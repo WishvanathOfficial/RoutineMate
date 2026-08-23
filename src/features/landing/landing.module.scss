@@ -1,0 +1,770 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.navbar {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(6px);
+  z-index: 10;
+
+  :global(html.dark) & {
+    background: rgba(15, 23, 42, 0.9);
+  }
+}
+
+.navInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 64px;
+  padding: 0 24px;
+  @include m.flex-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-family: v.$font-family-display;
+
+  img {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.navLinks {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+
+  a:hover {
+    color: v.$color-brand-600;
+  }
+}
+
+.navActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.loginLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+
+  &:hover {
+    color: v.$color-brand-600;
+  }
+}
+
+.ctaButton {
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  padding: 8px 16px;
+  border-radius: v.$radius-md;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    background: v.$color-brand-700;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+// Bigger, more prominent variant for the hero's primary CTA — matches the
+// wireframe's larger padding + brand-tinted drop shadow (as opposed to the
+// smaller, subtle shadow on the navbar/pricing buttons above).
+.heroCta {
+  padding: 14px 28px;
+  font-size: 16px;
+  box-shadow: 0 12px 24px -6px rgba(79, 70, 229, 0.35);
+
+  &:hover {
+    box-shadow: 0 16px 28px -6px rgba(79, 70, 229, 0.45);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 40px;
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 18px;
+    margin-bottom: 24px;
+  }
+}
+
+.heroBadge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: v.$color-brand-600;
+  background: v.$color-brand-50;
+  padding: 6px 14px;
+  border-radius: v.$radius-full;
+  margin-bottom: 16px;
+
+  :global(html.dark) & {
+    background: rgba(67, 56, 202, 0.2);
+    color: v.$color-brand-400;
+  }
+}
+
+.heroActions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.secondaryButton {
+  border: 1px solid var(--border-color-strong);
+  padding: 12px 24px;
+  border-radius: v.$radius-md;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.heroTrust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+
+  i {
+    color: v.$color-success-500;
+    margin-right: 4px;
+  }
+}
+
+.heroPreviewCard {
+  @include m.card;
+  padding: 20px;
+}
+
+.heroPreviewHeader {
+  @include m.flex-between;
+  margin-bottom: 16px;
+
+  p {
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0;
+    color: var(--text-primary);
+  }
+}
+
+.heroPreviewBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: v.$color-success-600;
+  background: v.$color-success-50;
+  padding: 4px 10px;
+  border-radius: v.$radius-full;
+
+  :global(html.dark) & {
+    background: rgba(16, 185, 129, 0.15);
+    color: v.$color-success-400;
+  }
+}
+
+.heroPreviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heroPreviewItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: v.$radius-md;
+  background: var(--bg-surface-alt);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+
+  i {
+    font-size: 16px;
+    color: var(--text-muted);
+  }
+
+  &.done {
+    background: v.$color-success-50;
+    color: var(--text-primary);
+
+    i {
+      color: v.$color-success-500;
+    }
+
+    :global(html.dark) & {
+      background: rgba(16, 185, 129, 0.12);
+    }
+  }
+}
+
+.heroPreviewFooter {
+  @include m.flex-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-muted);
+
+  strong {
+    color: v.$color-amber-500;
+    font-size: 14px;
+  }
+}
+
+.section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
+
+// Wraps a .section to give it the white/bordered treatment the wireframe
+// uses for Social Proof and FAQ, so those bands stand out against the
+// plain page background that Hero/Features/Pricing sit on directly.
+.sectionAlt {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sectionTitle {
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto 48px;
+
+  h2 {
+    font-size: 30px;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: var(--text-secondary);
+  }
+}
+
+.statRow {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+  text-align: center;
+
+  strong {
+    display: block;
+    font-size: 24px;
+    font-family: v.$font-family-display;
+    color: v.$color-brand-600;
+
+    :global(html.dark) & {
+      color: v.$color-brand-400;
+    }
+  }
+
+  span {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+}
+
+.ratingStat {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: v.$color-amber-500 !important;
+
+  .stars {
+    font-size: 13px;
+  }
+}
+
+.mutedStat {
+  color: var(--text-primary) !important;
+}
+
+.stars {
+  color: v.$color-amber-400;
+  font-size: 12px;
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.testimonialGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.testimonialCard {
+  @include m.card;
+  padding: 20px;
+
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+}
+
+.testimonialAuthor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: v.$radius-full;
+  color: v.$color-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.problemStrip {
+  background: var(--bg-surface-alt);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 56px 24px;
+
+  p {
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 18px;
+    color: var(--text-secondary);
+  }
+}
+
+.problemBrand {
+  font-weight: 600;
+  color: v.$color-brand-600;
+
+  :global(html.dark) & {
+    color: v.$color-brand-400;
+  }
+}
+
+.problemEmerald {
+  font-weight: 600;
+  color: v.$color-success-600;
+
+  :global(html.dark) & {
+    color: v.$color-success-400;
+  }
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.featureCard {
+  @include m.card;
+  padding: 24px;
+
+  h3 {
+    margin: 12px 0 8px;
+    font-size: 16px;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+}
+
+.featureIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: v.$radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+
+  &.brand {
+    background: v.$color-brand-50;
+    color: v.$color-brand-600;
+
+    :global(html.dark) & {
+      background: rgba(67, 56, 202, 0.2);
+      color: v.$color-brand-400;
+    }
+  }
+
+  &.amber {
+    background: v.$color-amber-50;
+    color: v.$color-amber-500;
+
+    :global(html.dark) & {
+      background: rgba(245, 158, 11, 0.1);
+    }
+  }
+
+  &.emerald {
+    background: v.$color-success-50;
+    color: v.$color-success-600;
+
+    :global(html.dark) & {
+      background: rgba(16, 185, 129, 0.1);
+    }
+  }
+
+  &.rose {
+    background: v.$color-rose-50;
+    color: v.$color-rose-500;
+
+    :global(html.dark) & {
+      background: rgba(239, 68, 68, 0.1);
+    }
+  }
+}
+
+.howSection {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 80px 24px;
+}
+
+.howInner {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.howHeading {
+  text-align: center;
+  font-size: 30px;
+  margin-bottom: 56px;
+}
+
+.howGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  text-align: center;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+}
+
+.howStepNumber {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: v.$radius-full;
+  color: v.$color-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: v.$font-family-display;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.faqItem {
+  background: var(--bg-surface-alt);
+  border-radius: v.$radius-lg;
+  padding: 16px;
+
+  summary {
+    list-style: none;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    i {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.15s ease;
+      flex-shrink: 0;
+    }
+  }
+
+  &[open] summary i {
+    transform: rotate(180deg);
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 12px 0 0;
+  }
+}
+
+.pricingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pricingCard {
+  @include m.card;
+  padding: 32px;
+
+  &.highlighted {
+    border: 2px solid v.$color-brand-600;
+  }
+
+  h3 {
+    font-size: 14px;
+    color: v.$color-brand-600;
+    margin-bottom: 8px;
+  }
+
+  p.price {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    font-size: 14px;
+    color: var(--text-secondary);
+
+    li {
+      margin-bottom: 8px;
+
+      i {
+        color: v.$color-success-500;
+        margin-right: 6px;
+      }
+    }
+  }
+
+  &:not(.highlighted) button {
+    width: 100%;
+  }
+}
+
+.disabledButton {
+  @include m.button-reset;
+  width: 100%;
+  padding: 12px;
+  border-radius: v.$radius-md;
+  font-weight: 600;
+  text-align: center;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.ctaSection {
+  text-align: center;
+  padding: 64px 24px;
+  color: v.$color-white;
+
+  h2 {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+
+  p {
+    opacity: 0.9;
+    margin-bottom: 32px;
+  }
+}
+
+.ctaSectionButton {
+  display: inline-block;
+  background: v.$color-white;
+  color: v.$color-brand-600;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: v.$radius-md;
+  box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.25);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px -6px rgba(15, 23, 42, 0.3);
+  }
+}
+
+.footer {
+  background: v.$color-slate-900;
+  color: v.$color-slate-400;
+  padding: 48px 24px 24px;
+  font-size: 13px;
+}
+
+.footerTop {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.footerBrand {
+  .brand {
+    margin-bottom: 12px;
+  }
+
+  p {
+    max-width: 260px;
+    font-size: 14px;
+    margin: 0;
+  }
+}
+
+.footerBrandName {
+  font-family: v.$font-family-display;
+  font-weight: 700;
+  color: v.$color-white;
+}
+
+.footerColumns {
+  display: flex;
+  gap: 64px;
+  font-size: 14px;
+}
+
+.footerCol {
+  p {
+    color: v.$color-white;
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  a:hover {
+    color: v.$color-white;
+  }
+}
+
+.footerLinkButton {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: v.$color-white;
+  }
+}
+
+.footerBottom {
+  text-align: center;
+  font-size: 12px;
+  color: v.$color-slate-500;
+  margin: 40px 0 0;
+}

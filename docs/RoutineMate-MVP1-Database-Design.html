@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoutineMate — MVP-1 Database Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --brand-50:#eef2ff; --brand-100:#e0e7ff; --brand-400:#818cf8; --brand-500:#6366f1; --brand-600:#4F46E5; --brand-700:#4338CA;
+    --emerald-50:#ecfdf5; --emerald-500:#10B981; --emerald-600:#059669;
+    --amber-50:#fffbeb; --amber-500:#f59e0b;
+    --rose-50:#fff1f2; --rose-500:#ef4444;
+    --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-300:#cbd5e1;
+    --slate-400:#94a3b8; --slate-500:#64748b; --slate-600:#475569; --slate-700:#334155; --slate-800:#1e293b; --slate-900:#0f172a;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: 'Inter', sans-serif; background: var(--slate-50); color: var(--slate-800);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3,h4,.font-display { font-family: 'Poppins', sans-serif; }
+  .gradient-text { background: linear-gradient(90deg,var(--brand-700),var(--emerald-600)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .gradient-bg { background: linear-gradient(135deg,var(--brand-600),var(--emerald-500)); }
+  header.top {
+    position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.92); backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--slate-100); padding: 16px 32px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  header.top .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; }
+  header.top .brand i { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; }
+  header.top nav { display:flex; gap:18px; font-size:13px; font-weight:600; }
+  header.top nav a { color: var(--slate-500); text-decoration:none; }
+  header.top nav a:hover { color: var(--brand-600); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 32px 80px; }
+  .hero-block { text-align:center; max-width: 760px; margin: 0 auto 48px; }
+  .eyebrow {
+    display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    color: var(--brand-600); background: var(--brand-50); padding:6px 14px; border-radius:999px; margin-bottom:16px;
+  }
+  .hero-block h1 { font-size: 34px; font-weight:800; margin: 0 0 12px; line-height:1.2; }
+  .hero-block p { color: var(--slate-500); font-size:15px; line-height:1.7; margin:0; }
+  section.block { margin-bottom: 56px; }
+  .block-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+  .block-head h2 { font-size:24px; font-weight:700; margin:0 0 6px; display:flex; align-items:center; gap:10px; }
+  .block-head h2 .num {
+    width:30px; height:30px; border-radius:9px; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:14px;
+  }
+  .block-head p { margin:0; color:var(--slate-500); font-size:14px; }
+  .card {
+    background:#fff; border:1px solid var(--slate-100); border-radius:16px; box-shadow:0 4px 20px -4px rgba(30,41,59,.08); padding:24px;
+  }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+  .grid-3 { display:grid; grid-template-columns: repeat(3,1fr); gap:20px; }
+  @media (max-width:900px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
+  .context-list { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top: 8px; }
+  @media (max-width:800px){ .context-list{ grid-template-columns:1fr; } }
+  .context-item { display:flex; gap:12px; padding:14px 16px; border:1px solid var(--slate-100); border-radius:12px; background:#fff; }
+  .context-item i { width:32px; height:32px; flex-shrink:0; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .context-item h4 { margin:0 0 4px; font-size:14px; }
+  .context-item p { margin:0; font-size:12.5px; color:var(--slate-500); line-height:1.55; }
+  .tint-brand { background:var(--brand-50); color:var(--brand-600); }
+  .tint-emerald { background:var(--emerald-50); color:var(--emerald-600); }
+  .tint-amber { background:var(--amber-50); color:var(--amber-500); }
+  .tint-rose { background:var(--rose-50); color:var(--rose-500); }
+  .tint-slate { background:var(--slate-100); color:var(--slate-600); }
+  .diagram-card { background:#fff; border:1px solid var(--slate-100); border-radius:16px; box-shadow:0 4px 20px -4px rgba(30,41,59,.08); padding:24px; overflow-x:auto; }
+  .diagram-card .mermaid { min-width: 980px; }
+  .legend { display:flex; flex-wrap:wrap; gap:16px; margin-top:18px; font-size:12px; color:var(--slate-500); }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .legend i.dot { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  table.spec { width:100%; border-collapse: collapse; font-size: 13px; }
+  table.spec th, table.spec td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--slate-100); vertical-align: top; }
+  table.spec th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--slate-400); font-weight:700; }
+  table.spec td.mono, table.spec code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px; background:var(--slate-50); padding:2px 6px; border-radius:5px; color:var(--brand-700); }
+  table.spec tr:last-child td { border-bottom:none; }
+  .badge { display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .badge.pk { background:var(--brand-50); color:var(--brand-600); }
+  .badge.fk { background:var(--amber-50); color:#b45309; }
+  .badge.uk { background:var(--emerald-50); color:var(--emerald-600); }
+  .table-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .table-card-head h3 { margin:0; font-size:16px; display:flex; align-items:center; gap:8px; }
+  .table-card-head .tag { font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .tag.core { background:var(--emerald-50); color:var(--emerald-600); }
+  .tag.phase2 { background:var(--slate-100); color:var(--slate-500); }
+  .tag.support { background:var(--brand-50); color:var(--brand-600); }
+  .note {
+    display:flex; gap:12px; padding:16px 18px; border-radius:12px; background:var(--amber-50); border:1px solid #fde68a; font-size:13px; color:#92400e; line-height:1.6;
+  }
+  .note i { margin-top:2px; }
+  .rel-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--slate-100); font-size:13.5px; }
+  .rel-row:last-child { border-bottom:none; }
+  .rel-row .ent { font-weight:700; padding:4px 10px; border-radius:8px; background:var(--slate-100); font-size:12.5px; }
+  .rel-row .card-x { color:var(--brand-600); font-weight:700; font-size:12px; white-space:nowrap; }
+  .rel-row .desc { color:var(--slate-500); font-size:12.5px; flex:1; }
+  .api-map td:first-child { font-family: ui-monospace, monospace; font-size:12px; }
+  .method { font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:5px; margin-right:8px; }
+  .method.get { background:#dbeafe; color:#1d4ed8; }
+  .method.post { background:var(--emerald-50); color:var(--emerald-600); }
+  .method.put, .method.patch { background:var(--amber-50); color:#b45309; }
+  .method.delete { background:var(--rose-50); color:var(--rose-500); }
+  footer.page-footer { text-align:center; padding: 32px; color:var(--slate-400); font-size:12px; }
+  .toc { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px; }
+  .toc a {
+    font-size:12.5px; font-weight:600; color:var(--slate-600); text-decoration:none; padding:8px 14px; border-radius:999px; border:1px solid var(--slate-200); background:#fff;
+  }
+  .toc a:hover { border-color:var(--brand-400); color:var(--brand-600); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="gradient-bg" style="width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;">
+      <i class="fa-solid fa-database" style="color:#fff;font-size:14px;"></i>
+    </span>
+    <span>RoutineMate <span class="gradient-text">DB Design</span></span>
+  </div>
+  <nav>
+    <a href="#context">Context</a>
+    <a href="#erd">ER Diagram</a>
+    <a href="#tables">Tables</a>
+    <a href="#relationships">Relationships</a>
+    <a href="#indexing">Indexing</a>
+    <a href="#api-map">API Mapping</a>
+    <a href="#phase2">Phase 2</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <div class="hero-block">
+    <span class="eyebrow">MVP-1 · Backend Data Model</span>
+    <h1>RoutineMate — Database Design &amp; Requirements</h1>
+    <p>
+      A complete relational data model for the RoutineMate backend, derived from a full pass over the
+      MVP-1 clickable wireframe and the existing React/TypeScript frontend (auth, dashboard, routines,
+      calendar, stats, profile). Target stack: <strong>Node.js + TypeScript</strong>, <strong>Express</strong>
+      (route → controller → service), <strong>Sequelize</strong> ORM on <strong>MySQL 8</strong>.
+    </p>
+    <div class="toc">
+      <a href="#context">1. Context</a>
+      <a href="#erd">2. ER Diagram</a>
+      <a href="#tables">3. Table Specs</a>
+      <a href="#relationships">4. Relationships</a>
+      <a href="#indexing">5. Indexing &amp; Constraints</a>
+      <a href="#enums">6. Enum Reference</a>
+      <a href="#api-map">7. API → Table Mapping</a>
+      <a href="#phase2">8. Phase-2 Extensions</a>
+    </div>
+  </div>
+
+  <!-- ============ 1. CONTEXT ============ -->
+  <section class="block" id="context">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">1</span> Context &amp; Scope</h2>
+        <p>What every screen in the app actually needs the database to hold.</p>
+      </div>
+    </div>
+    <div class="card">
+      <p style="margin-top:0;color:var(--slate-600);font-size:14px;line-height:1.7;">
+        The frontend currently runs on in-memory mock APIs (<code>*.api.ts</code> per feature) that stand in for
+        real HTTP calls. Each mock's function signatures and returned shapes were treated as the contract the
+        real backend must satisfy — this model is designed to serve every one of them without changing the
+        frontend's expectations. Two simplifications in the mock layer were deliberately <em>not</em> carried into
+        the schema: (1) <code>Routine.completedToday</code> is a derived flag, not a stored column — a real
+        backend needs one row per habit per calendar day (<code>habit_logs</code>) to support the Calendar and
+        Stats pages honestly; (2) <code>streak</code> / <code>longestStreak</code> are cached, not authoritative —
+        they're recomputed from <code>habit_logs</code> on every check-in write, inside the same transaction.
+      </p>
+      <div class="context-list">
+        <div class="context-item">
+          <i class="fa-solid fa-right-to-bracket tint-brand"></i>
+          <div><h4>Authentication</h4><p>Register / login with email + password, JWT access + refresh tokens, logout. Maps to <code>users</code> + <code>refresh_tokens</code>.</p></div>
+        </div>
+        <div class="context-item">
+          <i class="fa-solid fa-gauge-high tint-emerald"></i>
+          <div><h4>Dashboard</h4><p>Greeting + quote, today's routines, progress ring, best streak, active routine count — all derived reads over <code>routines</code> + <code>habit_logs</code>.</p></div>
+        </div>
+        <div class="context-item">
+          <i class="fa-solid fa-list-check tint-amber"></i>
+          <div><h4>Routines</h4><p>CRUD on habits, template quick-start, pause/resume, daily check-in toggle. Core tables: <code>routines</code>, <code>habit_logs</code>.</p></div>
+        </div>
+        <div class="context-item">
+          <i class="fa-solid fa-calendar-days tint-rose"></i>
+          <div><h4>Calendar</h4><p>Month grid colored by day status (completed / partial / missed). Pure aggregation over <code>habit_logs</code> — no dedicated table.</p></div>
+        </div>
+        <div class="context-item">
+          <i class="fa-solid fa-chart-simple tint-brand"></i>
+          <div><h4>Stats &amp; Insights</h4><p>Weekly completion, category breakdown, 30-day trend, time-of-day activity, per-habit consistency — all aggregated, optionally cached.</p></div>
+        </div>
+        <div class="context-item">
+          <i class="fa-solid fa-user-gear tint-emerald"></i>
+          <div><h4>Profile &amp; Settings</h4><p>Account edit, theme / notification preferences, danger-zone delete. Maps to <code>users</code> + <code>user_preferences</code>.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. ER DIAGRAM ============ -->
+  <section class="block" id="erd">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">2</span> Entity-Relationship Diagram</h2>
+        <p>Solid boxes are MVP-1 core tables; dashed/muted boxes are Phase-2 (see section 8) — included so the schema doesn't need reshaping later.</p>
+      </div>
+    </div>
+    <div class="diagram-card">
+      <pre class="mermaid">
+erDiagram
+  USERS ||--o| USER_PREFERENCES : has
+  USERS ||--o{ REFRESH_TOKENS : issues
+  USERS ||--o{ ROUTINES : owns
+  ROUTINES ||--o{ HABIT_LOGS : "checked in via"
+  USERS ||--o{ GOALS : sets
+  GOALS }o--o{ ROUTINES : "linked via GOAL_ROUTINES"
+  USERS ||--o{ ACHIEVEMENTS : unlocks
+  USERS ||--o{ JOURNAL_ENTRIES : writes
+  ROUTINES ||--o{ REMINDERS : schedules
+
+  USERS {
+    char36 id PK
+    varchar name
+    varchar email UK
+    varchar password_hash
+    varchar avatar_url
+    datetime email_verified_at
+    datetime created_at
+    datetime updated_at
+    datetime deleted_at
+  }
+  USER_PREFERENCES {
+    char36 id PK
+    char36 user_id FK
+    enum theme
+    boolean push_reminders_enabled
+    boolean daily_digest_enabled
+    varchar first_day_of_week
+    datetime created_at
+    datetime updated_at
+  }
+  REFRESH_TOKENS {
+    char36 id PK
+    char36 user_id FK
+    varchar token_hash UK
+    datetime expires_at
+    datetime revoked_at
+    datetime created_at
+  }
+  ROUTINES {
+    char36 id PK
+    char36 user_id FK
+    varchar name
+    varchar emoji
+    enum category
+    enum frequency_type
+    json frequency_config
+    enum reminder_type
+    time reminder_time
+    varchar reminder_location
+    int target_value
+    varchar target_unit
+    enum status
+    int current_streak
+    int longest_streak
+    date start_date
+    date end_date
+    datetime created_at
+    datetime updated_at
+    datetime deleted_at
+  }
+  HABIT_LOGS {
+    char36 id PK
+    char36 routine_id FK
+    date date
+    enum status
+    decimal value
+    varchar note
+    datetime completed_at
+    datetime created_at
+    datetime updated_at
+  }
+  GOALS {
+    char36 id PK
+    char36 user_id FK
+    varchar title
+    date target_date
+    decimal progress
+    datetime created_at
+  }
+  GOAL_ROUTINES {
+    char36 goal_id FK
+    char36 routine_id FK
+  }
+  ACHIEVEMENTS {
+    char36 id PK
+    char36 user_id FK
+    varchar type
+    datetime unlocked_at
+  }
+  REMINDERS {
+    char36 id PK
+    char36 routine_id FK
+    time time
+    enum channel
+    boolean enabled
+  }
+  JOURNAL_ENTRIES {
+    char36 id PK
+    char36 user_id FK
+    date date
+    tinyint mood
+    text note
+    datetime created_at
+  }
+      </pre>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--brand-600);"></i> Primary / owning relationship</span>
+      <span><i class="dot" style="background:var(--emerald-500);"></i> MVP-1 core table</span>
+      <span><i class="dot" style="background:var(--slate-300);"></i> Phase-2 table (schema-ready, not built yet)</span>
+    </div>
+  </section>
+
+  <!-- ============ 3. TABLE SPECS ============ -->
+  <section class="block" id="tables">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">3</span> Core Table Specifications (MVP-1)</h2>
+        <p>Every column, type, and constraint needed for Sequelize models + migrations.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="table-card-head">
+        <h3><i class="fa-solid fa-user tint-brand" style="width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;"></i> users</h3>
+        <span class="tag core">MVP-1 core</span>
+      </div>
+      <table class="spec">
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+        <tr><td class="mono">id</td><td>CHAR(36)</td><td><span class="badge pk">PK</span></td><td>UUIDv4, generated app-side or via <code>DEFAULT (UUID())</code></td></tr>
+        <tr><td class="mono">name</td><td>VARCHAR(120)</td><td>NOT NULL</td><td>Display name</td></tr>
+        <tr><td class="mono">email</td><td>VARCHAR(255)</td><td>NOT NULL, <span class="badge uk">UNIQUE</span></td><td>Case-insensitive collation (<code>utf8mb4_general_ci</code>)</td></tr>
+        <tr><td class="mono">password_hash</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>bcrypt/argon2 hash only; excluded from default query scope</td></tr>
+        <tr><td class="mono">avatar_url</td><td>VARCHAR(500)</td><td>NULL</td><td>Optional profile image</td></tr>
+        <tr><td class="mono">email_verified_at</td><td>DATETIME</td><td>NULL</td><td>Null = unverified (feature doc §4 email verification)</td></tr>
+        <tr><td class="mono">created_at / updated_at</td><td>DATETIME</td><td>NOT NULL</td><td>Sequelize-managed timestamps</td></tr>
+        <tr><td class="mono">deleted_at</td><td>DATETIME</td><td>NULL</td><td><code>paranoid: true</code> soft delete</td></tr>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="table-card-head">
+          <h3><i class="fa-solid fa-sliders tint-emerald" style="width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;"></i> user_preferences</h3>
+          <span class="tag core">1:1 with users</span>
+        </div>
+        <table class="spec">
+          <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+          <tr><td class="mono">id</td><td>CHAR(36)</td><td><span class="badge pk">PK</span></td></tr>
+          <tr><td class="mono">user_id</td><td>CHAR(36)</td><td><span class="badge fk">FK</span> → users.id, <span class="badge uk">UNIQUE</span></td></tr>
+          <tr><td class="mono">theme</td><td>ENUM('light','dark','system')</td><td>Default <code>'system'</code></td></tr>
+          <tr><td class="mono">push_reminders_enabled</td><td>BOOLEAN</td><td>Default <code>true</code></td></tr>
+          <tr><td class="mono">daily_digest_enabled</td><td>BOOLEAN</td><td>Default <code>false</code></td></tr>
+          <tr><td class="mono">first_day_of_week</td><td>VARCHAR(10)</td><td>Default <code>'monday'</code> — feature doc §6.11</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="table-card-head">
+          <h3><i class="fa-solid fa-key tint-amber" style="width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;"></i> refresh_tokens</h3>
+          <span class="tag core">Auth support</span>
+        </div>
+        <table class="spec">
+          <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+          <tr><td class="mono">id</td><td>CHAR(36)</td><td><span class="badge pk">PK</span></td></tr>
+          <tr><td class="mono">user_id</td><td>CHAR(36)</td><td><span class="badge fk">FK</span> → users.id, ON DELETE CASCADE</td></tr>
+          <tr><td class="mono">token_hash</td><td>VARCHAR(255)</td><td><span class="badge uk">UNIQUE</span> — never store the raw token</td></tr>
+          <tr><td class="mono">expires_at</td><td>DATETIME</td><td>NOT NULL</td></tr>
+          <tr><td class="mono">revoked_at</td><td>DATETIME</td><td>NULL — set on logout/rotation</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="table-card-head">
+        <h3><i class="fa-solid fa-list-check tint-rose" style="width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;"></i> routines</h3>
+        <span class="tag core">MVP-1 core</span>
+      </div>
+      <table class="spec">
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+        <tr><td class="mono">id</td><td>CHAR(36)</td><td><span class="badge pk">PK</span></td><td></td></tr>
+        <tr><td class="mono">user_id</td><td>CHAR(36)</td><td><span class="badge fk">FK</span> → users.id, ON DELETE CASCADE</td><td>Owner</td></tr>
+        <tr><td class="mono">name</td><td>VARCHAR(120)</td><td>NOT NULL</td><td>"Drink Water"</td></tr>
+        <tr><td class="mono">emoji</td><td>VARCHAR(16)</td><td>NOT NULL, default <code>'✅'</code></td><td>Requires <code>utf8mb4</code> table charset</td></tr>
+        <tr><td class="mono">category</td><td>ENUM(...)</td><td>NOT NULL</td><td>Health / Mindfulness / Learning / Wellness / Productivity</td></tr>
+        <tr><td class="mono">frequency_type</td><td>ENUM(...)</td><td>NOT NULL</td><td>daily / weekdays / specific_days / interval</td></tr>
+        <tr><td class="mono">frequency_config</td><td>JSON</td><td>NULL</td><td>e.g. <code>{"days":[1,3,5]}</code> or <code>{"everyNDays":3}</code> — shape depends on frequency_type</td></tr>
+        <tr><td class="mono">reminder_type</td><td>ENUM('time','location')</td><td>Default <code>'time'</code></td><td></td></tr>
+        <tr><td class="mono">reminder_time</td><td>TIME</td><td>NULL</td><td>Required when reminder_type = time</td></tr>
+        <tr><td class="mono">reminder_location</td><td>VARCHAR(255)</td><td>NULL</td><td>Required when reminder_type = location</td></tr>
+        <tr><td class="mono">target_value / target_unit</td><td>INT / VARCHAR(30)</td><td>NULL</td><td>Quantitative habits, e.g. 8 / "glasses"</td></tr>
+        <tr><td class="mono">status</td><td>ENUM('active','paused','archived')</td><td>Default <code>'active'</code></td><td></td></tr>
+        <tr><td class="mono">current_streak</td><td>INT</td><td>Default 0</td><td>Cached — recomputed on every check-in write</td></tr>
+        <tr><td class="mono">longest_streak</td><td>INT</td><td>Default 0</td><td>Cached — <code>MAX(current_streak)</code> over time</td></tr>
+        <tr><td class="mono">start_date / end_date</td><td>DATE</td><td>start NOT NULL, end NULL</td><td>Supports time-boxed challenges (feature doc §6.1)</td></tr>
+        <tr><td class="mono">deleted_at</td><td>DATETIME</td><td>NULL</td><td><code>paranoid: true</code> — preserves habit_logs history after archive</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="table-card-head">
+        <h3><i class="fa-solid fa-check-double tint-emerald" style="width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;"></i> habit_logs</h3>
+        <span class="tag core">MVP-1 core — highest write volume</span>
+      </div>
+      <table class="spec">
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+        <tr><td class="mono">id</td><td>CHAR(36)</td><td><span class="badge pk">PK</span></td><td></td></tr>
+        <tr><td class="mono">routine_id</td><td>CHAR(36)</td><td><span class="badge fk">FK</span> → routines.id, ON DELETE CASCADE</td><td></td></tr>
+        <tr><td class="mono">date</td><td>DATEONLY</td><td>NOT NULL</td><td>Calendar day, not a timestamp — avoids timezone drift</td></tr>
+        <tr><td class="mono">status</td><td>ENUM('done','partial','skipped','missed')</td><td>NOT NULL</td><td></td></tr>
+        <tr><td class="mono">value</td><td>DECIMAL(10,2)</td><td>NULL</td><td>Progress amount for quantitative habits</td></tr>
+        <tr><td class="mono">note</td><td>VARCHAR(500)</td><td>NULL</td><td>Optional skip/partial reason</td></tr>
+        <tr><td class="mono">completed_at</td><td>DATETIME</td><td>NULL</td><td>Exact check-in moment, for "activity by time of day" stat</td></tr>
+        <tr><td colspan="4"><span class="badge uk">UNIQUE (routine_id, date)</span> — one log per habit per day; the check-in endpoint upserts against this</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 4. RELATIONSHIPS ============ -->
+  <section class="block" id="relationships">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">4</span> Relationships &amp; Delete Behavior</h2>
+        <p>Every association's cardinality and <code>onDelete</code> rule, spelled out explicitly rather than left to defaults.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="rel-row">
+        <span class="ent">users</span><span class="card-x">1 — 1</span><span class="ent">user_preferences</span>
+        <span class="desc">Created automatically on registration. <code>ON DELETE CASCADE</code>.</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">users</span><span class="card-x">1 — N</span><span class="ent">refresh_tokens</span>
+        <span class="desc">One row per active session/device. <code>ON DELETE CASCADE</code>.</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">users</span><span class="card-x">1 — N</span><span class="ent">routines</span>
+        <span class="desc">A user's habit list. <code>ON DELETE CASCADE</code> (deleting a user removes their habits).</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">routines</span><span class="card-x">1 — N</span><span class="ent">habit_logs</span>
+        <span class="desc">Daily check-ins for a habit. <code>ON DELETE CASCADE</code> — logs are meaningless without the parent habit.</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">users</span><span class="card-x">1 — N</span><span class="ent">goals</span>
+        <span class="desc"><em>(Phase 2)</em> <code>ON DELETE CASCADE</code>.</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">goals</span><span class="card-x">N — N</span><span class="ent">routines</span>
+        <span class="desc"><em>(Phase 2)</em> via <code>goal_routines</code> join table — a goal can track multiple habits. <code>ON DELETE CASCADE</code> on both FKs.</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">users</span><span class="card-x">1 — N</span><span class="ent">achievements</span>
+        <span class="desc"><em>(Phase 2)</em> Append-only unlock log. <code>ON DELETE CASCADE</code>.</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">routines</span><span class="card-x">1 — N</span><span class="ent">reminders</span>
+        <span class="desc"><em>(Phase 2)</em> Only needed if a habit gains multiple reminders; MVP-1 keeps reminder fields inline on <code>routines</code>.</span>
+      </div>
+      <div class="rel-row">
+        <span class="ent">users</span><span class="card-x">1 — N</span><span class="ent">journal_entries</span>
+        <span class="desc"><em>(Phase 2)</em> <code>UNIQUE(user_id, date)</code> — one entry per day. <code>ON DELETE CASCADE</code>.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. INDEXING ============ -->
+  <section class="block" id="indexing">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">5</span> Indexing &amp; Constraints Strategy</h2>
+        <p>What gets indexed, why, and the constraints that do real integrity work (not just Sequelize validators).</p>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h4 style="margin-top:0;"><i class="fa-solid fa-bolt tint-brand" style="margin-right:8px;"></i>Performance indexes</h4>
+        <table class="spec">
+          <tr><td class="mono">routines(user_id)</td></tr>
+          <tr><td class="mono">routines(user_id, status)</td></tr>
+          <tr><td class="mono">habit_logs(routine_id, date)</td></tr>
+          <tr><td class="mono">habit_logs(date)</td></tr>
+          <tr><td class="mono">refresh_tokens(user_id)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4 style="margin-top:0;"><i class="fa-solid fa-shield-halved tint-emerald" style="margin-right:8px;"></i>Integrity constraints</h4>
+        <table class="spec">
+          <tr><td class="mono">users.email</td><td>UNIQUE</td></tr>
+          <tr><td class="mono">habit_logs(routine_id, date)</td><td>UNIQUE</td></tr>
+          <tr><td class="mono">refresh_tokens.token_hash</td><td>UNIQUE</td></tr>
+          <tr><td class="mono">user_preferences.user_id</td><td>UNIQUE</td></tr>
+          <tr><td class="mono">journal_entries(user_id, date)</td><td>UNIQUE <em>(Phase 2)</em></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4 style="margin-top:0;"><i class="fa-solid fa-layer-group tint-amber" style="margin-right:8px;"></i>Table-level notes</h4>
+        <ul style="margin:0;padding-left:18px;font-size:13px;color:var(--slate-600);line-height:1.8;">
+          <li>Charset <code>utf8mb4</code> / collation <code>utf8mb4_0900_ai_ci</code> everywhere (emoji + case-insensitive email).</li>
+          <li><code>paranoid: true</code> on <code>users</code> and <code>routines</code> only.</li>
+          <li>All writes to <code>habit_logs</code> that also touch <code>routines.current_streak</code> run in one <code>sequelize.transaction()</code>.</li>
+          <li>Check-in endpoint uses <code>upsert()</code> against the unique key, not find-then-write.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6. ENUM REFERENCE ============ -->
+  <section class="block" id="enums">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">6</span> Enum Reference</h2>
+        <p>Exact values, matching the frontend's TypeScript unions one-for-one so no translation layer is needed.</p>
+      </div>
+    </div>
+    <div class="card">
+      <table class="spec">
+        <tr><th>Column</th><th>Allowed values</th><th>Source</th></tr>
+        <tr><td class="mono">routines.category</td><td>Health · Mindfulness · Learning · Wellness · Productivity</td><td class="mono">RoutineCategory</td></tr>
+        <tr><td class="mono">routines.frequency_type</td><td>daily · weekdays · specific_days · interval</td><td class="mono">RoutineFrequency (expanded)</td></tr>
+        <tr><td class="mono">routines.reminder_type</td><td>time · location</td><td class="mono">ReminderType</td></tr>
+        <tr><td class="mono">routines.status</td><td>active · paused · archived</td><td class="mono">RoutineStatus (+ archived for soft-delete flow)</td></tr>
+        <tr><td class="mono">habit_logs.status</td><td>done · partial · skipped · missed</td><td>New — needed for Calendar's 4-state legend</td></tr>
+        <tr><td class="mono">user_preferences.theme</td><td>light · dark · system</td><td class="mono">ThemeMode (+ system)</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 7. API MAPPING ============ -->
+  <section class="block" id="api-map">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">7</span> API Endpoint → Table Mapping</h2>
+        <p>Groundwork for the route/controller/service build and the Postman collection — every planned endpoint and what it touches.</p>
+      </div>
+    </div>
+    <div class="card">
+      <table class="spec api-map">
+        <tr><th>Endpoint</th><th>Tables touched</th><th>Notes</th></tr>
+        <tr><td><span class="method post">POST</span>/api/auth/register</td><td>users, user_preferences</td><td>Creates default preferences row in the same transaction</td></tr>
+        <tr><td><span class="method post">POST</span>/api/auth/login</td><td>users, refresh_tokens</td><td>Issues access + refresh JWT pair</td></tr>
+        <tr><td><span class="method post">POST</span>/api/auth/refresh</td><td>refresh_tokens</td><td>Rotates token, revokes previous</td></tr>
+        <tr><td><span class="method post">POST</span>/api/auth/logout</td><td>refresh_tokens</td><td>Revokes current token</td></tr>
+        <tr><td><span class="method get">GET</span>/api/dashboard/greeting</td><td>users (name only)</td><td>Quote pool can be static app config, no table required</td></tr>
+        <tr><td><span class="method get">GET</span>/api/routines</td><td>routines</td><td>Filter by status; include today's <code>habit_logs</code> row for <code>completedToday</code></td></tr>
+        <tr><td><span class="method post">POST</span>/api/routines</td><td>routines</td><td></td></tr>
+        <tr><td><span class="method put">PUT</span>/api/routines/:id</td><td>routines</td><td></td></tr>
+        <tr><td><span class="method delete">DELETE</span>/api/routines/:id</td><td>routines (soft delete)</td><td></td></tr>
+        <tr><td><span class="method patch">PATCH</span>/api/routines/:id/pause</td><td>routines</td><td>Toggles active/paused</td></tr>
+        <tr><td><span class="method post">POST</span>/api/routines/:id/check-in</td><td>habit_logs, routines</td><td>Upsert log for today + recompute streak columns, transactional</td></tr>
+        <tr><td><span class="method get">GET</span>/api/calendar?month=YYYY-MM</td><td>habit_logs</td><td>Aggregate per day across all routines → completed/partial/missed</td></tr>
+        <tr><td><span class="method get">GET</span>/api/stats/summary</td><td>routines, habit_logs</td><td>Weekly, category breakdown, 30-day trend, time-of-day, consistency</td></tr>
+        <tr><td><span class="method get">GET</span>/api/profile</td><td>users, user_preferences</td><td></td></tr>
+        <tr><td><span class="method put">PUT</span>/api/profile</td><td>users</td><td>Name/email edit</td></tr>
+        <tr><td><span class="method put">PUT</span>/api/profile/preferences</td><td>user_preferences</td><td></td></tr>
+        <tr><td><span class="method delete">DELETE</span>/api/profile</td><td>users (soft delete), cascades</td><td>Danger zone</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 8. PHASE 2 ============ -->
+  <section class="block" id="phase2">
+    <div class="block-head">
+      <div>
+        <h2><span class="num gradient-bg" style="color:#fff;">8</span> Phase-2 Extensions (schema-ready, not built)</h2>
+        <p>From the feature analysis roadmap — not required for the MVP-1 backend, included in the ERD so the core tables never need reshaping.</p>
+      </div>
+    </div>
+    <div class="note">
+      <i class="fa-solid fa-circle-info"></i>
+      <div>
+        <strong>goals</strong>, <strong>goal_routines</strong>, <strong>achievements</strong>, <strong>reminders</strong>, and
+        <strong>journal_entries</strong> are deliberately left out of the MVP-1 Sequelize models/migrations build. They're
+        drawn in the ER diagram above with their full column list so a future migration only has to <em>add</em> tables,
+        never alter the shape of <code>users</code> or <code>routines</code> to accommodate them.
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="page-footer">RoutineMate — MVP-1 Database Design · generated from wireframe + frontend analysis</footer>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+    primaryColor: '#eef2ff', primaryBorderColor: '#4F46E5', primaryTextColor: '#1e293b',
+    lineColor: '#94a3b8', fontFamily: 'Inter, sans-serif', fontSize: '13px'
+  }});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+@use '@styles/variables' as v;
+
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  background: var(--bg-page);
+}

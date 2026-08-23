@@ -1,0 +1,177 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.header {
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.metaText {
+  color: var(--text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  @include m.card;
+  padding: 24px;
+}
+
+.listHeader {
+  @include m.flex-between;
+  margin-bottom: 16px;
+
+  a {
+    font-size: 14px;
+    color: v.$color-brand-600;
+    font-weight: 500;
+  }
+}
+
+.habitList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.habitItem {
+  @include m.flex-between;
+  padding: 16px;
+  border-radius: v.$radius-md;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
+}
+
+.habitInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkButton {
+  @include m.button-reset;
+  width: 36px;
+  height: 36px;
+  border-radius: v.$radius-full;
+  border: 2px solid var(--border-color-strong);
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.completed {
+    background: v.$color-success-500;
+    border-color: v.$color-success-500;
+    color: v.$color-white;
+  }
+}
+
+.streakBadge {
+  color: v.$color-amber-500;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.newRoutineButton {
+  @include m.button-reset;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: v.$radius-md;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+}
+
+.progressCard {
+  @include m.card;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-top: 24px;
+  text-align: left;
+}
+
+.statBox {
+  padding: 12px;
+  border-radius: v.$radius-md;
+  background: v.$color-amber-50;
+
+  :global(html.dark) & {
+    background: rgba(245, 158, 11, 0.1);
+  }
+
+  &.brand {
+    background: v.$color-brand-50;
+
+    :global(html.dark) & {
+      background: rgba(67, 56, 202, 0.2);
+    }
+
+    p:last-child {
+      color: v.$color-brand-600;
+
+      :global(html.dark) & {
+        color: v.$color-brand-400;
+      }
+    }
+  }
+
+  p:first-child {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  p:last-child {
+    font-weight: 700;
+    color: v.$color-amber-500;
+
+    :global(html.dark) & {
+      color: v.$color-amber-400;
+    }
+  }
+}
+
+.ctaCard {
+  @include m.card;
+  padding: 24px;
+  @include m.flex-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}

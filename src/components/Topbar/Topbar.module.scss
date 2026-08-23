@@ -1,0 +1,50 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.topbar {
+  height: v.$topbar-height;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  @include m.flex-between;
+  padding: 0 24px;
+}
+
+.title {
+  font-family: v.$font-family-display;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.iconButton {
+  @include m.button-reset;
+  width: 36px;
+  height: 36px;
+  border-radius: v.$radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: v.$radius-full;
+  color: v.$color-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}

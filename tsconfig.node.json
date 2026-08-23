@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    // `composite: true` (needed for the project reference from tsconfig.json)
+    // forbids `noEmit`, so instead redirect any build output away from the
+    // source tree — otherwise `tsc -b` emits vite.config.js/.d.ts right next
+    // to vite.config.ts, which silently shadows it for Vite's dev server
+    // (Vite's config-file lookup checks .js before .ts).
+    "outDir": "./.tsbuild-node"
+  },
+  "include": ["vite.config.ts", "jest.config.ts"]
+}

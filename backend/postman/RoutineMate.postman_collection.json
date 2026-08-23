@@ -1,0 +1,869 @@
+{
+  "info": {
+    "_postman_id": "57fe7c13-df27-4735-89e8-b09454d919b2",
+    "name": "RoutineMate API",
+    "description": "MVP-1 backend for RoutineMate \u2014 Node.js + TypeScript + Express + Sequelize (MySQL). See docs/RoutineMate-MVP1-Database-Design.html in the repo for the full schema and API-to-table mapping this collection exercises.\n\nWorkflow: run Auth > Register (or Login) first \u2014 its test script saves {{accessToken}} to the environment automatically. Every other request uses that token via the collection-level Bearer auth.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Basic liveness check \u2014 no auth required.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Register/login return { user, accessToken } and set an httpOnly refresh-token cookie. All other folders require the Bearer accessToken captured here.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Creates a user + default preferences row, returns an access token, and sets an httpOnly refresh-token cookie (path /api/auth).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo User\",\n  \"email\": \"demo@routinemate.app\",\n  \"password\": \"Demo@1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (pm.response.code < 300 && json && json.data && json.data.accessToken) {",
+                  "    pm.environment.set('accessToken', json.data.accessToken);",
+                  "    console.log('accessToken saved to environment');",
+                  "}",
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Issues a fresh access + refresh token pair. Run this first if the seeded demo user already exists.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@routinemate.app\",\n  \"password\": \"Demo@1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (pm.response.code < 300 && json && json.data && json.data.accessToken) {",
+                  "    pm.environment.set('accessToken', json.data.accessToken);",
+                  "    console.log('accessToken saved to environment');",
+                  "}",
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Reads the refresh-token cookie set by Login/Register, rotates it, and returns a new access token. Postman's cookie jar sends the cookie automatically as long as Login/Register ran first in this session.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (pm.response.code < 300 && json && json.data && json.data.accessToken) {",
+                  "    pm.environment.set('accessToken', json.data.accessToken);",
+                  "    console.log('accessToken saved to environment');",
+                  "}",
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revokes the current refresh token and clears the cookie.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "",
+      "item": [
+        {
+          "name": "Get Greeting",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/greeting",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "greeting"
+              ]
+            },
+            "description": "Name + a rotating motivational quote for the dashboard header."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "overview"
+              ]
+            },
+            "description": "Active routine count, today's completion %, best streak, and today's routines with completedToday flags."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Routines",
+      "description": "",
+      "item": [
+        {
+          "name": "List Routines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/routines?status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "routines"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "Optional ?status=active|paused|archived and ?category=Health|Mindfulness|Learning|Wellness|Productivity filters."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Routine",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/routines",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "routines"
+              ]
+            },
+            "description": "Creates a routine and saves its id to {{routineId}} for the requests below.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Drink Water\",\n  \"emoji\": \"\\ud83d\\udca7\",\n  \"category\": \"Health\",\n  \"frequencyType\": \"daily\",\n  \"reminderType\": \"time\",\n  \"reminderTime\": \"08:00\",\n  \"targetValue\": 8,\n  \"targetUnit\": \"glasses\",\n  \"startDate\": \"2026-08-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (pm.response.code < 300 && json && json.data && json.data.id) {",
+                  "    pm.environment.set('routineId', json.data.id);",
+                  "    console.log('routineId saved to environment: ' + json.data.id);",
+                  "}",
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Routine By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/routines/{{routineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "routines",
+                "{{routineId}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Routine",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/routines/{{routineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "routines",
+                "{{routineId}}"
+              ]
+            },
+            "description": "Partial update \u2014 send only the fields you want changed.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Drink More Water\",\n  \"targetValue\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pause / Resume Routine",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/routines/{{routineId}}/pause",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "routines",
+                "{{routineId}}",
+                "pause"
+              ]
+            },
+            "description": "Toggles status between active and paused."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/routines/{{routineId}}/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "routines",
+                "{{routineId}}",
+                "check-in"
+              ]
+            },
+            "description": "Upserts today's habit_logs row and recomputes current/longest streak transactionally. status: done | partial | skipped | missed.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"done\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Routine",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/routines/{{routineId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "routines",
+                "{{routineId}}"
+              ]
+            },
+            "description": "Soft delete (paranoid) \u2014 habit_logs history is preserved."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "description": "",
+      "item": [
+        {
+          "name": "Get Month Calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/calendar?month=2026-08",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "2026-08"
+                }
+              ]
+            },
+            "description": "Aggregates habit_logs across all of the user's routines into a per-day completed/partial/missed/none status for the given YYYY-MM."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "description": "",
+      "item": [
+        {
+          "name": "Get Stats Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "summary"
+              ]
+            },
+            "description": "Weekly completion, category breakdown, 30-day trend, time-of-day activity, best streak, active routine count."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "description": "",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo User Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile",
+                "preferences"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"theme\": \"dark\",\n  \"pushRemindersEnabled\": true,\n  \"dailyDigestEnabled\": false,\n  \"firstDayOfWeek\": \"monday\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "Danger zone \u2014 soft-deletes the user, soft-deletes their routines, and revokes all refresh tokens."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is success (2xx)', function () {",
+                  "    pm.expect(pm.response.code).to.be.below(300);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

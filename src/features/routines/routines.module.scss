@@ -1,0 +1,382 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.pageHeader {
+  @include m.flex-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viewToggle {
+  display: flex;
+  background: var(--bg-hover);
+  border-radius: v.$radius-md;
+  padding: 4px;
+
+  button {
+    @include m.button-reset;
+    width: 32px;
+    height: 32px;
+    border-radius: v.$radius-sm;
+    color: var(--text-secondary);
+
+    &.active {
+      background: v.$color-brand-600;
+      color: v.$color-white;
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.routineCard {
+  @include m.card;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &.paused {
+    opacity: 0.6;
+  }
+
+  &.listView {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    .routineCardTop {
+      flex: 1;
+      min-width: 0;
+      // Grid cards stack icon/name above category/footer, so the actions
+      // are pinned to the top edge there. In a single-line list row
+      // everything shares one baseline, so re-center them here — without
+      // this the edit/delete icons sit visibly higher than the category
+      // badge and streak next to them.
+      align-items: center;
+    }
+
+    .category {
+      flex-shrink: 0;
+    }
+
+    .routineCardFooter {
+      flex-shrink: 0;
+      gap: 16px;
+    }
+  }
+}
+
+// Groups the icon+name block with the edit/delete actions on one row,
+// pinned to opposite ends — matches the wireframe's top-right action
+// placement instead of stacking actions on their own line below the name.
+.routineCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.routineCardMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.emoji {
+  font-size: 28px;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.routineCardActions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+
+  button {
+    @include m.button-reset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: v.$radius-sm;
+    flex-shrink: 0;
+  }
+}
+
+.editButton {
+  color: var(--text-muted);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.deleteButton {
+  color: v.$color-rose-400;
+
+  &:hover {
+    background: v.$color-rose-50;
+
+    :global(html.dark) & {
+      background: rgba(244, 63, 94, 0.1);
+    }
+  }
+}
+
+.category {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  background: v.$color-brand-50;
+  color: v.$color-brand-600;
+  padding: 4px 10px;
+  border-radius: v.$radius-full;
+  width: fit-content;
+
+  :global(html.dark) & {
+    background: rgba(67, 56, 202, 0.2);
+    color: v.$color-brand-400;
+  }
+}
+
+.routineCardFooter {
+  @include m.flex-between;
+}
+
+.streak {
+  font-size: 13px;
+  font-weight: 600;
+  color: v.$color-amber-500;
+}
+
+.pauseButton {
+  @include m.button-reset;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color-strong);
+  padding: 4px 12px;
+  border-radius: v.$radius-full;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+// ---- Form (inside modal) ----
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label,
+  .groupLabel {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  input,
+  select {
+    padding: 10px 14px;
+    border-radius: v.$radius-md;
+    border: 1px solid var(--border-color-strong);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  @include m.button-reset;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-color-strong);
+  padding: 6px 12px;
+  border-radius: v.$radius-full;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.tabRow {
+  display: flex;
+  background: var(--bg-hover);
+  border-radius: v.$radius-md;
+  padding: 4px;
+  margin-bottom: 8px;
+}
+
+.tab,
+.tabActive {
+  @include m.button-reset;
+  flex: 1;
+  padding: 8px;
+  border-radius: v.$radius-sm;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.tabActive {
+  background: v.$color-brand-600;
+  color: v.$color-white;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cancelButton,
+.submitButton {
+  flex: 1;
+  padding: 10px;
+  border-radius: v.$radius-md;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cancelButton {
+  @include m.button-reset;
+  border: 1px solid var(--border-color-strong);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.submitButton {
+  @include m.button-reset;
+  background: v.$color-brand-600;
+  color: v.$color-white;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+}
+
+// ---- Detail page ----
+.detailGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detailCard {
+  @include m.card;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.backLink {
+  @include m.button-reset;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.heatCell {
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  background: var(--border-color-strong);
+
+  &.done {
+    background: v.$color-success-500;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+}

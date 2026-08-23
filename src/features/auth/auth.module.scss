@@ -1,0 +1,123 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-page);
+  padding: 48px 24px;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 420px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+
+  img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.card {
+  @include m.card;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  input {
+    padding: 10px 14px;
+    border-radius: v.$radius-md;
+    border: 1px solid var(--border-color-strong);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 14px;
+
+    &:focus {
+      outline: 2px solid v.$color-brand-500;
+      outline-offset: 1px;
+    }
+  }
+}
+
+.error {
+  font-size: 13px;
+  color: v.$color-rose-500;
+  background: v.$color-rose-50;
+  border-radius: v.$radius-sm;
+  padding: 8px 12px;
+
+  :global(html.dark) & {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+  }
+}
+
+.submit {
+  @include m.button-reset;
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: v.$radius-md;
+  text-align: center;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.footer {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+
+  a {
+    color: v.$color-brand-600;
+    font-weight: 600;
+  }
+}
+
+.backLink {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+}

@@ -1,0 +1,33 @@
+@use '@styles/variables' as v;
+
+.ring {
+  width: 128px;
+  height: 128px;
+  border-radius: v.$radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inner {
+  width: 96px;
+  height: 96px;
+  border-radius: v.$radius-full;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  strong {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: v.$font-family-display;
+    color: var(--text-primary);
+  }
+
+  span {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+}

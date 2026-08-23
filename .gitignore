@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+coverage
+.tsbuild-node
+*.tsbuildinfo
+*.local
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+*.log
+.env
+.env.local
+.git-broken-*

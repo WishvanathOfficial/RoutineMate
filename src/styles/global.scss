@@ -1,0 +1,87 @@
+@use 'variables' as v;
+
+// Theme tokens — light values live on :root, dark overrides on html.dark.
+// Toggling the `dark` class on <html> (see src/app/ThemeSync.tsx) flips
+// every one of these at once, which is what makes the theme switch work
+// across the whole app instead of just the shell background.
+:root {
+  --bg-page: #{v.$color-slate-50};
+  --bg-surface: #{v.$color-white};
+  --bg-surface-alt: #{v.$color-slate-50};
+  --bg-hover: #{v.$color-slate-100};
+  --bg-input: #{v.$color-white};
+  --border-color: #{v.$color-slate-100};
+  --border-color-strong: #{v.$color-slate-200};
+  --text-primary: #{v.$color-slate-800};
+  --text-secondary: #{v.$color-slate-500};
+  --text-muted: #{v.$color-slate-400};
+  --ring-fill: #{v.$color-brand-600};
+  --ring-track: #{v.$color-slate-200};
+}
+
+html.dark {
+  --bg-page: #{v.$color-slate-900};
+  --bg-surface: #{v.$color-slate-800};
+  --bg-surface-alt: rgba(51, 65, 85, 0.4);
+  --bg-hover: #{v.$color-slate-700};
+  --bg-input: #{v.$color-slate-700};
+  --border-color: #{v.$color-slate-700};
+  --border-color-strong: #{v.$color-slate-600};
+  --text-primary: #{v.$color-slate-50};
+  --text-secondary: #{v.$color-slate-300};
+  --text-muted: #{v.$color-slate-400};
+  --ring-fill: #{v.$color-brand-400};
+  --ring-track: #{v.$color-slate-700};
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: v.$font-family-base;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: v.$font-family-display;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, v.$color-brand-700, v.$color-success-600);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, v.$color-brand-600, v.$color-success-500);
+}

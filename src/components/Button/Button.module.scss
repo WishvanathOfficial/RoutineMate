@@ -1,0 +1,52 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.button {
+  @include m.button-reset;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: v.$radius-md;
+  font-weight: 600;
+  font-size: 14px;
+  transition: opacity 0.15s ease;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.primary {
+  background: v.$color-brand-600;
+  color: v.$color-white;
+
+  &:hover:not(:disabled) {
+    background: v.$color-brand-700;
+  }
+}
+
+.secondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color-strong);
+
+  &:hover:not(:disabled) {
+    background: var(--bg-hover);
+  }
+}
+
+.danger {
+  background: var(--bg-surface);
+  color: v.$color-rose-500;
+  border: 1px solid v.$color-rose-400;
+
+  &:hover:not(:disabled) {
+    background: v.$color-rose-50;
+
+    :global(html.dark) & {
+      background: rgba(244, 63, 94, 0.1);
+    }
+  }
+}

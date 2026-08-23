@@ -1,0 +1,176 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.sidebar {
+  width: v.$sidebar-width-expanded;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition:
+    width 0.2s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  &.collapsed {
+    width: v.$sidebar-width-collapsed;
+
+    .label {
+      display: none;
+    }
+
+    .logoText {
+      display: none;
+    }
+
+    .link,
+    .collapseButton {
+      justify-content: center;
+    }
+
+    // Tooltip only makes sense once the text label is hidden — reveal it
+    // on hover/focus of whichever item is being pointed at.
+    .link:hover .tooltip,
+    .collapseButton:hover .tooltip,
+    .logoutLink:hover .tooltip {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+  }
+}
+
+.logo {
+  height: v.$topbar-height;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-color);
+
+  img {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+}
+
+.logoText {
+  font-family: v.$font-family-display;
+  font-weight: 700;
+}
+
+.nav {
+  flex: 1;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.link {
+  @include m.button-reset;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: v.$radius-md;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+
+  &.active {
+    background: v.$color-brand-50;
+    color: v.$color-brand-700;
+    font-weight: 600;
+
+    :global(html.dark) & {
+      background: v.$color-brand-900;
+      color: v.$color-brand-200;
+    }
+  }
+}
+
+.icon {
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+// Custom collapsed-state tooltip — replaces the native `title` attribute
+// tooltip with one that matches the wireframe: a dark pill positioned to
+// the right of the icon with a small left-pointing arrow, fading in on
+// hover instead of the browser's default delayed system tooltip.
+.tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  margin-left: 12px;
+  background: v.$color-slate-800;
+  color: v.$color-white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  z-index: 50;
+
+  &::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: v.$color-slate-800;
+  }
+}
+
+.footer {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.collapseButton {
+  @include m.button-reset;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: v.$radius-md;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.logoutLink {
+  @extend .collapseButton;
+  color: v.$color-rose-500;
+
+  &:hover {
+    background: v.$color-rose-50;
+
+    :global(html.dark) & {
+      background: rgba(244, 63, 94, 0.1);
+    }
+  }
+}

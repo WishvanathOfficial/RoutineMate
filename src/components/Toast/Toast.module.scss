@@ -1,0 +1,33 @@
+@use '@styles/variables' as v;
+
+.container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+}
+
+.toast {
+  background: v.$color-slate-900;
+  color: v.$color-white;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: v.$radius-md;
+  box-shadow: v.$shadow-card;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

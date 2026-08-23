@@ -1,0 +1,28 @@
+@use 'variables' as v;
+
+@mixin card {
+  background: var(--bg-surface);
+  border-radius: v.$radius-lg;
+  box-shadow: v.$shadow-card;
+  border: 1px solid var(--border-color);
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin button-reset {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
