@@ -8,6 +8,15 @@ declare module '*.svg' {
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_GOOGLE_CLIENT_ID?: string;
+  readonly VITE_FEATURE_CHALLENGES?: string;
+  readonly VITE_FEATURE_FRIENDS?: string;
+  readonly VITE_FEATURE_ROUTINE_BUNDLES?: string;
+  readonly VITE_FEATURE_FOCUS_TIMER?: string;
+  readonly VITE_FEATURE_CALENDAR_SYNC?: string;
+  readonly VITE_FEATURE_AI_INSIGHTS?: string;
+  readonly VITE_FEATURE_FEEDBACK?: string;
+  readonly VITE_FEATURE_BILLING?: string;
+  readonly VITE_FEATURE_LOCALIZATION?: string;
 }
 
 interface ImportMeta {
