@@ -9,6 +9,7 @@ type Friend = {
   user: { id: string; name: string; avatarUrl: string | null };
 };
 type SearchResult = { items: Friend['user'][]; meta: { total: number } };
+type Leaderboard = { items: { rank: number; score: number; user: Friend['user'] }[] };
 
 export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -16,6 +17,9 @@ export default function FriendsPage() {
   const [results, setResults] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [metric, setMetric] = useState<'streak' | 'consistency' | 'checkins'>('streak');
+  const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -28,9 +32,28 @@ export default function FriendsPage() {
       setLoading(false);
     }
   };
+  // The loader intentionally follows the selected metric and is recreated per render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void load();
   }, []);
+  const loadLeaderboard = async () => {
+    setLeaderboardLoading(true);
+    try {
+      setLeaderboard(
+        await httpClient
+          .get('/api/leaderboards', { params: { metric, scope: 'friends', window: '7d' } })
+          .then(unwrap<Leaderboard>),
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load leaderboard.');
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+  useEffect(() => {
+    void loadLeaderboard();
+  }, [metric]);
   const search = async () => {
     if (query.trim().length < 2) return;
     try {
@@ -106,6 +129,35 @@ export default function FriendsPage() {
               )}
             </p>
           ))
+        )}
+      </section>
+      <section>
+        <h3>Friends leaderboard</h3>
+        <select
+          aria-label="Leaderboard metric"
+          value={metric}
+          onChange={(e) => setMetric(e.target.value as typeof metric)}
+        >
+          <option value="streak">Current streak</option>
+          <option value="consistency">Weekly consistency</option>
+          <option value="checkins">Total check-ins</option>
+        </select>
+        <button type="button" onClick={() => void loadLeaderboard()}>
+          Refresh
+        </button>
+        {leaderboardLoading ? (
+          <p>Loading leaderboard…</p>
+        ) : leaderboard?.items.length ? (
+          <ol>
+            {leaderboard.items.map((entry) => (
+              <li key={entry.user.id}>
+                {entry.rank}. <a href={`/friends?user=${entry.user.id}`}>{entry.user.name}</a> —{' '}
+                {entry.score}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No leaderboard data yet.</p>
         )}
       </section>
     </div>
