@@ -37,6 +37,7 @@ import {
 } from '@features/journal/journal.thunks';
 import journalStyles from '@features/journal/journal.module.scss';
 import ProgressRing from '@components/ProgressRing/ProgressRing';
+import Pagination from '@components/Pagination/Pagination';
 import { fetchGreetingThunk } from './dashboard.thunks';
 import { selectGreeting } from './dashboard.selectors';
 import styles from './dashboard.module.scss';
@@ -60,6 +61,9 @@ export default function DashboardPage() {
   const [journalMood, setJournalMood] = useState<1 | 2 | 3 | 4 | 5>(4);
   const [journalNote, setJournalNote] = useState('');
   const [journalSaving, setJournalSaving] = useState(false);
+  const [routinePage, setRoutinePage] = useState(1);
+  const routinesPerPage = 5;
+  const routineTotalPages = Math.max(1, Math.ceil(routines.length / routinesPerPage));
 
   useEffect(() => {
     if (routinesStatus === 'idle') dispatch(fetchRoutinesThunk());
@@ -145,31 +149,38 @@ export default function DashboardPage() {
             <Link to="/routines">View all →</Link>
           </div>
           <div className={styles.habitList}>
-            {routines.map((routine) => (
-              <div className={styles.habitItem} key={routine.id}>
-                <div className={styles.habitInfo}>
-                  <button
-                    type="button"
-                    className={`${styles.checkButton} ${routine.completedToday ? styles.completed : ''}`}
-                    onClick={() => handleToggle(routine)}
-                    aria-label={`Toggle ${routine.name}`}
-                  >
-                    <i className="fa-solid fa-check" aria-hidden="true" />
-                  </button>
-                  <div>
-                    <p style={{ fontWeight: 500 }}>
-                      {routine.emoji} {routine.name}
-                    </p>
-                    <p style={{ fontSize: 12 }} className={styles.metaText}>
-                      {routine.reminderTime} · {routine.frequency}
-                    </p>
+            {routines
+              .slice((routinePage - 1) * routinesPerPage, routinePage * routinesPerPage)
+              .map((routine) => (
+                <div className={styles.habitItem} key={routine.id}>
+                  <div className={styles.habitInfo}>
+                    <button
+                      type="button"
+                      className={`${styles.checkButton} ${routine.completedToday ? styles.completed : ''}`}
+                      onClick={() => handleToggle(routine)}
+                      aria-label={`Toggle ${routine.name}`}
+                    >
+                      <i className="fa-solid fa-check" aria-hidden="true" />
+                    </button>
+                    <div>
+                      <p style={{ fontWeight: 500 }}>
+                        {routine.emoji} {routine.name}
+                      </p>
+                      <p style={{ fontSize: 12 }} className={styles.metaText}>
+                        {routine.reminderTime} · {routine.frequency}
+                      </p>
+                    </div>
                   </div>
+                  <span className={styles.streakBadge}>
+                    <i className="fa-solid fa-fire" aria-hidden="true" /> {routine.streak}
+                  </span>
                 </div>
-                <span className={styles.streakBadge}>
-                  <i className="fa-solid fa-fire" aria-hidden="true" /> {routine.streak}
-                </span>
-              </div>
-            ))}
+              ))}
+            <Pagination
+              page={routinePage}
+              totalPages={routineTotalPages}
+              onChange={setRoutinePage}
+            />
           </div>
         </div>
 
@@ -212,6 +223,27 @@ export default function DashboardPage() {
           docs/RoutineMate-MVP2-Scope.md §3.1-3.2. Journal joins this row
           once that module lands. */}
       <div className={styles.widgetsGrid}>
+        <div className={styles.widgetCard}>
+          <div className={styles.widgetHeader}>
+            <h3>
+              <i className="fa-solid fa-compass" style={{ color: '#4f46e5' }} /> Keep growing
+            </h3>
+          </div>
+          <p className={styles.widgetEmptyText}>
+            Build momentum with friends, bundles, and focused sessions.
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+            <Link to="/friends" className={styles.widgetPromptButton}>
+              Friends
+            </Link>
+            <Link to="/routines/bundles/new" className={styles.widgetPromptButton}>
+              Bundle routines
+            </Link>
+            <Link to="/focus-timer" className={styles.widgetPromptButton}>
+              Focus timer
+            </Link>
+          </div>
+        </div>
         <div className={styles.widgetCard}>
           <div className={styles.widgetHeader}>
             <h3>

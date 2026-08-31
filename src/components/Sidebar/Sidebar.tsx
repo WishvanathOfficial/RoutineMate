@@ -12,15 +12,16 @@ interface NavItem {
   icon: string;
 }
 
-// docs/RoutineMate-MVP2-Scope.md §4 "site map" — Goals and Journal both
-// belong after Stats; Goals previously sat before it.
+// Matches the MVP3 wireframe: social navigation is grouped in the main menu,
+// while Feedback stays in the sidebar footer with utility actions.
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-gauge-high' },
   { to: '/routines', label: 'Routines', icon: 'fa-solid fa-list-check' },
-  { to: '/stats', label: 'Stats', icon: 'fa-solid fa-chart-simple' },
   { to: '/goals', label: 'Goals', icon: 'fa-solid fa-bullseye' },
-  { to: '/achievements', label: 'Achievements', icon: 'fa-solid fa-trophy' },
+  { to: '/challenges', label: 'Challenges', icon: 'fa-solid fa-people-group' },
   { to: '/friends', label: 'Friends', icon: 'fa-solid fa-user-group' },
+  { to: '/stats', label: 'Stats', icon: 'fa-solid fa-chart-simple' },
+  { to: '/achievements', label: 'Achievements', icon: 'fa-solid fa-trophy' },
   { to: '/journal', label: 'Journal', icon: 'fa-solid fa-book-open' },
   { to: '/calendar', label: 'Calendar', icon: 'fa-solid fa-calendar-days' },
   { to: '/profile', label: 'Profile & Settings', icon: 'fa-solid fa-user-gear' },
@@ -54,6 +55,13 @@ export default function Sidebar() {
       </nav>
 
       <div className={styles.footer}>
+        <NavLink to="/feedback" className={styles.footerLink}>
+          <span className={styles.icon}>
+            <i className="fa-solid fa-comment-dots" aria-hidden="true" />
+          </span>
+          <span className={styles.label}>Feedback</span>
+          <span className={styles.tooltip}>Feedback</span>
+        </NavLink>
         <button
           type="button"
           className={styles.collapseButton}

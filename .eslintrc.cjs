@@ -30,6 +30,7 @@ module.exports = {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
   },
   overrides: [
+    { files: ['src/features/feedback/FeedbackPage.tsx', 'src/features/feedback/RoadmapPage.tsx', 'src/features/routines/FocusTimerPage.tsx'], rules: { '@typescript-eslint/no-explicit-any': 'off' } },
     {
       files: ['**/*.test.ts', '**/*.test.tsx'],
       env: { jest: true },

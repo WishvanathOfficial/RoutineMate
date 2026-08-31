@@ -17,6 +17,8 @@ export const updatePreferencesSchema = z.object({
     dailyDigestEnabled: z.boolean().optional(),
     weeklyEmailEnabled: z.boolean().optional(),
     firstDayOfWeek: z.enum(['sunday', 'monday']).optional(),
+    language: z.enum(['en', 'hi', 'es']).optional(),
+    units: z.enum(['metric', 'imperial']).optional(),
   }),
   params: z.object({}).optional(),
   query: z.object({}).optional(),

@@ -3,8 +3,27 @@ import { ApiResponse } from '../utils/ApiResponse';
 import { asyncHandler } from '../utils/asyncHandler';
 
 export const list = asyncHandler(async (req, res) => {
-  const { status, category } = req.query as { status?: string; category?: string };
+  const { status, category, page, pageSize } = req.query as {
+    status?: string;
+    category?: string;
+    page?: string;
+    pageSize?: string;
+  };
   const routines = await routinesService.listRoutines(req.user!.sub, { status, category });
+  if (page) {
+    const size = Math.max(1, Number(pageSize) || 6);
+    const current = Math.max(1, Number(page));
+    const start = (current - 1) * size;
+    return ApiResponse.ok(res, {
+      items: routines.slice(start, start + size),
+      meta: {
+        page: current,
+        pageSize: size,
+        total: routines.length,
+        totalPages: Math.ceil(routines.length / size),
+      },
+    });
+  }
   ApiResponse.ok(res, routines);
 });
 

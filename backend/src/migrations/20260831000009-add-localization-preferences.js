@@ -1,0 +1,1 @@
+module.exports={async up(q,S){await q.addColumn('user_preferences','language',{type:S.ENUM('en','hi','es'),allowNull:false,defaultValue:'en'});await q.addColumn('user_preferences','units',{type:S.ENUM('metric','imperial'),allowNull:false,defaultValue:'metric'})},async down(q){await q.removeColumn('user_preferences','language');await q.removeColumn('user_preferences','units')}};

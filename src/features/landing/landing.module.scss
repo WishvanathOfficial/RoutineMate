@@ -616,6 +616,35 @@
     font-size: 32px;
     font-weight: 700;
     margin-bottom: 16px;
+
+    span {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+  }
+
+  &.proCard {
+    border: 2px solid #fbbf24;
+    position: relative;
+  }
+
+  .proBadge {
+    position: absolute;
+    top: -12px;
+    right: 24px;
+    background: #f59e0b;
+    color: #fff;
+    border-radius: v.$radius-full;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .proCta {
+    display: block;
+    text-align: center;
+    background: linear-gradient(90deg, #f59e0b, #f97316);
   }
 
   ul {

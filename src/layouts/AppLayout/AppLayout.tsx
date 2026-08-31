@@ -10,6 +10,12 @@ const PAGE_TITLES: Record<string, string> = {
   '/stats': 'Stats & Insights',
   '/calendar': 'Calendar',
   '/profile': 'Profile & Settings',
+  '/friends': 'Friends',
+  '/challenges': 'Challenges',
+  '/focus-timer': 'Focus Timer',
+  '/feedback': 'Feedback',
+  '/settings/language': 'Language Settings',
+  '/routines/bundles/new': 'Routine Bundle',
 };
 
 function resolveTitle(pathname: string): string {

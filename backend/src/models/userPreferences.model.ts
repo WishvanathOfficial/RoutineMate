@@ -8,6 +8,8 @@ import {
 import { sequelize } from '../config/database';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
+export type Language = 'en' | 'hi' | 'es';
+export type MeasurementUnit = 'metric' | 'imperial';
 
 // docs/RoutineMate-MVP1-Database-Design.html §3 "user_preferences" — 1:1 with users
 export class UserPreferences extends Model<
@@ -21,6 +23,8 @@ export class UserPreferences extends Model<
   declare dailyDigestEnabled: CreationOptional<boolean>;
   declare weeklyEmailEnabled: CreationOptional<boolean>;
   declare firstDayOfWeek: CreationOptional<string>;
+  declare language: CreationOptional<Language>;
+  declare units: CreationOptional<MeasurementUnit>;
   /** Dedupe marker for weeklyEmail.service.ts's sweep — null means "never sent". */
   declare weeklyEmailLastSentAt: CreationOptional<Date | null>;
 
@@ -70,6 +74,8 @@ UserPreferences.init(
       defaultValue: 'monday',
       field: 'first_day_of_week',
     },
+    language: { type: DataTypes.ENUM('en', 'hi', 'es'), allowNull: false, defaultValue: 'en' },
+    units: { type: DataTypes.ENUM('metric', 'imperial'), allowNull: false, defaultValue: 'metric' },
     weeklyEmailLastSentAt: {
       type: DataTypes.DATE,
       allowNull: true,

@@ -115,9 +115,9 @@ export function fromBackendRoutine(dto: BackendRoutineDto, completedToday: boole
   };
 }
 
-export function toBackendCreatePayload(input: CreateRoutineInput): string {
+export function toBackendCreatePayload(input: CreateRoutineInput): Record<string, unknown> {
   const { frequencyType, frequencyConfig } = toBackendFrequency(input.frequency);
-  return JSON.stringify({
+  return {
     name: input.name,
     emoji: input.emoji,
     category: input.category,
@@ -127,12 +127,7 @@ export function toBackendCreatePayload(input: CreateRoutineInput): string {
     reminderTime: input.reminderType === 'time' ? input.reminderTime : undefined,
     reminderLocation:
       input.reminderType === 'location' ? (input.reminderLocation ?? undefined) : undefined,
-  }).replace(/./gu, (character) => {
-    if (character.charCodeAt(0) <= 0x7f) return character;
-    return [...character]
-      .map((codePoint) => `\\u${codePoint.charCodeAt(0).toString(16).padStart(4, '0')}`)
-      .join('');
-  });
+  };
 }
 
 /**

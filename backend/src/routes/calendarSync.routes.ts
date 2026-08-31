@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import * as c from '../controllers/calendarSync.controller';
+import { requireAuth } from '../middleware/auth.middleware';
+const r = Router();
+r.use(requireAuth);
+r.get('/connections', c.connections);
+r.get('/connect/google', c.connectGoogle);
+r.post('/disconnect', c.disconnect);
+r.post('/sync', c.sync);
+r.get('/conflicts', c.conflicts);
+export default r;

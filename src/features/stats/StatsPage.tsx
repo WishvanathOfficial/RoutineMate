@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectAllRoutines } from '@features/routines/routines.selectors';
 import { toastShown } from '@features/ui/ui.slice';
@@ -8,6 +8,8 @@ import { fetchStatsThunk } from './stats.thunks';
 import { selectStatsStatus, selectStatsSummary } from './stats.selectors';
 import { buildStatsCsv, downloadTextFile, exportStatsAsPdf } from './stats.export';
 import styles from './stats.module.scss';
+import { httpClient } from '@api/httpClient';
+import { unwrap } from '@api/apiResponse';
 
 // Shared muted axis/legend color that stays legible on both the light card
 // background and the dark-mode slate-800 card background.
@@ -51,6 +53,19 @@ export default function StatsPage() {
   const summary = useAppSelector(selectStatsSummary);
   const status = useAppSelector(selectStatsStatus);
   const routines = useAppSelector(selectAllRoutines);
+  const [insight, setInsight] = useState<{
+    id: string;
+    summaryText: string;
+    suggestions: string[];
+    fallback: boolean;
+  } | null>(null);
+  useEffect(() => {
+    void httpClient
+      .get('/api/insights')
+      .then(unwrap<typeof insight>)
+      .then(setInsight)
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchStatsThunk());
@@ -80,6 +95,25 @@ export default function StatsPage() {
 
   return (
     <div>
+      {insight && (
+        <div className={styles.chartCard}>
+          <h3>AI Insights {insight.fallback && <span>(basic)</span>}</h3>
+          <p>{insight.summaryText}</p>
+          <ul>
+            {insight.suggestions.map((suggestion) => (
+              <li key={suggestion}>{suggestion}</li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() =>
+              void httpClient.post(`/api/insights/${insight.id}/feedback`, { feedback: 'helpful' })
+            }
+          >
+            Helpful
+          </button>
+        </div>
+      )}
       <div className={styles.header}>
         <div>
           <h2>Stats &amp; Insights</h2>

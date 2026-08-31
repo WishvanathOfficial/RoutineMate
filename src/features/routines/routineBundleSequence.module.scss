@@ -1,0 +1,108 @@
+@use '@styles/variables' as v;
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 8px 56px;
+}
+.back {
+  color: v.$color-brand-600;
+  font-weight: 600;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 28px 0 22px;
+  h2 {
+    font-size: 32px;
+  }
+}
+.eyebrow {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.streak {
+  color: v.$color-amber-500;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.progress > span {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+.progress > div {
+  height: 8px;
+  background: var(--bg-hover);
+  border-radius: v.$radius-full;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.progress i {
+  display: block;
+  height: 100%;
+  background: v.$color-brand-600;
+  border-radius: inherit;
+  transition: width 0.2s ease;
+}
+.stepCard {
+  margin-top: 28px;
+  padding: 42px 32px 32px;
+  text-align: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: v.$radius-lg;
+  box-shadow: v.$shadow-card;
+}
+.emoji {
+  font-size: 72px;
+  line-height: 1;
+  margin-bottom: 18px;
+}
+.stepCard h3 {
+  font-size: 25px;
+}
+.prompt {
+  color: var(--text-secondary);
+  margin: 10px 0 28px;
+}
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.actions button {
+  min-width: 150px;
+  padding: 12px 20px;
+  border-radius: v.$radius-md;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary {
+  border: 0;
+  background: v.$color-brand-600;
+  color: #fff;
+}
+.secondary {
+  border: 1px solid var(--border-color-strong);
+  background: transparent;
+  color: var(--text-primary);
+}
+.secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.message {
+  margin-top: 18px;
+  text-align: center;
+  color: v.$color-success-600;
+  font-weight: 600;
+}
+.loading {
+  padding: 40px;
+  color: var(--text-secondary);
+}

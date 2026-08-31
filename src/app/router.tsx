@@ -17,6 +17,13 @@ import OnboardingPage from '@features/onboarding/OnboardingPage';
 import AppLayout from '@layouts/AppLayout/AppLayout';
 import ProtectedRoute from '@components/ProtectedRoute/ProtectedRoute';
 import FriendsPage from '@features/friends/FriendsPage';
+import RoutineBundlePage from '@features/routines/RoutineBundlePage';
+import RoutineBundleSequencePage from '@features/routines/RoutineBundleSequencePage';
+import FocusTimerPage from '@features/routines/FocusTimerPage';
+import RoadmapPage from '@features/feedback/RoadmapPage';
+import FeedbackPage from '@features/feedback/FeedbackPage';
+import LanguageSettingsPage from '@features/profile/LanguageSettingsPage';
+import ChallengesPage from '@features/challenges/ChallengesPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -49,7 +56,14 @@ export const router = createBrowserRouter([
       { path: '/calendar', element: <CalendarPage /> },
       { path: '/profile', element: <ProfilePage /> },
       { path: '/friends', element: <FriendsPage /> },
+      { path: '/routines/bundles/new', element: <RoutineBundlePage /> },
+      { path: '/routines/bundles/:id', element: <RoutineBundleSequencePage /> },
+      { path: '/focus-timer', element: <FocusTimerPage /> },
+      { path: '/feedback', element: <FeedbackPage /> },
+      { path: '/settings/language', element: <LanguageSettingsPage /> },
+      { path: '/challenges', element: <ChallengesPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
+  { path: '/roadmap', element: <RoadmapPage /> },
 ]);

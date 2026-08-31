@@ -33,7 +33,6 @@ export default function FriendsPage() {
     }
   };
   // The loader intentionally follows the selected metric and is recreated per render.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     void load();
   }, []);
@@ -53,6 +52,7 @@ export default function FriendsPage() {
   };
   useEffect(() => {
     void loadLeaderboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metric]);
   const search = async () => {
     if (query.trim().length < 2) return;

@@ -127,6 +127,19 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className={styles.formOptions}>
+              <label>
+                <input type="checkbox" defaultChecked /> Remember me
+              </label>
+              <button
+                type="button"
+                className={styles.forgotLink}
+                onClick={() => dispatch(toastShown('Password reset is not configured yet.'))}
+              >
+                Forgot password?
+              </button>
+            </div>
+
             <div className={styles.field}>
               <label htmlFor="password">Password</label>
               <input

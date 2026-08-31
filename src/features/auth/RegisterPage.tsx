@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
-import { registerUser } from './auth.thunks';
+import { loginWithGoogle, registerUser } from './auth.thunks';
 import { selectAuthError, selectAuthStatus } from './auth.selectors';
 import logoIcon from '@assets/logo-icon.svg';
 import styles from './auth.module.scss';
@@ -15,8 +15,46 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '';
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const isSubmitting = status === 'loading';
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    const initialize = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response) => {
+          if (!response.credential) return;
+          const result = await dispatch(loginWithGoogle({ credential: response.credential }));
+          if (loginWithGoogle.fulfilled.match(result)) navigate('/onboarding');
+        },
+      });
+      googleButtonRef.current.replaceChildren();
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        text: 'continue_with',
+      });
+    };
+    const existing = document.getElementById('google-gsi');
+    if (existing) {
+      if (window.google?.accounts?.id) initialize();
+      else existing.addEventListener('load', initialize, { once: true });
+    } else {
+      const script = document.createElement('script');
+      script.id = 'google-gsi';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initialize;
+      document.head.appendChild(script);
+    }
+  }, [dispatch, googleClientId, navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -81,6 +119,17 @@ export default function RegisterPage() {
           <button type="submit" className={styles.submit} disabled={isSubmitting}>
             {isSubmitting ? 'Creating account…' : 'Create Account'}
           </button>
+
+          <div className={styles.divider}>
+            <span>or</span>
+          </div>
+          {googleClientId ? (
+            <div ref={googleButtonRef} aria-label="Continue with Google" />
+          ) : (
+            <button type="button" className={styles.googleButton} disabled>
+              Continue with Google
+            </button>
+          )}
 
           <p className={styles.footer}>
             Already have an account? <Link to="/login">Log in</Link>

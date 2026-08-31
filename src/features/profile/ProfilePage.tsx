@@ -26,6 +26,8 @@ import {
 import Button from '@components/Button/Button';
 import Switch from '@components/Switch/Switch';
 import styles from './profile.module.scss';
+import { httpClient } from '@api/httpClient';
+import { unwrap } from '@api/apiResponse';
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
@@ -43,10 +45,32 @@ export default function ProfilePage() {
   const [email, setEmail] = useState(user?.email ?? '');
   const [installAvailable, setInstallAvailable] = useState(isInstallAvailable());
   const [installed, setInstalled] = useState(isAppInstalled());
+  const [subscription, setSubscription] = useState<{ plan: string; status: string } | null>(null);
 
   useEffect(() => {
     if (profileStatus === 'idle') dispatch(fetchProfileThunk());
   }, [profileStatus, dispatch]);
+  useEffect(() => {
+    void httpClient
+      .get('/api/billing/subscription')
+      .then(unwrap<{ plan: string; status: string }>)
+      .then(setSubscription)
+      .catch(() => undefined);
+  }, []);
+  const billingAction = async (path: string) => {
+    const result = await httpClient
+      .post(`/api/billing/${path}`)
+      .then(unwrap<{ url: string | null; status: string }>);
+    if (result.url) window.location.assign(result.url);
+    else
+      dispatch(
+        toastShown(
+          result.status === 'configuration_required'
+            ? 'Billing is not configured yet.'
+            : 'Billing action started.',
+        ),
+      );
+  };
 
   // MVP-2 §3.1 "Levels shown on the profile" — Achievements page already
   // fetches this same slice; re-fetching here (guarded by `idle`) means the
@@ -133,6 +157,22 @@ export default function ProfilePage() {
   return (
     <div>
       <h2 style={{ marginBottom: 24 }}>Profile &amp; Settings</h2>
+      <section className={styles.section} aria-labelledby="billing-heading">
+        <h3 id="billing-heading">Billing</h3>
+        <p>
+          Current plan: <strong>{subscription?.plan === 'pro' ? 'Pro' : 'Free'}</strong>
+        </p>
+        {subscription?.plan === 'pro' ? (
+          <button type="button" onClick={() => void billingAction('portal')}>
+            Manage subscription
+          </button>
+        ) : (
+          <button type="button" onClick={() => void billingAction('checkout')}>
+            Upgrade to Pro
+          </button>
+        )}
+        <p className={styles.helpText}>Core tracking, streaks, and basic stats remain free.</p>
+      </section>
       <div className={styles.grid}>
         <div className={styles.profileCard}>
           <div className={`${styles.avatar} gradient-bg`}>{initials || 'JD'}</div>

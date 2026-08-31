@@ -53,6 +53,30 @@
   gap: 16px;
 }
 
+.formOptions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  input {
+    accent-color: v.$color-brand-600;
+  }
+}
+
+.forgotLink {
+  @include m.button-reset;
+  color: v.$color-brand-600;
+  font-weight: 500;
+}
+
 .googleButton {
   @include m.button-reset;
   background: v.$color-white;
@@ -91,6 +115,12 @@
   color: v.$color-white;
   font-size: 10px;
   font-weight: 700;
+}
+
+.googleMark {
+  font-weight: 700;
+  color: #4285f4;
+  font-size: 18px;
 }
 
 .divider {

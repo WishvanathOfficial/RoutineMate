@@ -8,7 +8,6 @@ import { logger } from '../utils/logger';
 // Centralized error handler — every thrown error (from asyncHandler-wrapped
 // controllers, middleware, etc.) ends up here and is normalized into
 // `{ success: false, message, errors? }`.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function errorHandler(
   err: unknown,
   _req: Request,

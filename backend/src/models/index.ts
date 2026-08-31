@@ -12,6 +12,16 @@ import { JournalEntry } from './journalEntry.model';
 import { Notification } from './notification.model';
 import { OnboardingState } from './onboardingState.model';
 import { Friendship } from './friendship.model';
+import { RoutineBundle } from './routineBundle.model';
+import { RoutineBundleItem } from './routineBundleItem.model';
+import { BundleCheckIn } from './bundleCheckIn.model';
+import { Subscription } from './subscription.model';
+import { BillingEvent } from './billingEvent.model';
+import { FocusSession } from './focusSession.model';
+import { CalendarConnection } from './calendarConnection.model';
+import { Insight } from './insight.model';
+import { FeedbackItem } from './feedbackItem.model';
+import { FeedbackVote } from './feedbackVote.model';
 
 // Associations — see docs/RoutineMate-MVP1-Database-Design.html §4 "Relationships & Delete Behavior"
 
@@ -86,6 +96,23 @@ User.hasMany(Friendship, {
 });
 Friendship.belongsTo(User, { foreignKey: 'requesterId', as: 'requester' });
 Friendship.belongsTo(User, { foreignKey: 'addresseeId', as: 'addressee' });
+User.hasMany(RoutineBundle, { foreignKey: 'userId', as: 'routineBundles', onDelete: 'CASCADE' });
+RoutineBundle.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+RoutineBundle.hasMany(RoutineBundleItem, {
+  foreignKey: 'bundleId',
+  as: 'items',
+  onDelete: 'CASCADE',
+});
+RoutineBundleItem.belongsTo(RoutineBundle, { foreignKey: 'bundleId', as: 'bundle' });
+RoutineBundleItem.belongsTo(Routine, { foreignKey: 'routineId', as: 'routine' });
+RoutineBundle.hasMany(BundleCheckIn, {
+  foreignKey: 'bundleId',
+  as: 'checkIns',
+  onDelete: 'CASCADE',
+});
+BundleCheckIn.belongsTo(RoutineBundle, { foreignKey: 'bundleId', as: 'bundle' });
+User.hasOne(Subscription, { foreignKey: 'userId', as: 'subscription', onDelete: 'CASCADE' });
+Subscription.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 export {
   sequelize,
@@ -102,6 +129,16 @@ export {
   Notification,
   OnboardingState,
   Friendship,
+  RoutineBundle,
+  RoutineBundleItem,
+  BundleCheckIn,
+  Subscription,
+  BillingEvent,
+  FocusSession,
+  CalendarConnection,
+  Insight,
+  FeedbackItem,
+  FeedbackVote,
 };
 
 export default {
@@ -119,4 +156,14 @@ export default {
   Notification,
   OnboardingState,
   Friendship,
+  RoutineBundle,
+  RoutineBundleItem,
+  BundleCheckIn,
+  Subscription,
+  BillingEvent,
+  FocusSession,
+  CalendarConnection,
+  Insight,
+  FeedbackItem,
+  FeedbackVote,
 };

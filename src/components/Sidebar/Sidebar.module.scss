@@ -174,3 +174,12 @@
     }
   }
 }
+
+.footerLink {
+  @extend .collapseButton;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}

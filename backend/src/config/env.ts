@@ -42,4 +42,9 @@ export const env = {
       return process.env.GOOGLE_CLIENT_ID ?? '';
     },
   },
+  billing: {
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? '',
+    priceId: process.env.STRIPE_PRO_PRICE_ID ?? '',
+  },
 };

@@ -25,6 +25,209 @@
   gap: 12px;
 }
 
+.bundleButton {
+  @include m.button-reset;
+  border: 1px solid var(--border-color-strong);
+  padding: 10px 18px;
+  border-radius: v.$radius-md;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  &:hover {
+    background: var(--bg-hover);
+  }
+  i {
+    color: v.$color-brand-600;
+  }
+}
+.sectionLabel {
+  margin: 24px 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.bundlesSection {
+  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  > nav {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.bundlesSection > .sectionLabel,
+.bundlesSection > .emptyState {
+  grid-column: 1 / -1;
+}
+.bundleCard {
+  @include m.card;
+  padding: 20px;
+  border-top: 3px solid v.$color-brand-400;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: v.$shadow-card;
+  }
+}
+.bundleHeader {
+  @include m.flex-between;
+  gap: 12px;
+  h3 {
+    font-size: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    i {
+      color: v.$color-brand-600;
+    }
+  }
+}
+.bundleSteps {
+  color: var(--text-secondary);
+  margin: 4px 0 8px;
+  font-size: 14px;
+  min-height: 24px;
+  span {
+    margin-left: 12px;
+    color: var(--text-muted);
+  }
+}
+.sequenceButton {
+  display: block;
+  text-align: center;
+  background: v.$color-brand-600;
+  color: #fff;
+  font-weight: 600;
+  padding: 10px;
+  border-radius: v.$radius-md;
+  margin-top: auto;
+}
+.bundlesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  > nav {
+    width: 100%;
+  }
+  .bundleCard {
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 18px;
+    border-top: 0;
+    border-left: 3px solid v.$color-brand-400;
+    .bundleHeader {
+      flex: 1;
+    }
+    .bundleSteps {
+      margin: 0;
+      min-width: 180px;
+    }
+    .sequenceButton {
+      margin: 0;
+      min-width: 150px;
+    }
+  }
+}
+.pagination {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 8px 0 16px;
+  button {
+    border: 1px solid var(--border-color-strong);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border-radius: v.$radius-md;
+    padding: 8px 14px;
+    font-weight: 600;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+.bundleForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  input:not([type='checkbox']) {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color-strong);
+    border-radius: v.$radius-md;
+    background: var(--bg-input);
+    color: var(--text-primary);
+  }
+}
+.bundleHint {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+.bundleChoices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: v.$radius-md;
+    font-weight: 500;
+  }
+}
+.bundleActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+  button {
+    min-height: 44px;
+    border: 1px solid var(--border-color-strong);
+    border-radius: v.$radius-md;
+    background: transparent;
+    font-weight: 600;
+  }
+  .sequenceButton {
+    border: 0;
+    background: v.$color-brand-600;
+    color: #fff;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
 .viewToggle {
   display: flex;
   background: var(--bg-hover);
@@ -57,12 +260,21 @@
   @media (min-width: 1280px) {
     grid-template-columns: repeat(3, 1fr);
   }
+
+  > nav {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
 }
 
 .list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  > nav {
+    width: 100%;
+  }
 }
 
 .routineCard {

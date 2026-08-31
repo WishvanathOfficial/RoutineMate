@@ -44,6 +44,24 @@ const FEATURES = [
     title: 'Made for you',
     text: 'Light/dark themes, custom icons, and settings that fit your lifestyle.',
   },
+  {
+    icon: 'fa-solid fa-user-group',
+    tint: 'emerald',
+    title: 'Friends & Challenges',
+    text: 'Stay accountable with friends, shared challenges, and progress you can celebrate together.',
+  },
+  {
+    icon: 'fa-solid fa-wand-magic-sparkles',
+    tint: 'brand',
+    title: 'Smarter Insights',
+    text: 'Turn your consistency patterns into practical weekly suggestions and next steps.',
+  },
+  {
+    icon: 'fa-solid fa-stopwatch',
+    tint: 'amber',
+    title: 'Focus Sessions',
+    text: 'Build momentum with focused timer sessions connected to the routines that matter.',
+  },
 ];
 
 const HOW_IT_WORKS = [
@@ -308,17 +326,28 @@ export default function LandingPage() {
               Get Started
             </Link>
           </div>
-          <div className={styles.pricingCard}>
-            <h3>PRO — COMING SOON</h3>
-            <p className="price">TBD</p>
+          <div className={`${styles.pricingCard} ${styles.proCard}`}>
+            <span className={styles.proBadge}>PRO</span>
+            <h3>PRO</h3>
+            <p className="price">
+              $6.99<span>/mo</span>
+            </p>
             <ul>
-              <li>Advanced analytics</li>
-              <li>Goals &amp; achievements</li>
-              <li>Friends &amp; challenges</li>
+              <li>
+                <i className="fa-solid fa-check" aria-hidden="true" /> Unlimited challenges &amp;
+                friends
+              </li>
+              <li>
+                <i className="fa-solid fa-check" aria-hidden="true" /> AI-generated weekly insights
+              </li>
+              <li>
+                <i className="fa-solid fa-check" aria-hidden="true" /> Calendar sync &amp; focus
+                timer
+              </li>
             </ul>
-            <button type="button" className={styles.disabledButton} disabled>
-              Coming Soon
-            </button>
+            <Link to="/register" className={`${styles.ctaButton} ${styles.proCta}`}>
+              Start Pro Trial
+            </Link>
           </div>
         </div>
       </section>

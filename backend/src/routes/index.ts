@@ -13,6 +13,12 @@ import onboardingRoutes from './onboarding.routes';
 import friendsRoutes from './friends.routes';
 import usersRoutes from './users.routes';
 import leaderboardsRoutes from './leaderboards.routes';
+import routineBundlesRoutes from './routineBundles.routes';
+import billingRoutes from './billing.routes';
+import focusSessionsRoutes from './focusSessions.routes';
+import calendarSyncRoutes from './calendarSync.routes';
+import insightsRoutes from './insights.routes';
+import feedbackRoutes from './feedback.routes';
 
 const router = Router();
 
@@ -30,5 +36,12 @@ router.use('/onboarding', onboardingRoutes);
 router.use('/friends', friendsRoutes);
 router.use('/users', usersRoutes);
 router.use('/leaderboards', leaderboardsRoutes);
+router.use('/routine-bundles', routineBundlesRoutes);
+router.use('/billing', billingRoutes);
+router.use('/focus-sessions', focusSessionsRoutes);
+router.use('/calendar-sync', calendarSyncRoutes);
+router.use('/calendar', calendarSyncRoutes);
+router.use('/insights', insightsRoutes);
+router.use('/', feedbackRoutes);
 
 export default router;
