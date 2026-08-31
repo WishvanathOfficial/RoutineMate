@@ -31,4 +31,15 @@ export const env = {
   },
 
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+
+  email: {
+    resendApiKey: process.env.RESEND_API_KEY ?? '',
+    from: process.env.EMAIL_FROM ?? '',
+  },
+
+  google: {
+    get clientId() {
+      return process.env.GOOGLE_CLIENT_ID ?? '';
+    },
+  },
 };

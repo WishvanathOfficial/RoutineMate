@@ -2,8 +2,9 @@ import { Sequelize } from 'sequelize';
 import { env } from './env';
 
 // Single shared Sequelize instance, used by every model in src/models.
-// utf8mb4 is required so habit emoji icons and other 4-byte unicode
-// characters store correctly.
+// utf8mb4 is required (not the MySQL default utf8) so habit emoji icons
+// and other 4-byte unicode characters store correctly — see
+// docs/RoutineMate-MVP1-Database-Design.html, "Indexing & Constraints".
 export const sequelize = new Sequelize(env.db.name, env.db.user, env.db.password, {
   host: env.db.host,
   port: env.db.port,

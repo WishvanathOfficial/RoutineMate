@@ -13,6 +13,12 @@ export const getOne = asyncHandler(async (req, res) => {
   ApiResponse.ok(res, routine);
 });
 
+export const history = asyncHandler(async (req, res) => {
+  const days = (req.query as { days?: number }).days;
+  const result = await routinesService.getRoutineHistory(req.user!.sub, req.params.id, days);
+  ApiResponse.ok(res, result);
+});
+
 export const create = asyncHandler(async (req, res) => {
   const routine = await routinesService.createRoutine(req.user!.sub, req.body);
   ApiResponse.created(res, routine, 'Routine created');

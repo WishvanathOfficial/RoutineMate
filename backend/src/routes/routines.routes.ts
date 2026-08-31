@@ -7,6 +7,7 @@ import {
   createRoutineSchema,
   listRoutinesQuerySchema,
   routineIdParamSchema,
+  routineHistorySchema,
   updateRoutineSchema,
 } from '../validators/routines.validator';
 
@@ -15,6 +16,7 @@ router.use(requireAuth);
 
 router.get('/', validate(listRoutinesQuerySchema), routinesController.list);
 router.post('/', validate(createRoutineSchema), routinesController.create);
+router.get('/:id/history', validate(routineHistorySchema), routinesController.history);
 router.get('/:id', validate(routineIdParamSchema), routinesController.getOne);
 router.put('/:id', validate(updateRoutineSchema), routinesController.update);
 router.delete('/:id', validate(routineIdParamSchema), routinesController.remove);

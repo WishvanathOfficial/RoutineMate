@@ -3,13 +3,17 @@ import { fetchProfileThunk, updatePreferencesThunk } from '../profile.thunks';
 import type { ProfileState } from '../profile.types';
 
 const initialState: ProfileState = {
-  preferences: { pushRemindersEnabled: true, dailyDigestEnabled: false },
+  preferences: { pushRemindersEnabled: true, dailyDigestEnabled: false, weeklyEmailEnabled: false },
   status: 'idle',
 };
 
 describe('profile.slice', () => {
   it('updates preferences on fulfilled', () => {
-    const nextPreferences = { pushRemindersEnabled: false, dailyDigestEnabled: true };
+    const nextPreferences = {
+      pushRemindersEnabled: false,
+      dailyDigestEnabled: true,
+      weeklyEmailEnabled: true,
+    };
     const action = { type: updatePreferencesThunk.fulfilled.type, payload: nextPreferences };
     const state = reducer(initialState, action);
     expect(state.preferences).toEqual(nextPreferences);
@@ -23,7 +27,11 @@ describe('profile.slice', () => {
   });
 
   it('adopts fetched preferences on fulfilled, ignoring the user half of the payload', () => {
-    const fetchedPreferences = { pushRemindersEnabled: false, dailyDigestEnabled: true };
+    const fetchedPreferences = {
+      pushRemindersEnabled: false,
+      dailyDigestEnabled: true,
+      weeklyEmailEnabled: true,
+    };
     const action = {
       type: fetchProfileThunk.fulfilled.type,
       payload: {

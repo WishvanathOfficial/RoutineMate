@@ -1,7 +1,7 @@
-/// <reference path="./types/express.d.ts" />
 import { createApp } from './app';
 import { assertDbConnection } from './config/database';
 import { env } from './config/env';
+import { startNotificationScheduler } from './jobs/notificationScheduler';
 import { logger } from './utils/logger';
 
 async function bootstrap(): Promise<void> {
@@ -17,6 +17,10 @@ async function bootstrap(): Promise<void> {
   app.listen(env.port, () => {
     logger.info(`RoutineMate API listening on http://localhost:${env.port}`);
   });
+
+  // Reminder / streak-risk / daily-digest notifications — see
+  // jobs/notificationScheduler.ts and services/notificationGenerator.service.ts.
+  startNotificationScheduler();
 }
 
 process.on('unhandledRejection', (reason) => {

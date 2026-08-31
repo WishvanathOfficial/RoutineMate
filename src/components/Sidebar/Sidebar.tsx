@@ -12,10 +12,15 @@ interface NavItem {
   icon: string;
 }
 
+// docs/RoutineMate-MVP2-Scope.md §4 "site map" — Goals and Journal both
+// belong after Stats; Goals previously sat before it.
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-gauge-high' },
   { to: '/routines', label: 'Routines', icon: 'fa-solid fa-list-check' },
   { to: '/stats', label: 'Stats', icon: 'fa-solid fa-chart-simple' },
+  { to: '/goals', label: 'Goals', icon: 'fa-solid fa-bullseye' },
+  { to: '/achievements', label: 'Achievements', icon: 'fa-solid fa-trophy' },
+  { to: '/journal', label: 'Journal', icon: 'fa-solid fa-book-open' },
   { to: '/calendar', label: 'Calendar', icon: 'fa-solid fa-calendar-days' },
   { to: '/profile', label: 'Profile & Settings', icon: 'fa-solid fa-user-gear' },
 ];

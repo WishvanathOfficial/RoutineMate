@@ -15,6 +15,7 @@ export const updatePreferencesSchema = z.object({
     theme: z.enum(['light', 'dark', 'system']).optional(),
     pushRemindersEnabled: z.boolean().optional(),
     dailyDigestEnabled: z.boolean().optional(),
+    weeklyEmailEnabled: z.boolean().optional(),
     firstDayOfWeek: z.enum(['sunday', 'monday']).optional(),
   }),
   params: z.object({}).optional(),

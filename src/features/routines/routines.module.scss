@@ -220,6 +220,46 @@
   }
 }
 
+.deleteConfirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.deleteConfirmationActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  .cancelButton,
+  .deleteConfirmButton {
+    flex: 0 0 88px;
+    width: 88px;
+    min-height: 36px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+}
+
+.deleteConfirmButton {
+  @include m.button-reset;
+  border-radius: v.$radius-md;
+  background: v.$color-rose-500;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+
+  &:hover {
+    background: v.$color-rose-400;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+}
+
 // ---- Form (inside modal) ----
 .form {
   display: flex;
@@ -349,6 +389,68 @@
   margin-bottom: 24px;
 }
 
+.detailCompleteButton {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 10px 16px;
+  border-radius: v.$radius-md;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: v.$color-success-500;
+
+  &:hover {
+    background: v.$color-success-600;
+  }
+
+  &:disabled {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    cursor: default;
+  }
+}
+
+.routineSettings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settingsAction {
+  @include m.button-reset;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: v.$radius-md;
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: left;
+
+  i {
+    width: 16px;
+    color: var(--text-muted);
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.dangerSettingsAction {
+  color: v.$color-rose-500;
+
+  i {
+    color: inherit;
+  }
+
+  &:hover {
+    background: v.$color-rose-50;
+  }
+}
+
 .backLink {
   @include m.button-reset;
   color: var(--text-secondary);
@@ -372,6 +474,56 @@
 
   &.done {
     background: v.$color-success-500;
+  }
+
+  &.missed {
+    background: var(--border-color-strong);
+  }
+
+  &.pending {
+    background: v.$color-amber-400;
+  }
+
+  &.not_active {
+    background: transparent;
+    border: 1px dashed var(--border-color-strong);
+  }
+}
+
+.historyMessage {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.heatmapLegend {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  color: var(--text-secondary);
+  font-size: 12px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.legendSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--border-color-strong);
+
+  &.done {
+    background: v.$color-success-500;
+  }
+
+  &.pending {
+    background: v.$color-amber-400;
   }
 }
 

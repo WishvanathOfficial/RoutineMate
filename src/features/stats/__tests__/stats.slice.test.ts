@@ -13,6 +13,8 @@ const sampleSummary: StatsSummary = {
   categoryBreakdown: [],
   trend30Day: [],
   timeOfDay: [],
+  moodCorrelation: [],
+  moodInsight: null,
 };
 
 describe('stats.slice', () => {

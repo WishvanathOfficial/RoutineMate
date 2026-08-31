@@ -1,6 +1,7 @@
 export interface ProfilePreferences {
   pushRemindersEnabled: boolean;
   dailyDigestEnabled: boolean;
+  weeklyEmailEnabled: boolean;
 }
 
 export interface AccountUpdateInput {

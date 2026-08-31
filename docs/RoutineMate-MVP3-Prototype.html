@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoutineMate — MVP-03 Clickable Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter','sans-serif'], display: ['Poppins','sans-serif'] },
+        colors: {
+          brand: { 50:'#eef2ff',100:'#e0e7ff',400:'#818cf8',500:'#6366f1',600:'#4F46E5',700:'#4338CA' },
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; }
+  h1,h2,h3,.font-display { font-family: 'Poppins', sans-serif; }
+  .gradient-text { background: linear-gradient(90deg,#4338CA,#059669); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .gradient-bg { background: linear-gradient(135deg,#4F46E5,#10B981); }
+  .card-shadow { box-shadow: 0 4px 20px -4px rgba(30,41,59,.08); }
+  .screen.hidden, .app-page.hidden { display: none; }
+  .modal-overlay.hidden { display: none; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  .progress-ring { border-radius: 9999px; background: conic-gradient(#4F46E5 calc(var(--pct)*1%), #e2e8f0 0); }
+  .dark .progress-ring { background: conic-gradient(#818cf8 calc(var(--pct)*1%), #334155 0); }
+  .check-btn.completed { background:#10B981; border-color:#10B981; color:#fff !important; }
+  .toast { transition: opacity .3s ease, transform .3s ease; }
+  .sidebar-link.active { background:#eef2ff; color:#4338CA; font-weight:600; }
+  .dark .sidebar-link.active { background:#312e81; color:#c7d2fe; }
+  .switch { width:42px; height:24px; }
+  .switch input:checked + .switch-track { background:#4F46E5; }
+  .switch input:checked + .switch-track .switch-thumb { transform: translateX(18px); }
+  .heat-cell { width:100%; aspect-ratio:1/1; border-radius:4px; }
+  .template-chip.selected { background:#4F46E5; color:#fff; border-color:#4F46E5; }
+  .reminder-tab.active { background:#4F46E5; color:#fff; }
+  .view-toggle-btn.active { background:#4F46E5; color:#fff; }
+  #routines-grid.view-list { display:flex; flex-direction:column; gap:.75rem; }
+  #routines-grid.view-list .routine-card { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; }
+  #routines-grid.view-list .routine-card .mb-3 { margin-bottom:0; }
+  #routines-grid.view-list .routine-card .mb-3 + span { margin-bottom:0; }
+  .cal-day { min-height:64px; }
+  .nav-tooltip {
+    position:absolute; left:100%; top:50%; transform:translateY(-50%); margin-left:.75rem;
+    background:#1e293b; color:#fff; font-size:12px; font-weight:600; padding:6px 10px;
+    border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none;
+    transition:opacity .15s ease; z-index:50;
+  }
+  .nav-tooltip::before {
+    content:''; position:absolute; right:100%; top:50%; transform:translateY(-50%);
+    border:5px solid transparent; border-right-color:#1e293b;
+  }
+  #app-sidebar[data-collapsed="true"] .sidebar-link:hover .nav-tooltip,
+  #app-sidebar[data-collapsed="true"] button:hover .nav-tooltip {
+    opacity:1;
+  }
+  #app-sidebar[data-collapsed="true"] .nav-label,
+  #app-sidebar[data-collapsed="true"] #sidebar-logo-text { display:none; }
+  #app-sidebar[data-collapsed="true"] .sidebar-link,
+  #app-sidebar[data-collapsed="true"] button,
+  #app-sidebar[data-collapsed="true"] a.group { justify-content:center; }
+  #app-sidebar[data-collapsed="true"] { width:5rem; }
+  #app-sidebar[data-collapsed="true"] #collapse-icon { transform:rotate(180deg); }
+  .lb-tab.active, .chal-tab.active { background:#4F46E5; color:#fff; }
+  .pro-badge { background:linear-gradient(135deg,#F59E0B,#f97316); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px; letter-spacing:.03em; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100">
+
+<!-- Logo sprite -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="rm-logo-icon" viewBox="0 0 64 64">
+    <defs>
+      <linearGradient id="rmIconGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#4F46E5"/>
+        <stop offset="1" stop-color="#10B981"/>
+      </linearGradient>
+    </defs>
+    <circle cx="32" cy="32" r="30" fill="url(#rmIconGrad)"/>
+    <circle cx="32" cy="32" r="24" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1"/>
+    <g fill="#ffffff">
+      <circle cx="32" cy="8" r="3"/>
+      <circle cx="48.97" cy="15.03" r="3"/>
+      <circle cx="56" cy="32" r="3"/>
+      <circle cx="48.97" cy="48.97" r="3"/>
+      <circle cx="32" cy="56" r="3"/>
+      <circle cx="15.03" cy="48.97" r="3" fill-opacity="0.4"/>
+      <circle cx="8" cy="32" r="3" fill-opacity="0.4"/>
+      <circle cx="15.03" cy="15.03" r="3"/>
+    </g>
+    <path d="M21 33 L29 41 L45 22" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<!-- ============ SCREEN: LANDING ============ -->
+<section id="screen-landing" class="screen">
+  <!-- Navbar -->
+  <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-100 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-9 h-9"><use href="#rm-logo-icon"/></svg>
+        <span class="font-display font-bold text-lg gradient-text">RoutineMate</span>
+      </div>
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
+        <a href="#features" class="hover:text-brand-600">Features</a>
+        <a href="#how" class="hover:text-brand-600">How it works</a>
+        <a href="#pricing" class="hover:text-brand-600">Pricing</a>
+        <a href="#faq" class="hover:text-brand-600">FAQ</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <a href="#" data-nav="screen-login" class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-600">Log In</a>
+        <a href="#" data-nav="screen-register" class="text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-lg shadow-sm">Get Started Free</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 gradient-bg opacity-5"></div>
+    <div class="max-w-7xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="inline-block text-xs font-semibold uppercase tracking-wide text-brand-600 bg-brand-50 dark:bg-brand-700/20 dark:text-brand-400 px-3 py-1 rounded-full mb-4">Habit tracking, made simple</span>
+        <h1 class="font-display text-4xl md:text-5xl font-bold leading-tight mb-6">Build better routines. <span class="gradient-text">One day at a time.</span></h1>
+        <p class="text-slate-500 dark:text-slate-400 text-lg mb-8">RoutineMate helps you plan, track, and stick to the habits that matter — with streaks, reminders, and insights that keep you motivated.</p>
+        <div class="flex flex-wrap gap-4">
+          <a href="#" data-nav="screen-register" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg shadow-brand-600/20">Start Free <i class="fa-solid fa-arrow-right ml-1"></i></a>
+          <a href="#how" class="border border-slate-200 dark:border-slate-700 font-semibold px-6 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">See how it works</a>
+        </div>
+        <p class="text-xs text-slate-400 mt-4"><i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>No credit card required &nbsp; <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Free forever plan</p>
+      </div>
+      <div class="relative">
+        <div class="rounded-2xl card-shadow bg-white dark:bg-slate-800 p-5 border border-slate-100 dark:border-slate-700">
+          <div class="flex items-center justify-between mb-4">
+            <p class="font-display font-semibold">Today · Aug 18</p>
+            <span class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full font-semibold">3/5 done</span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20"><i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i><span class="text-sm font-medium">Drink 8 glasses of water</span></div>
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20"><i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i><span class="text-sm font-medium">Morning meditation</span></div>
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40"><i class="fa-regular fa-circle text-slate-300 text-lg"></i><span class="text-sm font-medium text-slate-500">Read 20 pages</span></div>
+          </div>
+          <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Current streak</span>
+            <span class="text-amber-500 font-bold text-sm"><i class="fa-solid fa-fire mr-1"></i>12 days</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Social Proof -->
+  <section class="bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800 py-14">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-center mb-12">
+        <div><p class="font-display text-2xl font-bold text-brand-600">10,000+</p><p class="text-xs text-slate-400">Habits tracked</p></div>
+        <div class="flex items-center gap-1"><p class="font-display text-2xl font-bold text-amber-500">4.8</p><div class="text-amber-400 text-sm"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></div></div>
+        <div><p class="font-display text-2xl font-bold text-emerald-600">92%</p><p class="text-xs text-slate-400">Stay consistent after 30 days</p></div>
+        <div><p class="font-display text-2xl font-bold text-slate-700 dark:text-slate-200">Free forever</p><p class="text-xs text-slate-400">No credit card required</p></div>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-5">
+        <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+          <div class="text-amber-400 text-xs mb-2"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">"Finally a habit tracker that doesn't feel like homework. The streaks keep me coming back every morning."</p>
+          <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full gradient-bg text-white text-xs flex items-center justify-center font-semibold">SK</div><p class="text-xs font-medium">Sara K.</p></div>
+        </div>
+        <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+          <div class="text-amber-400 text-xs mb-2"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">"I love that I can see my whole month at a glance. Seeing the calendar fill in green is oddly addictive."</p>
+          <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full gradient-bg text-white text-xs flex items-center justify-center font-semibold">MR</div><p class="text-xs font-medium">Marcus R.</p></div>
+        </div>
+        <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+          <div class="text-amber-400 text-xs mb-2"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></div>
+          <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">"Setup took two minutes thanks to the habit templates. I was tracking water, meditation and reading right away."</p>
+          <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full gradient-bg text-white text-xs flex items-center justify-center font-semibold">PJ</div><p class="text-xs font-medium">Priya J.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem/Solution -->
+  <section class="bg-slate-50 dark:bg-slate-800/30 border-y border-slate-100 dark:border-slate-800 py-14">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <p class="text-slate-500 dark:text-slate-400 text-lg">Most habits fail not from lack of motivation — but from lack of a simple system to <span class="text-brand-600 font-semibold">show up daily</span> and <span class="text-emerald-600 font-semibold">see progress</span>.</p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="max-w-7xl mx-auto px-6 py-20">
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <h2 class="font-display text-3xl font-bold mb-3">Everything you need to build habits that stick</h2>
+      <p class="text-slate-500 dark:text-slate-400">Simple daily tracking, motivating streaks, and clear insight into your progress.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="p-6 rounded-2xl border border-slate-100 dark:border-slate-800 card-shadow bg-white dark:bg-slate-800">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-700/20 flex items-center justify-center text-brand-600 mb-4"><i class="fa-solid fa-list-check text-lg"></i></div>
+        <h3 class="font-semibold mb-2">Routine Tracking</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Create daily, weekly, or custom-frequency habits and check them off in one tap.</p>
+      </div>
+      <div class="p-6 rounded-2xl border border-slate-100 dark:border-slate-800 card-shadow bg-white dark:bg-slate-800">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500 mb-4"><i class="fa-solid fa-fire text-lg"></i></div>
+        <h3 class="font-semibold mb-2">Streaks that motivate</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Stay consistent with visual streak counters that keep you coming back.</p>
+      </div>
+      <div class="p-6 rounded-2xl border border-slate-100 dark:border-slate-800 card-shadow bg-white dark:bg-slate-800">
+        <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 mb-4"><i class="fa-solid fa-calendar-days text-lg"></i></div>
+        <h3 class="font-semibold mb-2">Calendar View</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">See your whole month at a glance and spot patterns in your consistency.</p>
+      </div>
+      <div class="p-6 rounded-2xl border border-slate-100 dark:border-slate-800 card-shadow bg-white dark:bg-slate-800">
+        <div class="w-11 h-11 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500 mb-4"><i class="fa-solid fa-bell text-lg"></i></div>
+        <h3 class="font-semibold mb-2">Smart Reminders</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Set the right time for every habit so nothing slips through the cracks.</p>
+      </div>
+      <div class="p-6 rounded-2xl border border-slate-100 dark:border-slate-800 card-shadow bg-white dark:bg-slate-800">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-700/20 flex items-center justify-center text-brand-600 mb-4"><i class="fa-solid fa-chart-simple text-lg"></i></div>
+        <h3 class="font-semibold mb-2">Progress Insights</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Track your completion rate and celebrate how far you've come.</p>
+      </div>
+      <div class="p-6 rounded-2xl border border-slate-100 dark:border-slate-800 card-shadow bg-white dark:bg-slate-800">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500 mb-4"><i class="fa-solid fa-user-gear text-lg"></i></div>
+        <h3 class="font-semibold mb-2">Made for you</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Light/dark themes, custom icons, and settings that fit your lifestyle.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800 py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="font-display text-3xl font-bold text-center mb-14">How RoutineMate works</h2>
+      <div class="grid md:grid-cols-3 gap-10 text-center">
+        <div>
+          <div class="w-14 h-14 mx-auto rounded-full gradient-bg text-white flex items-center justify-center font-display font-bold text-xl mb-4">1</div>
+          <h3 class="font-semibold mb-2">Create a routine</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Pick a habit, set how often, and choose a reminder time.</p>
+        </div>
+        <div>
+          <div class="w-14 h-14 mx-auto rounded-full gradient-bg text-white flex items-center justify-center font-display font-bold text-xl mb-4">2</div>
+          <h3 class="font-semibold mb-2">Track it daily</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">One tap to check in from your dashboard, every day.</p>
+        </div>
+        <div>
+          <div class="w-14 h-14 mx-auto rounded-full gradient-bg text-white flex items-center justify-center font-display font-bold text-xl mb-4">3</div>
+          <h3 class="font-semibold mb-2">See your progress</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Watch your streaks grow and review your consistency over time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="max-w-5xl mx-auto px-6 py-20">
+    <h2 class="font-display text-3xl font-bold text-center mb-4">Simple pricing</h2>
+    <p class="text-center text-slate-500 dark:text-slate-400 mb-12">Start free. Upgrade later — MVP-1 ships free-tier only.</p>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="p-8 rounded-2xl border-2 border-brand-600 card-shadow bg-white dark:bg-slate-800">
+        <p class="text-xs font-semibold text-brand-600 mb-2">FREE</p>
+        <p class="font-display text-3xl font-bold mb-4">$0<span class="text-base font-normal text-slate-400">/mo</span></p>
+        <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 mb-6">
+          <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Unlimited routines</li>
+          <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Streaks &amp; calendar view</li>
+          <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Reminders</li>
+        </ul>
+        <a href="#" data-nav="screen-register" class="block text-center bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 rounded-lg">Get Started</a>
+      </div>
+      <div class="p-8 rounded-2xl border-2 border-amber-400 card-shadow bg-white dark:bg-slate-800 relative">
+        <span class="absolute -top-3 right-6 pro-badge">PRO</span>
+        <p class="text-xs font-semibold text-amber-500 mb-2">PRO</p>
+        <p class="font-display text-3xl font-bold mb-4">$6.99<span class="text-base font-normal text-slate-400">/mo</span></p>
+        <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 mb-6">
+          <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Unlimited challenges &amp; friends</li>
+          <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>AI-generated weekly insights</li>
+          <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Calendar sync &amp; focus timer</li>
+        </ul>
+        <a href="#" data-nav="screen-register" class="block text-center bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 text-white font-semibold py-3 rounded-lg">Start Pro Trial</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800 py-20">
+    <div class="max-w-3xl mx-auto px-6">
+      <h2 class="font-display text-3xl font-bold text-center mb-10">Frequently asked questions</h2>
+      <div class="space-y-3">
+        <details class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 group">
+          <summary class="font-medium cursor-pointer list-none flex justify-between items-center">Is RoutineMate free to use? <i class="fa-solid fa-chevron-down text-xs text-slate-400 group-open:rotate-180 transition"></i></summary>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-3">Yes — the core habit tracking experience is free forever.</p>
+        </details>
+        <details class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 group">
+          <summary class="font-medium cursor-pointer list-none flex justify-between items-center">Can I track more than one habit? <i class="fa-solid fa-chevron-down text-xs text-slate-400 group-open:rotate-180 transition"></i></summary>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-3">Yes, you can create and track unlimited routines/habits.</p>
+        </details>
+        <details class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 group">
+          <summary class="font-medium cursor-pointer list-none flex justify-between items-center">Will there be a mobile app? <i class="fa-solid fa-chevron-down text-xs text-slate-400 group-open:rotate-180 transition"></i></summary>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-3">RoutineMate is a responsive web app (PWA-ready) that works great on mobile browsers, with native apps planned later.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="gradient-bg py-16">
+    <div class="max-w-3xl mx-auto px-6 text-center text-white">
+      <h2 class="font-display text-3xl font-bold mb-4">Ready to build better habits?</h2>
+      <p class="mb-8 opacity-90">Join RoutineMate today — it's free.</p>
+      <a href="#" data-nav="screen-register" class="inline-block bg-white text-brand-600 font-semibold px-8 py-3 rounded-lg shadow-lg">Create your free account</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-12">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between gap-8">
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-8 h-8"><use href="#rm-logo-icon"/></svg>
+          <span class="font-display font-bold text-white">RoutineMate</span>
+        </div>
+        <p class="text-sm max-w-xs">Build better routines, daily.</p>
+      </div>
+      <div class="flex gap-16 text-sm">
+        <div>
+          <p class="text-white font-semibold mb-3">Product</p>
+          <ul class="space-y-2"><li><a href="#features" class="hover:text-white">Features</a></li><li><a href="#pricing" class="hover:text-white">Pricing</a></li></ul>
+        </div>
+        <div>
+          <p class="text-white font-semibold mb-3">Legal</p>
+          <ul class="space-y-2"><li><a href="#" class="hover:text-white">Privacy</a></li><li><a href="#" class="hover:text-white">Terms</a></li></ul>
+        </div>
+      </div>
+    </div>
+    <p class="text-center text-xs text-slate-500 mt-10">© 2026 RoutineMate. All rights reserved.</p>
+  </footer>
+</section>
+
+<!-- ============ SCREEN: REGISTER ============ -->
+<section id="screen-register" class="screen hidden min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-6 py-12">
+  <div class="w-full max-w-md">
+    <div class="flex flex-col items-center mb-8">
+      <svg class="w-12 h-12 mb-2"><use href="#rm-logo-icon"/></svg>
+      <h1 class="font-display text-2xl font-bold">Create your account</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Start building better routines today.</p>
+    </div>
+    <form id="form-register" class="bg-white dark:bg-slate-800 card-shadow rounded-2xl p-8 space-y-4 border border-slate-100 dark:border-slate-700">
+      <div>
+        <label class="text-sm font-medium block mb-1">Full name</label>
+        <input required type="text" placeholder="Jane Doe" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-1">Email</label>
+        <input required type="email" placeholder="jane@example.com" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-1">Password</label>
+        <input required type="password" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg mt-2">Create Account</button>
+      <div class="flex items-center gap-3 text-xs text-slate-400"><div class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>or<div class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div></div>
+      <button type="button" class="w-full border border-slate-200 dark:border-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-brands fa-google text-rose-500"></i> Continue with Google</button>
+      <p class="text-center text-sm text-slate-500 dark:text-slate-400 pt-2">Already have an account? <a href="#" data-nav="screen-login" class="text-brand-600 font-semibold">Log in</a></p>
+    </form>
+    <p class="text-center text-xs text-slate-400 mt-6"><a href="#" data-nav="screen-landing">← Back to home</a></p>
+  </div>
+</section>
+
+<!-- ============ SCREEN: LOGIN ============ -->
+<section id="screen-login" class="screen hidden min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-6 py-12">
+  <div class="w-full max-w-md">
+    <div class="flex flex-col items-center mb-8">
+      <svg class="w-12 h-12 mb-2"><use href="#rm-logo-icon"/></svg>
+      <h1 class="font-display text-2xl font-bold">Welcome back</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Log in to continue your streaks.</p>
+    </div>
+    <form id="form-login" class="bg-white dark:bg-slate-800 card-shadow rounded-2xl p-8 space-y-4 border border-slate-100 dark:border-slate-700">
+      <div>
+        <label class="text-sm font-medium block mb-1">Email</label>
+        <input required type="email" value="jane@example.com" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-1">Password</label>
+        <input required type="password" value="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <label class="flex items-center gap-2 text-slate-500 dark:text-slate-400"><input type="checkbox" checked class="rounded"> Remember me</label>
+        <a href="#" onclick="showToast('Password reset link sent (demo)'); return false;" class="text-brand-600 font-medium">Forgot password?</a>
+      </div>
+      <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg mt-2">Log In</button>
+      <p class="text-center text-sm text-slate-500 dark:text-slate-400 pt-2">Don't have an account? <a href="#" data-nav="screen-register" class="text-brand-600 font-semibold">Sign up</a></p>
+    </form>
+    <p class="text-center text-xs text-slate-400 mt-6"><a href="#" data-nav="screen-landing">← Back to home</a></p>
+  </div>
+</section>
+
+<!-- ============ SCREEN: ONBOARDING WIZARD (new in MVP-02) ============ -->
+<section id="screen-onboarding" class="screen hidden min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-6 py-12">
+  <div class="w-full max-w-lg">
+    <div class="flex flex-col items-center mb-6">
+      <svg class="w-12 h-12 mb-2"><use href="#rm-logo-icon"/></svg>
+      <h1 class="font-display text-2xl font-bold">Let's set you up</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Takes less than a minute.</p>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="flex items-center gap-2 mb-6 px-2">
+      <div id="ob-dot-1" class="ob-dot h-1.5 flex-1 rounded-full bg-brand-600"></div>
+      <div id="ob-dot-2" class="ob-dot h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+      <div id="ob-dot-3" class="ob-dot h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 card-shadow rounded-2xl p-8 border border-slate-100 dark:border-slate-700">
+
+      <!-- Step 1: categories -->
+      <div id="ob-step-1" class="ob-step">
+        <p class="text-xs font-semibold text-brand-600 mb-1">STEP 1 OF 3</p>
+        <h2 class="font-display text-xl font-bold mb-1">What do you want to work on?</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Pick as many as you like.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" onclick="toggleObCategory(this)" class="ob-category selected text-left border-2 border-brand-500 bg-brand-50 dark:bg-brand-700/20 rounded-xl p-4"><span class="text-2xl">💪</span><p class="font-medium mt-2 text-sm">Health</p></button>
+          <button type="button" onclick="toggleObCategory(this)" class="ob-category text-left border-2 border-slate-200 dark:border-slate-600 rounded-xl p-4"><span class="text-2xl">🧘</span><p class="font-medium mt-2 text-sm">Mindfulness</p></button>
+          <button type="button" onclick="toggleObCategory(this)" class="ob-category text-left border-2 border-slate-200 dark:border-slate-600 rounded-xl p-4"><span class="text-2xl">📚</span><p class="font-medium mt-2 text-sm">Learning</p></button>
+          <button type="button" onclick="toggleObCategory(this)" class="ob-category text-left border-2 border-slate-200 dark:border-slate-600 rounded-xl p-4"><span class="text-2xl">🚀</span><p class="font-medium mt-2 text-sm">Productivity</p></button>
+        </div>
+        <button onclick="obGoTo(2)" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg mt-6">Continue</button>
+      </div>
+
+      <!-- Step 2: starter habits -->
+      <div id="ob-step-2" class="ob-step hidden">
+        <p class="text-xs font-semibold text-brand-600 mb-1">STEP 2 OF 3</p>
+        <h2 class="font-display text-xl font-bold mb-1">Pick a few starter habits</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">We'll add these to your dashboard — you can edit anytime.</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="this.classList.toggle('selected')" class="ob-habit template-chip selected text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full">💧 Drink Water</button>
+          <button type="button" onclick="this.classList.toggle('selected')" class="ob-habit template-chip selected text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full">🧘 Meditate</button>
+          <button type="button" onclick="this.classList.toggle('selected')" class="ob-habit template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full">📚 Read</button>
+          <button type="button" onclick="this.classList.toggle('selected')" class="ob-habit template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full">🏃 Exercise</button>
+          <button type="button" onclick="this.classList.toggle('selected')" class="ob-habit template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full">😴 Sleep by 11 PM</button>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button onclick="obGoTo(1)" class="flex-1 border border-slate-200 dark:border-slate-600 font-semibold py-2.5 rounded-lg">Back</button>
+          <button onclick="obGoTo(3)" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: reminder time -->
+      <div id="ob-step-3" class="ob-step hidden">
+        <p class="text-xs font-semibold text-brand-600 mb-1">STEP 3 OF 3</p>
+        <h2 class="font-display text-xl font-bold mb-1">When should we remind you?</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Your default daily reminder time — you can set per-habit times later.</p>
+        <input id="ob-reminder-time" type="time" value="08:00" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-lg">
+        <div class="flex gap-3 mt-6">
+          <button onclick="obGoTo(2)" class="flex-1 border border-slate-200 dark:border-slate-600 font-semibold py-2.5 rounded-lg">Back</button>
+          <button onclick="finishOnboarding()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">Finish Setup 🎉</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN: APP (shell) ============ -->
+<section id="screen-app" class="screen hidden">
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside id="app-sidebar" data-collapsed="false" class="w-64 shrink-0 bg-white dark:bg-slate-800 border-r border-slate-100 dark:border-slate-700 flex flex-col transition-all duration-200">
+      <div class="h-16 flex items-center gap-2 px-5 border-b border-slate-100 dark:border-slate-700">
+        <svg class="w-8 h-8 shrink-0"><use href="#rm-logo-icon"/></svg>
+        <span id="sidebar-logo-text" class="font-display font-bold gradient-text whitespace-nowrap overflow-hidden">RoutineMate</span>
+      </div>
+      <nav class="flex-1 px-3 py-5 space-y-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+        <a href="#" data-appnav="app-dashboard" class="sidebar-link active group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-gauge-high w-5 text-center shrink-0"></i><span class="nav-label">Dashboard</span><span class="nav-tooltip">Dashboard</span></a>
+        <a href="#" data-appnav="app-routines" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-list-check w-5 text-center shrink-0"></i><span class="nav-label">Routines</span><span class="nav-tooltip">Routines</span></a>
+        <a href="#" data-appnav="app-goals" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-bullseye w-5 text-center shrink-0"></i><span class="nav-label">Goals</span><span class="nav-tooltip">Goals</span></a>
+        <a href="#" data-appnav="app-challenges" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-people-group w-5 text-center shrink-0"></i><span class="nav-label">Challenges</span><span class="nav-tooltip">Challenges</span></a>
+        <a href="#" data-appnav="app-friends" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-user-group w-5 text-center shrink-0"></i><span class="nav-label">Friends</span><span class="nav-tooltip">Friends</span></a>
+        <a href="#" data-appnav="app-stats" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-chart-simple w-5 text-center shrink-0"></i><span class="nav-label">Stats</span><span class="nav-tooltip">Stats</span></a>
+        <a href="#" data-appnav="app-achievements" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-trophy w-5 text-center shrink-0"></i><span class="nav-label">Achievements</span><span class="nav-tooltip">Achievements</span></a>
+        <a href="#" data-appnav="app-journal" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-book-open w-5 text-center shrink-0"></i><span class="nav-label">Journal</span><span class="nav-tooltip">Journal</span></a>
+        <a href="#" data-appnav="app-calendar" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-calendar-days w-5 text-center shrink-0"></i><span class="nav-label">Calendar</span><span class="nav-tooltip">Calendar</span></a>
+        <a href="#" data-appnav="app-profile" class="sidebar-link group relative flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-user-gear w-5 text-center shrink-0"></i><span class="nav-label">Profile &amp; Settings</span><span class="nav-tooltip">Profile &amp; Settings</span></a>
+      </nav>
+      <div class="p-3 border-t border-slate-100 dark:border-slate-700 space-y-1">
+        <a href="#" data-appnav="app-feedback" class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium"><i class="fa-solid fa-comment-dots w-5 text-center shrink-0"></i><span class="nav-label">Feedback</span><span class="nav-tooltip">Feedback</span></a>
+        <button onclick="toggleSidebar()" class="w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium">
+          <i id="collapse-icon" class="fa-solid fa-angles-left w-5 text-center shrink-0"></i><span class="nav-label">Collapse</span><span class="nav-tooltip">Expand</span>
+        </button>
+        <a href="#" data-nav="screen-landing" class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-sm font-medium"><i class="fa-solid fa-arrow-right-from-bracket w-5 text-center shrink-0"></i><span class="nav-label">Log Out</span><span class="nav-tooltip">Log Out</span></a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Topbar -->
+      <header class="h-16 shrink-0 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between px-6">
+        <p id="app-page-title" class="font-display font-semibold text-lg">Dashboard</p>
+        <div class="flex items-center gap-4">
+          <button onclick="simulateOffline()" id="offline-btn" class="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-400 border border-slate-200 dark:border-slate-600 rounded-full px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-wifi"></i> <span id="offline-btn-label">Online</span></button>
+          <button onclick="toggleTheme()" class="w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i></button>
+          <div class="relative">
+            <button onclick="toggleNotifPanel()" class="relative w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-bell"></i><span id="notif-dot" class="absolute top-1.5 right-2 w-2 h-2 bg-rose-500 rounded-full"></span></button>
+            <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 z-50">
+              <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                <p class="font-semibold text-sm">Notifications</p>
+                <button onclick="markAllNotifsRead()" class="text-xs text-brand-600 font-medium">Mark all read</button>
+              </div>
+              <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
+                <div class="p-4 flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-trophy text-xs"></i></div>
+                  <div class="flex-1"><p class="text-sm font-medium">New badge unlocked: 7-Day Streak!</p><p class="text-xs text-slate-400 mt-0.5">2 minutes ago</p></div>
+                </div>
+                <div class="p-4 flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-700/20 text-brand-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock text-xs"></i></div>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">Reminder: Drink Water at 8:00 AM</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Today · 8:00 AM</p>
+                    <button onclick="showToast('Snoozed for 30 minutes')" class="text-xs text-brand-600 font-medium mt-1">Snooze 30m</button>
+                  </div>
+                </div>
+                <div class="p-4 flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-triangle-exclamation text-xs"></i></div>
+                  <div class="flex-1"><p class="text-sm font-medium">Your Run 3km streak is at risk — complete it today to keep it alive.</p><p class="text-xs text-slate-400 mt-0.5">3 hours ago</p></div>
+                </div>
+                <div class="p-4 flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-list-check text-xs"></i></div>
+                  <div class="flex-1"><p class="text-sm font-medium">3 habits left today</p><p class="text-xs text-slate-400 mt-0.5">This morning</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="w-9 h-9 rounded-full gradient-bg text-white flex items-center justify-center font-semibold text-sm">JD</div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 md:p-8">
+
+        <!-- APP PAGE: DASHBOARD -->
+        <div id="app-dashboard" class="app-page">
+          <div class="mb-6">
+            <h2 class="font-display text-2xl font-bold">Good morning, Jane 👋</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Tuesday, August 18, 2026 · "Small steps every day lead to big change."</p>
+          </div>
+
+          <div class="grid lg:grid-cols-3 gap-6 mb-8">
+            <!-- Today's routines -->
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">Today's Routines</h3>
+                <a href="#" data-appnav="app-routines" class="text-sm text-brand-600 font-medium">View all →</a>
+              </div>
+              <div id="today-list" class="space-y-3">
+                <div class="habit-item flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                  <div class="flex items-center gap-3">
+                    <button class="check-btn completed w-9 h-9 rounded-full border-2 border-emerald-500 flex items-center justify-center transition" onclick="toggleCheck(this)"><i class="fa-solid fa-check text-sm"></i></button>
+                    <div><p class="font-medium">💧 Drink Water</p><p class="text-xs text-slate-400">8:00 AM · Daily</p></div>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-amber-500 text-sm font-semibold"><i class="fa-solid fa-fire"></i>12</div>
+                </div>
+                <div class="habit-item flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                  <div class="flex items-center gap-3">
+                    <button class="check-btn completed w-9 h-9 rounded-full border-2 border-emerald-500 flex items-center justify-center transition" onclick="toggleCheck(this)"><i class="fa-solid fa-check text-sm"></i></button>
+                    <div><p class="font-medium">🧘 Morning Meditation</p><p class="text-xs text-slate-400">6:30 AM · Daily</p></div>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-amber-500 text-sm font-semibold"><i class="fa-solid fa-fire"></i>27</div>
+                </div>
+                <div class="habit-item flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                  <div class="flex items-center gap-3">
+                    <button class="check-btn w-9 h-9 rounded-full border-2 border-slate-300 dark:border-slate-500 text-transparent flex items-center justify-center transition" onclick="toggleCheck(this)"><i class="fa-solid fa-check text-sm"></i></button>
+                    <div><p class="font-medium">📚 Read 20 pages</p><p class="text-xs text-slate-400">9:00 PM · Daily</p></div>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-amber-500 text-sm font-semibold"><i class="fa-solid fa-fire"></i>5</div>
+                </div>
+                <div class="habit-item flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                  <div class="flex items-center gap-3">
+                    <button class="check-btn w-9 h-9 rounded-full border-2 border-slate-300 dark:border-slate-500 text-transparent flex items-center justify-center transition" onclick="toggleCheck(this)"><i class="fa-solid fa-check text-sm"></i></button>
+                    <div><p class="font-medium">🏃 Run 3km</p><p class="text-xs text-slate-400">6:00 AM · Mon/Wed/Fri</p></div>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-amber-500 text-sm font-semibold"><i class="fa-solid fa-fire"></i>3</div>
+                </div>
+                <div class="habit-item flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                  <div class="flex items-center gap-3">
+                    <button class="check-btn w-9 h-9 rounded-full border-2 border-slate-300 dark:border-slate-500 text-transparent flex items-center justify-center transition" onclick="toggleCheck(this)"><i class="fa-solid fa-check text-sm"></i></button>
+                    <div><p class="font-medium">😴 Sleep by 11 PM</p><p class="text-xs text-slate-400">11:00 PM · Daily</p></div>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-amber-500 text-sm font-semibold"><i class="fa-solid fa-fire"></i>8</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 flex flex-col items-center justify-center text-center">
+              <h3 class="font-semibold mb-4 self-start">Today's Progress</h3>
+              <div id="progress-ring" class="progress-ring w-32 h-32 flex items-center justify-center" style="--pct:40">
+                <div class="w-24 h-24 rounded-full bg-white dark:bg-slate-800 flex flex-col items-center justify-center">
+                  <span id="progress-pct-text" class="text-2xl font-bold font-display">40%</span>
+                  <span class="text-[11px] text-slate-400">complete</span>
+                </div>
+              </div>
+              <p id="today-count-text" class="text-sm text-slate-500 dark:text-slate-400 mt-4">2 of 5 done</p>
+              <div class="grid grid-cols-2 gap-3 w-full mt-6 text-left">
+                <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10"><p class="text-xs text-slate-500 dark:text-slate-400">Best streak</p><p class="font-bold text-amber-600">27 days</p></div>
+                <div class="p-3 rounded-xl bg-brand-50 dark:bg-brand-700/20"><p class="text-xs text-slate-500 dark:text-slate-400">Active routines</p><p class="font-bold text-brand-600">5</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 flex items-center justify-between mb-6">
+            <div>
+              <h3 class="font-semibold mb-1">Want to build a new habit?</h3>
+              <p class="text-sm text-slate-500 dark:text-slate-400">Add a routine and start your streak today.</p>
+            </div>
+            <button data-modal-open="modal-routine" onclick="prepModalForCreate()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-plus"></i> New Routine</button>
+          </div>
+
+          <!-- MVP-02: Goals / Achievements / Journal quick-glance widgets -->
+          <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-sm flex items-center gap-2"><i class="fa-solid fa-bullseye text-brand-600"></i> Goals</h3>
+                <a href="#" data-appnav="app-goals" class="text-xs text-brand-600 font-medium">View all →</a>
+              </div>
+              <p class="text-sm font-medium mb-1">🏃 Run a 5K</p>
+              <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-700 mb-1"><div class="h-2 rounded-full bg-brand-600" style="width:60%"></div></div>
+              <p class="text-xs text-slate-400">60% there · 42 days left</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-sm flex items-center gap-2"><i class="fa-solid fa-trophy text-amber-500"></i> Recent Achievement</h3>
+                <a href="#" data-appnav="app-achievements" class="text-xs text-brand-600 font-medium">View all →</a>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center text-lg">🔥</div>
+                <div><p class="text-sm font-medium">7-Day Streak</p><p class="text-xs text-slate-400">Unlocked today · Level 3 · 420 XP</p></div>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-sm flex items-center gap-2"><i class="fa-solid fa-book-open text-emerald-600"></i> Quick Journal</h3>
+                <a href="#" data-appnav="app-journal" class="text-xs text-brand-600 font-medium">Open →</a>
+              </div>
+              <div class="flex gap-1.5 mb-2">
+                <button type="button" class="dash-mood text-lg hover:scale-110 transition">😞</button>
+                <button type="button" class="dash-mood text-lg hover:scale-110 transition">🙁</button>
+                <button type="button" class="dash-mood text-lg hover:scale-110 transition">😐</button>
+                <button type="button" class="dash-mood text-lg hover:scale-110 transition">🙂</button>
+                <button type="button" class="dash-mood text-lg hover:scale-110 transition">😄</button>
+              </div>
+              <button onclick="showAppPage('app-journal'); showToast('Opening today\'s entry')" class="w-full text-left text-xs text-slate-400 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700">How did today go?</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: ROUTINES -->
+        <div id="app-routines" class="app-page hidden">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="font-display text-2xl font-bold">My Routines</h2>
+              <p class="text-slate-500 dark:text-slate-400 text-sm">Manage all your habits in one place.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+                <button id="view-grid-btn" onclick="setRoutinesView('grid')" class="view-toggle-btn active w-8 h-8 rounded-md flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-grip text-xs"></i></button>
+                <button id="view-list-btn" onclick="setRoutinesView('list')" class="view-toggle-btn w-8 h-8 rounded-md flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-list text-xs"></i></button>
+              </div>
+              <button data-modal-open="modal-bundle" class="border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-layer-group text-brand-600"></i> Create Bundle</button>
+              <button data-modal-open="modal-routine" onclick="prepModalForCreate()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-plus"></i> New Routine</button>
+            </div>
+          </div>
+
+          <!-- Routine Bundles (new in MVP-03) -->
+          <div id="bundles-row" class="mb-6">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Bundles</p>
+            <div id="bundles-grid" class="grid sm:grid-cols-2 gap-4">
+              <div class="bundle-card rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold text-sm flex items-center gap-2"><i class="fa-solid fa-layer-group text-brand-600"></i> Morning Routine</h3>
+                  <span class="text-xs text-amber-500 font-semibold"><i class="fa-solid fa-fire"></i> 9 day streak</span>
+                </div>
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-lg">🧘</span><i class="fa-solid fa-arrow-right-long text-slate-300 text-xs"></i>
+                  <span class="text-lg">💧</span><i class="fa-solid fa-arrow-right-long text-slate-300 text-xs"></i>
+                  <span class="text-lg">📚</span>
+                  <span class="text-xs text-slate-400 ml-2">3 steps</span>
+                </div>
+                <button onclick="showToast('Starting guided sequence: Meditate → Drink Water → Read')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold py-2 rounded-lg">Start Sequence</button>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">All Routines</p>
+          <div id="routines-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+
+            <div class="routine-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5" data-name="Drink Water" data-emoji="💧">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showAppPage('app-routine-detail')">
+                  <span class="text-2xl">💧</span>
+                  <div><p class="font-semibold">Drink Water</p><p class="text-xs text-slate-400">Daily · 8:00 AM</p></div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="prepModalForEdit(this)" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" data-modal-open="modal-routine"><i class="fa-solid fa-pen text-xs"></i></button>
+                  <button onclick="deleteRoutine(this)" class="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <span class="inline-block text-xs font-medium bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2 py-1 rounded-full mb-3">Health</span>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-amber-500 font-semibold"><i class="fa-solid fa-fire mr-1"></i>12 day streak</span>
+                <button onclick="togglePause(this)" class="text-xs font-medium text-slate-500 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">Pause</button>
+              </div>
+            </div>
+
+            <div class="routine-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5" data-name="Morning Meditation" data-emoji="🧘">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showAppPage('app-routine-detail')">
+                  <span class="text-2xl">🧘</span>
+                  <div><p class="font-semibold">Morning Meditation</p><p class="text-xs text-slate-400">Daily · 6:30 AM</p></div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="prepModalForEdit(this)" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" data-modal-open="modal-routine"><i class="fa-solid fa-pen text-xs"></i></button>
+                  <button onclick="deleteRoutine(this)" class="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <span class="inline-block text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 px-2 py-1 rounded-full mb-3">Mindfulness</span>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-amber-500 font-semibold"><i class="fa-solid fa-fire mr-1"></i>27 day streak</span>
+                <button onclick="togglePause(this)" class="text-xs font-medium text-slate-500 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">Pause</button>
+              </div>
+            </div>
+
+            <div class="routine-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5" data-name="Read 20 pages" data-emoji="📚">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showAppPage('app-routine-detail')">
+                  <span class="text-2xl">📚</span>
+                  <div><p class="font-semibold">Read 20 pages</p><p class="text-xs text-slate-400">Daily · 9:00 PM</p></div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="prepModalForEdit(this)" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" data-modal-open="modal-routine"><i class="fa-solid fa-pen text-xs"></i></button>
+                  <button onclick="deleteRoutine(this)" class="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <span class="inline-block text-xs font-medium bg-amber-50 dark:bg-amber-500/10 text-amber-600 px-2 py-1 rounded-full mb-3">Learning</span>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-amber-500 font-semibold"><i class="fa-solid fa-fire mr-1"></i>5 day streak</span>
+                <button onclick="togglePause(this)" class="text-xs font-medium text-slate-500 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">Pause</button>
+              </div>
+            </div>
+
+            <div class="routine-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5" data-name="Run 3km" data-emoji="🏃">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showAppPage('app-routine-detail')">
+                  <span class="text-2xl">🏃</span>
+                  <div><p class="font-semibold">Run 3km</p><p class="text-xs text-slate-400">Mon/Wed/Fri · 6:00 AM</p></div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="prepModalForEdit(this)" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" data-modal-open="modal-routine"><i class="fa-solid fa-pen text-xs"></i></button>
+                  <button onclick="deleteRoutine(this)" class="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <span class="inline-block text-xs font-medium bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2 py-1 rounded-full mb-3">Health</span>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-amber-500 font-semibold"><i class="fa-solid fa-fire mr-1"></i>3 day streak</span>
+                <button onclick="togglePause(this)" class="text-xs font-medium text-slate-500 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">Pause</button>
+              </div>
+            </div>
+
+            <div class="routine-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5" data-name="Sleep by 11PM" data-emoji="😴">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showAppPage('app-routine-detail')">
+                  <span class="text-2xl">😴</span>
+                  <div><p class="font-semibold">Sleep by 11 PM</p><p class="text-xs text-slate-400">Daily · 11:00 PM</p></div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="prepModalForEdit(this)" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" data-modal-open="modal-routine"><i class="fa-solid fa-pen text-xs"></i></button>
+                  <button onclick="deleteRoutine(this)" class="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <span class="inline-block text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 px-2 py-1 rounded-full mb-3">Wellness</span>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-amber-500 font-semibold"><i class="fa-solid fa-fire mr-1"></i>8 day streak</span>
+                <button onclick="togglePause(this)" class="text-xs font-medium text-slate-500 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">Pause</button>
+              </div>
+            </div>
+
+            <div class="routine-card opacity-60 bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5" data-name="No Smoking" data-emoji="🚭">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">🚭</span>
+                  <div><p class="font-semibold">No Smoking</p><p class="text-xs text-slate-400">Daily · Paused</p></div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="prepModalForEdit(this)" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" data-modal-open="modal-routine"><i class="fa-solid fa-pen text-xs"></i></button>
+                  <button onclick="deleteRoutine(this)" class="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+              </div>
+              <span class="inline-block text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-1 rounded-full mb-3">Health</span>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-400 font-semibold"><i class="fa-solid fa-fire mr-1"></i>0 day streak</span>
+                <button onclick="togglePause(this)" class="text-xs font-medium text-emerald-600 border border-emerald-200 dark:border-emerald-700 px-2.5 py-1 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-500/10">Resume</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- APP PAGE: ROUTINE DETAIL -->
+        <div id="app-routine-detail" class="app-page hidden">
+          <button onclick="showAppPage('app-routines')" class="text-sm text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2 hover:text-brand-600"><i class="fa-solid fa-arrow-left"></i> Back to Routines</button>
+          <div class="grid lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+              <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl">💧</span>
+                    <div><h2 class="font-display text-xl font-bold">Drink Water</h2><p class="text-sm text-slate-400">Daily · Reminder at 8:00 AM · Target: 8 glasses</p></div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="openModal('modal-timer')" class="border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold px-4 py-2 rounded-lg text-sm flex items-center gap-2"><i class="fa-solid fa-stopwatch text-brand-600"></i> Focus Timer</button>
+                    <button id="mark-complete-btn" onclick="markDetailComplete(this)" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg text-sm flex items-center gap-2"><i class="fa-solid fa-check"></i> Mark Today Complete</button>
+                  </div>
+                </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Stay hydrated throughout the day for better focus and energy.</p>
+              </div>
+
+              <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+                <h3 class="font-semibold mb-4">Last 35 Days</h3>
+                <div class="grid grid-cols-7 gap-2">
+                  <div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-slate-200 dark:bg-slate-700"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-300"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div>
+                  <div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-slate-200 dark:bg-slate-700"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-300"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div>
+                  <div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-slate-200 dark:bg-slate-700"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-300"></div>
+                  <div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-slate-200 dark:bg-slate-700"></div><div class="heat-cell bg-emerald-500"></div>
+                  <div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-500"></div><div class="heat-cell bg-emerald-100 dark:bg-slate-600"></div>
+                </div>
+                <div class="flex items-center gap-4 text-xs text-slate-400 mt-4">
+                  <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> Completed</span>
+                  <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-300 inline-block"></span> Partial</span>
+                  <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-200 dark:bg-slate-700 inline-block"></span> Missed</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 text-center">
+                <p class="text-xs text-slate-400 mb-1">Current Streak</p>
+                <p class="text-3xl font-display font-bold text-amber-500"><i class="fa-solid fa-fire"></i> 12</p>
+                <div class="grid grid-cols-2 gap-3 mt-5 text-left">
+                  <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40"><p class="text-xs text-slate-400">Longest streak</p><p class="font-bold">21 days</p></div>
+                  <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40"><p class="text-xs text-slate-400">This week</p><p class="font-bold">6/7</p></div>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+                <h3 class="font-semibold mb-3 text-sm">Routine Settings</h3>
+                <button onclick="prepModalForEdit(document.querySelector('.routine-card[data-name=\'Drink Water\']')); openModal('modal-routine');" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm flex items-center gap-2"><i class="fa-solid fa-pen text-slate-400 w-4"></i> Edit routine</button>
+                <button onclick="showToast('Routine paused'); return false;" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-sm flex items-center gap-2"><i class="fa-solid fa-pause text-slate-400 w-4"></i> Pause routine</button>
+                <button onclick="showAppPage('app-routines'); showToast('Routine deleted');" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-sm text-rose-500 flex items-center gap-2"><i class="fa-solid fa-trash w-4"></i> Delete routine</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: GOALS (new in MVP-02) -->
+        <div id="app-goals" class="app-page hidden">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="font-display text-2xl font-bold">Goals</h2>
+              <p class="text-slate-500 dark:text-slate-400 text-sm">Long-term targets linked to your daily routines.</p>
+            </div>
+            <button data-modal-open="modal-goal" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-plus"></i> New Goal</button>
+          </div>
+          <div id="goals-grid" class="grid sm:grid-cols-2 gap-5">
+            <div class="goal-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <div class="flex items-start justify-between mb-3">
+                <div><span class="text-2xl">🏃</span><h3 class="font-semibold mt-2">Run a 5K</h3><p class="text-xs text-slate-400">Target: Sep 29, 2026 · 42 days left</p></div>
+                <span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2.5 py-1 rounded-full">Active</span>
+              </div>
+              <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-700 mb-2"><div class="h-2.5 rounded-full bg-brand-600" style="width:60%"></div></div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-400">60% complete</span>
+                <span class="text-xs bg-slate-50 dark:bg-slate-700 px-2 py-1 rounded-full">🏃 Run 3km linked</span>
+              </div>
+            </div>
+            <div class="goal-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <div class="flex items-start justify-between mb-3">
+                <div><span class="text-2xl">🧘</span><h3 class="font-semibold mt-2">30 Days of Mindfulness</h3><p class="text-xs text-slate-400">Target: Sep 5, 2026 · 18 days left</p></div>
+                <span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2.5 py-1 rounded-full">Active</span>
+              </div>
+              <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-700 mb-2"><div class="h-2.5 rounded-full bg-emerald-500" style="width:88%"></div></div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-400">88% complete</span>
+                <span class="text-xs bg-slate-50 dark:bg-slate-700 px-2 py-1 rounded-full">🧘 Meditation linked</span>
+              </div>
+            </div>
+            <div class="goal-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 opacity-70">
+              <div class="flex items-start justify-between mb-3">
+                <div><span class="text-2xl">📚</span><h3 class="font-semibold mt-2">Finish 4 Books This Quarter</h3><p class="text-xs text-slate-400">Completed Jul 30, 2026</p></div>
+                <span class="text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 px-2.5 py-1 rounded-full">Completed</span>
+              </div>
+              <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-700 mb-2"><div class="h-2.5 rounded-full bg-emerald-500" style="width:100%"></div></div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-400">100% complete</span>
+                <span class="text-xs bg-slate-50 dark:bg-slate-700 px-2 py-1 rounded-full">📚 Read 20 pages linked</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: CHALLENGES (new in MVP-03) -->
+        <div id="app-challenges" class="app-page hidden">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="font-display text-2xl font-bold">Challenges</h2>
+              <p class="text-slate-500 dark:text-slate-400 text-sm">Build habits together — join a challenge or start your own.</p>
+            </div>
+            <button data-modal-open="modal-challenge" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2"><i class="fa-solid fa-plus"></i> Create Challenge</button>
+          </div>
+
+          <div class="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 mb-6 max-w-xs text-sm font-medium">
+            <button id="chal-tab-discover" onclick="setChalTab('discover')" class="chal-tab active flex-1 py-1.5 rounded-md">Discover</button>
+            <button id="chal-tab-mine" onclick="setChalTab('mine')" class="chal-tab flex-1 py-1.5 rounded-md">My Challenges</button>
+          </div>
+
+          <div id="chal-panel-discover" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5">
+              <div class="flex items-center justify-between mb-3"><span class="text-2xl">🧘</span><span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2.5 py-1 rounded-full">12 days left</span></div>
+              <h3 class="font-semibold mb-1">30-Day Meditation Challenge</h3>
+              <p class="text-xs text-slate-400 mb-3">128 participants · Public</p>
+              <div class="flex -space-x-2 mb-3">
+                <div class="w-7 h-7 rounded-full gradient-bg text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">SK</div>
+                <div class="w-7 h-7 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">MR</div>
+                <div class="w-7 h-7 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">PJ</div>
+                <div class="w-7 h-7 rounded-full bg-slate-300 dark:bg-slate-600 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">+125</div>
+              </div>
+              <button onclick="showToast('Joined 30-Day Meditation Challenge 🎉')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold py-2 rounded-lg">Join Challenge</button>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5">
+              <div class="flex items-center justify-between mb-3"><span class="text-2xl">💧</span><span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2.5 py-1 rounded-full">5 days left</span></div>
+              <h3 class="font-semibold mb-1">Hydration Week</h3>
+              <p class="text-xs text-slate-400 mb-3">64 participants · Public</p>
+              <div class="flex -space-x-2 mb-3">
+                <div class="w-7 h-7 rounded-full bg-emerald-500 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">AL</div>
+                <div class="w-7 h-7 rounded-full bg-brand-500 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">TN</div>
+                <div class="w-7 h-7 rounded-full bg-slate-300 dark:bg-slate-600 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">+62</div>
+              </div>
+              <button onclick="showToast('Joined Hydration Week 🎉')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold py-2 rounded-lg">Join Challenge</button>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5">
+              <div class="flex items-center justify-between mb-3"><span class="text-2xl">🏃</span><span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2.5 py-1 rounded-full">21 days left</span></div>
+              <h3 class="font-semibold mb-1">Run Every Other Day</h3>
+              <p class="text-xs text-slate-400 mb-3">39 participants · Public</p>
+              <div class="flex -space-x-2 mb-3">
+                <div class="w-7 h-7 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">JD</div>
+                <div class="w-7 h-7 rounded-full bg-slate-300 dark:bg-slate-600 text-white text-[10px] flex items-center justify-center font-semibold border-2 border-white dark:border-slate-800">+38</div>
+              </div>
+              <button onclick="showToast('Joined Run Every Other Day 🎉')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold py-2 rounded-lg">Join Challenge</button>
+            </div>
+          </div>
+
+          <div id="chal-panel-mine" class="hidden grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 cursor-pointer" onclick="showAppPage('app-challenge-detail')">
+              <div class="flex items-center justify-between mb-3"><span class="text-2xl">🧘</span><span class="text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 px-2.5 py-1 rounded-full">Joined</span></div>
+              <h3 class="font-semibold mb-1">30-Day Meditation Challenge</h3>
+              <p class="text-xs text-slate-400 mb-3">Day 18 of 30 · You're #4 of 128</p>
+              <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-700"><div class="h-2 rounded-full bg-brand-600" style="width:60%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: CHALLENGE DETAIL (new in MVP-03) -->
+        <div id="app-challenge-detail" class="app-page hidden">
+          <button onclick="showAppPage('app-challenges')" class="text-sm text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2 hover:text-brand-600"><i class="fa-solid fa-arrow-left"></i> Back to Challenges</button>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 mb-6">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-display text-xl font-bold flex items-center gap-2">🧘 30-Day Meditation Challenge</h2>
+              <span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2.5 py-1 rounded-full">Day 18 of 30</span>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">128 participants · You're ranked #4</p>
+          </div>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+            <h3 class="font-semibold mb-4 text-sm">Shared Progress Feed</h3>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-full gradient-bg text-white text-xs flex items-center justify-center font-semibold shrink-0">SK</div>
+                <div class="flex-1"><p class="text-sm"><span class="font-medium">Sara K.</span> completed today's meditation — 22 day streak 🔥</p><div class="flex gap-2 mt-1"><button onclick="showToast('Reacted 👏')" class="text-xs text-slate-400 hover:text-brand-600">👏 React</button></div></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-semibold shrink-0">MR</div>
+                <div class="flex-1"><p class="text-sm"><span class="font-medium">Marcus R.</span> completed today's meditation — 15 day streak 🔥</p><div class="flex gap-2 mt-1"><button onclick="showToast('Reacted 👏')" class="text-xs text-slate-400 hover:text-brand-600">👏 React</button></div></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-full gradient-bg text-white text-xs flex items-center justify-center font-semibold shrink-0">JD</div>
+                <div class="flex-1"><p class="text-sm"><span class="font-medium">You</span> completed today's meditation — 18 day streak 🔥</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-full bg-rose-500 text-white text-xs flex items-center justify-center font-semibold shrink-0">PJ</div>
+                <div class="flex-1"><p class="text-sm"><span class="font-medium">Priya J.</span> hasn't checked in yet today</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: FRIENDS & LEADERBOARD (new in MVP-03) -->
+        <div id="app-friends" class="app-page hidden">
+          <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <div>
+              <h2 class="font-display text-2xl font-bold">Friends</h2>
+              <p class="text-slate-500 dark:text-slate-400 text-sm">Add friends and see who's most consistent.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" placeholder="Add by email or username" class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm w-56">
+              <button onclick="showToast('Friend request sent')" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-sm">Add</button>
+            </div>
+          </div>
+
+          <div class="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 mb-6 max-w-xs text-sm font-medium">
+            <button id="lb-tab-friends" onclick="setFriendsTab('friends')" class="lb-tab active flex-1 py-1.5 rounded-md">Friends</button>
+            <button id="lb-tab-leaderboard" onclick="setFriendsTab('leaderboard')" class="lb-tab flex-1 py-1.5 rounded-md">Leaderboard</button>
+          </div>
+
+          <div id="friends-panel-friends" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div class="w-11 h-11 rounded-full gradient-bg text-white flex items-center justify-center font-semibold text-sm">SK</div>
+              <div><p class="font-medium text-sm">Sara K.</p><p class="text-xs text-slate-400">🔥 22 day streak</p></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div class="w-11 h-11 rounded-full bg-amber-500 text-white flex items-center justify-center font-semibold text-sm">MR</div>
+              <div><p class="font-medium text-sm">Marcus R.</p><p class="text-xs text-slate-400">🔥 15 day streak</p></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div class="w-11 h-11 rounded-full bg-rose-500 text-white flex items-center justify-center font-semibold text-sm">PJ</div>
+              <div><p class="font-medium text-sm">Priya J.</p><p class="text-xs text-slate-400">🔥 9 day streak</p></div>
+            </div>
+          </div>
+
+          <div id="friends-panel-leaderboard" class="hidden bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-sm">Ranked by current streak</h3>
+              <select class="text-xs border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg px-2 py-1.5">
+                <option>Current streak</option><option>Weekly consistency %</option><option>Total check-ins</option>
+              </select>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10">
+                <span class="text-lg">🥇</span>
+                <div class="w-9 h-9 rounded-full gradient-bg text-white flex items-center justify-center font-semibold text-xs">SK</div>
+                <p class="flex-1 text-sm font-medium">Sara K.</p><span class="text-sm font-bold text-amber-600">22 days</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+                <span class="text-lg">🥈</span>
+                <div class="w-9 h-9 rounded-full bg-amber-500 text-white flex items-center justify-center font-semibold text-xs">MR</div>
+                <p class="flex-1 text-sm font-medium">Marcus R.</p><span class="text-sm font-bold text-slate-500">15 days</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+                <span class="text-lg">🥉</span>
+                <div class="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center font-semibold text-xs">JD</div>
+                <p class="flex-1 text-sm font-medium">You</p><span class="text-sm font-bold text-slate-500">12 days</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+                <span class="text-sm font-semibold text-slate-400 w-5 text-center">4</span>
+                <div class="w-9 h-9 rounded-full bg-rose-500 text-white flex items-center justify-center font-semibold text-xs">PJ</div>
+                <p class="flex-1 text-sm font-medium">Priya J.</p><span class="text-sm font-bold text-slate-500">9 days</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: STATS -->
+        <div id="app-stats" class="app-page hidden">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="font-display text-2xl font-bold">Stats &amp; Insights</h2>
+              <p class="text-slate-500 dark:text-slate-400 text-sm">Visualize your progress and activity across every routine.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="showToast('Exporting CSV — your file will download shortly (demo)')" class="text-sm font-medium border border-slate-200 dark:border-slate-600 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"><i class="fa-solid fa-file-csv text-slate-400"></i> Export CSV</button>
+              <button onclick="showToast('Exporting PDF — your file will download shortly (demo)')" class="text-sm font-medium border border-slate-200 dark:border-slate-600 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"><i class="fa-solid fa-file-pdf text-slate-400"></i> Export PDF</button>
+            </div>
+          </div>
+
+          <!-- AI Insights (new in MVP-03, Pro feature) -->
+          <div class="rounded-2xl card-shadow border border-brand-100 dark:border-brand-700/40 bg-gradient-to-br from-brand-50 to-emerald-50 dark:from-brand-700/10 dark:to-emerald-500/5 p-6 mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-brand-600"></i> AI Insights <span class="pro-badge">PRO</span></h3>
+              <button onclick="refreshInsights()" class="text-xs font-medium text-brand-600 flex items-center gap-1.5"><i class="fa-solid fa-arrow-rotate-right"></i> Refresh</button>
+            </div>
+            <p id="insight-text" class="text-sm text-slate-700 dark:text-slate-200 mb-3">You're most consistent on weekday mornings — your Monday completion rate is 40% higher than weekends. Consider moving "Run 3km" to a morning slot to match your strongest habit window.</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="text-xs font-medium bg-white/70 dark:bg-slate-800/60 px-3 py-1.5 rounded-full">💡 Shift "Run 3km" reminder to 6:30 AM</span>
+              <span class="text-xs font-medium bg-white/70 dark:bg-slate-800/60 px-3 py-1.5 rounded-full">⚠️ "Read 20 pages" is at risk of being dropped</span>
+              <span class="text-xs font-medium bg-white/70 dark:bg-slate-800/60 px-3 py-1.5 rounded-full">🔗 Pair "Read 20 pages" with your strong "Meditation" habit</span>
+            </div>
+          </div>
+
+          <!-- Summary stat cards -->
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5">
+              <div class="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-700/20 text-brand-600 flex items-center justify-center mb-3"><i class="fa-solid fa-check-double text-sm"></i></div>
+              <p class="text-xs text-slate-400">Total Check-ins</p>
+              <p class="text-2xl font-display font-bold">142</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5">
+              <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-3"><i class="fa-solid fa-chart-line text-sm"></i></div>
+              <p class="text-xs text-slate-400">Completion Rate</p>
+              <p class="text-2xl font-display font-bold">83%</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5">
+              <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3"><i class="fa-solid fa-fire text-sm"></i></div>
+              <p class="text-xs text-slate-400">Best Streak</p>
+              <p class="text-2xl font-display font-bold">27 days</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5">
+              <div class="w-9 h-9 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center mb-3"><i class="fa-solid fa-list-check text-sm"></i></div>
+              <p class="text-xs text-slate-400">Active Routines</p>
+              <p class="text-2xl font-display font-bold">5</p>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <h3 class="font-semibold mb-4">This Week's Completion</h3>
+              <canvas id="chart-weekly" height="180"></canvas>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <h3 class="font-semibold mb-4">By Category</h3>
+              <canvas id="chart-category" height="180"></canvas>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">Last 30 Days Trend</h3>
+                <span class="text-xs text-slate-400">Daily completion %</span>
+              </div>
+              <canvas id="chart-trend" height="160"></canvas>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+              <h3 class="font-semibold mb-4">Activity by Time of Day</h3>
+              <canvas id="chart-timeofday" height="160"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 mb-6">
+            <h3 class="font-semibold mb-4">Current Streaks by Habit</h3>
+            <canvas id="chart-streaks" height="140"></canvas>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+            <h3 class="font-semibold mb-4">Per-Habit Consistency</h3>
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>💧 Drink Water</span><span class="text-slate-400">92%</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-700"><div class="h-2 rounded-full bg-emerald-500" style="width:92%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🧘 Morning Meditation</span><span class="text-slate-400">97%</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-700"><div class="h-2 rounded-full bg-emerald-500" style="width:97%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>📚 Read 20 pages</span><span class="text-slate-400">64%</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-700"><div class="h-2 rounded-full bg-amber-400" style="width:64%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>🏃 Run 3km</span><span class="text-slate-400">48%</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-700"><div class="h-2 rounded-full bg-amber-400" style="width:48%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span>😴 Sleep by 11 PM</span><span class="text-slate-400">71%</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-700"><div class="h-2 rounded-full bg-emerald-500" style="width:71%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: ACHIEVEMENTS (new in MVP-02) -->
+        <div id="app-achievements" class="app-page hidden">
+          <div class="mb-6">
+            <h2 class="font-display text-2xl font-bold">Achievements</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Badges and rewards for staying consistent.</p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 mb-6 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400 mb-1">Current Level</p>
+              <p class="font-display text-2xl font-bold">Level 3 <span class="text-sm font-normal text-slate-400">· 420 XP</span></p>
+            </div>
+            <div class="flex-1 max-w-xs ml-6">
+              <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-700"><div class="h-2.5 rounded-full gradient-bg" style="width:70%"></div></div>
+              <p class="text-xs text-slate-400 mt-1 text-right">80 XP to Level 4</p>
+            </div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center">
+              <div class="w-14 h-14 mx-auto rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center text-2xl mb-3">🔥</div>
+              <p class="font-semibold text-sm">7-Day Streak</p>
+              <p class="text-xs text-slate-400 mt-1">Unlocked Aug 18, 2026</p>
+            </div>
+            <div class="rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center">
+              <div class="w-14 h-14 mx-auto rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-2xl mb-3">🌱</div>
+              <p class="font-semibold text-sm">First Habit Created</p>
+              <p class="text-xs text-slate-400 mt-1">Unlocked Jul 20, 2026</p>
+            </div>
+            <div class="rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center">
+              <div class="w-14 h-14 mx-auto rounded-full bg-brand-50 dark:bg-brand-700/20 text-brand-600 flex items-center justify-center text-2xl mb-3">💯</div>
+              <p class="font-semibold text-sm">50 Check-ins</p>
+              <p class="text-xs text-slate-400 mt-1">Unlocked Aug 10, 2026</p>
+            </div>
+            <div class="rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-center">
+              <div class="w-14 h-14 mx-auto rounded-full bg-brand-50 dark:bg-brand-700/20 text-brand-600 flex items-center justify-center text-2xl mb-3">🌅</div>
+              <p class="font-semibold text-sm">Early Bird</p>
+              <p class="text-xs text-slate-400 mt-1">Checked in before 7 AM, 5 days running</p>
+            </div>
+            <div class="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 text-center relative opacity-70">
+              <div class="w-14 h-14 mx-auto rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 flex items-center justify-center text-2xl mb-3"><i class="fa-solid fa-lock text-lg"></i></div>
+              <p class="font-semibold text-sm text-slate-500">30-Day Streak</p>
+              <p class="text-xs text-slate-400 mt-1">18 more days to go</p>
+            </div>
+            <div class="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 text-center relative opacity-70">
+              <div class="w-14 h-14 mx-auto rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 flex items-center justify-center text-2xl mb-3"><i class="fa-solid fa-lock text-lg"></i></div>
+              <p class="font-semibold text-sm text-slate-500">100 Check-ins</p>
+              <p class="text-xs text-slate-400 mt-1">92 more to go</p>
+            </div>
+            <div class="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 text-center relative opacity-70">
+              <div class="w-14 h-14 mx-auto rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 flex items-center justify-center text-2xl mb-3"><i class="fa-solid fa-lock text-lg"></i></div>
+              <p class="font-semibold text-sm text-slate-500">Perfect Week</p>
+              <p class="text-xs text-slate-400 mt-1">Complete every habit, 7 days straight</p>
+            </div>
+            <div class="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 text-center relative opacity-70">
+              <div class="w-14 h-14 mx-auto rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 flex items-center justify-center text-2xl mb-3"><i class="fa-solid fa-lock text-lg"></i></div>
+              <p class="font-semibold text-sm text-slate-500">100-Day Streak</p>
+              <p class="text-xs text-slate-400 mt-1">88 more days to go</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: JOURNAL (new in MVP-02) -->
+        <div id="app-journal" class="app-page hidden">
+          <div class="mb-6">
+            <h2 class="font-display text-2xl font-bold">Journal</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">A short daily reflection, separate from your habit check-ins.</p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 mb-6">
+            <p class="font-semibold text-sm mb-3">How did today go?</p>
+            <div id="journal-mood-picker" class="flex gap-2 mb-4">
+              <button type="button" onclick="selectJournalMood(this)" class="journal-mood text-2xl w-11 h-11 rounded-full border-2 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700">😞</button>
+              <button type="button" onclick="selectJournalMood(this)" class="journal-mood text-2xl w-11 h-11 rounded-full border-2 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700">🙁</button>
+              <button type="button" onclick="selectJournalMood(this)" class="journal-mood text-2xl w-11 h-11 rounded-full border-2 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700">😐</button>
+              <button type="button" onclick="selectJournalMood(this)" class="journal-mood text-2xl w-11 h-11 rounded-full border-2 border-brand-500 bg-brand-50 dark:bg-brand-700/20 selected">🙂</button>
+              <button type="button" onclick="selectJournalMood(this)" class="journal-mood text-2xl w-11 h-11 rounded-full border-2 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700">😄</button>
+            </div>
+            <textarea id="journal-text" rows="3" placeholder="Write a quick reflection..." class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm"></textarea>
+            <button onclick="saveJournalEntry()" class="mt-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm">Save Entry</button>
+          </div>
+
+          <div id="journal-entries" class="space-y-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex gap-4">
+              <div class="text-2xl">🙂</div>
+              <div><p class="text-xs text-slate-400 mb-1">Aug 17, 2026</p><p class="text-sm">Good day overall — got the run in early and felt great the rest of the day.</p></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex gap-4">
+              <div class="text-2xl">😐</div>
+              <div><p class="text-xs text-slate-400 mb-1">Aug 16, 2026</p><p class="text-sm">Skipped the run, felt tired all day. Need to sleep earlier tonight.</p></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex gap-4">
+              <div class="text-2xl">😄</div>
+              <div><p class="text-xs text-slate-400 mb-1">Aug 15, 2026</p><p class="text-sm">Best day this week — hit every habit and finished a whole chapter of my book.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: FEEDBACK (new in MVP-03) -->
+        <div id="app-feedback" class="app-page hidden">
+          <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 class="font-display text-2xl font-bold">Feedback &amp; Roadmap</h2>
+              <p class="text-slate-500 dark:text-slate-400 text-sm">Suggest features, vote on what matters most, and see what's coming.</p>
+            </div>
+            <a href="#" onclick="showToast('Opening public roadmap (demo)'); return false;" class="text-sm font-medium text-brand-600 flex items-center gap-1.5">View public roadmap <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></a>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 mb-6">
+            <p class="font-semibold text-sm mb-3">Suggest a feature</p>
+            <div class="flex gap-3">
+              <input id="feedback-input" type="text" placeholder="What should we build next?" class="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm">
+              <button onclick="submitFeedback()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm">Submit</button>
+            </div>
+          </div>
+
+          <div id="feedback-list" class="space-y-3">
+            <div class="feedback-item bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex items-center gap-4">
+              <button onclick="upvoteFeedback(this)" class="flex flex-col items-center px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-brand-50 dark:hover:bg-brand-700/20">
+                <i class="fa-solid fa-caret-up text-brand-600"></i><span class="vote-count text-sm font-bold">64</span>
+              </button>
+              <div class="flex-1"><p class="text-sm font-medium">Apple Watch app for quick check-ins</p><span class="text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full">Planned</span></div>
+            </div>
+            <div class="feedback-item bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex items-center gap-4">
+              <button onclick="upvoteFeedback(this)" class="flex flex-col items-center px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-brand-50 dark:hover:bg-brand-700/20">
+                <i class="fa-solid fa-caret-up text-brand-600"></i><span class="vote-count text-sm font-bold">41</span>
+              </button>
+              <div class="flex-1"><p class="text-sm font-medium">Team/family shared routines</p><span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2 py-0.5 rounded-full">In progress</span></div>
+            </div>
+            <div class="feedback-item bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex items-center gap-4">
+              <button onclick="upvoteFeedback(this)" class="flex flex-col items-center px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-brand-50 dark:hover:bg-brand-700/20">
+                <i class="fa-solid fa-caret-up text-brand-600"></i><span class="vote-count text-sm font-bold">19</span>
+              </button>
+              <div class="flex-1"><p class="text-sm font-medium">Dark-mode-only auto schedule (sunset to sunrise)</p><span class="text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-0.5 rounded-full">Under review</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: CALENDAR -->
+        <div id="app-calendar" class="app-page hidden">
+          <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <h2 class="font-display text-2xl font-bold">Calendar</h2>
+            <div class="flex items-center gap-2">
+              <button id="gcal-connect-btn" onclick="connectCalendar('Google', this)" class="text-xs font-semibold border border-slate-200 dark:border-slate-600 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5"><i class="fa-brands fa-google text-rose-500"></i> Connect Google Calendar</button>
+              <button id="acal-connect-btn" onclick="connectCalendar('Apple', this)" class="text-xs font-semibold border border-slate-200 dark:border-slate-600 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5"><i class="fa-brands fa-apple"></i> Connect Apple Calendar</button>
+              <button class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-chevron-left"></i></button>
+              <span class="font-semibold px-2">August 2026</span>
+              <button class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+            <div class="flex items-center gap-4 text-xs font-semibold mb-5">
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600"><i class="fa-solid fa-check"></i> All done</span>
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600"><i class="fa-solid fa-minus"></i> Partial</span>
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-500"><i class="fa-solid fa-xmark"></i> Missed</span>
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-700/20 text-brand-600"><i class="fa-solid fa-circle text-[8px]"></i> Today</span>
+            </div>
+            <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 bg-slate-50 dark:bg-slate-700/40 rounded-lg py-2">
+              <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
+          </div>
+        </div>
+
+        <!-- APP PAGE: PROFILE / SETTINGS -->
+        <div id="app-profile" class="app-page hidden">
+          <h2 class="font-display text-2xl font-bold mb-6">Profile &amp; Settings</h2>
+          <div class="grid lg:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6 text-center h-fit">
+              <div class="w-20 h-20 rounded-full gradient-bg text-white flex items-center justify-center font-display font-bold text-2xl mx-auto mb-3">JD</div>
+              <p class="font-semibold">Jane Doe</p>
+              <p class="text-sm text-slate-400">jane@example.com</p>
+              <p class="text-xs text-slate-400 mt-1">Member since Aug 2026</p>
+              <div class="grid grid-cols-3 gap-2 mt-5 text-center">
+                <div><p class="font-bold text-brand-600">5</p><p class="text-[11px] text-slate-400">Routines</p></div>
+                <div><p class="font-bold text-amber-500">27</p><p class="text-[11px] text-slate-400">Best streak</p></div>
+                <div><p class="font-bold text-emerald-500">83%</p><p class="text-[11px] text-slate-400">Consistency</p></div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+              <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+                <h3 class="font-semibold mb-4">Account</h3>
+                <div class="grid sm:grid-cols-2 gap-4">
+                  <div><label class="text-xs font-medium text-slate-500">Full name</label><input value="Jane Doe" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm"></div>
+                  <div><label class="text-xs font-medium text-slate-500">Email</label><input value="jane@example.com" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm"></div>
+                </div>
+                <button onclick="showToast('Account details saved')" class="mt-4 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Save Changes</button>
+              </div>
+
+              <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+                <h3 class="font-semibold mb-4">Preferences</h3>
+                <div class="flex items-center justify-between py-2">
+                  <div><p class="text-sm font-medium">Dark mode</p><p class="text-xs text-slate-400">Switch between light and dark theme</p></div>
+                  <label class="switch relative inline-block">
+                    <input type="checkbox" class="opacity-0 w-0 h-0 peer" onchange="toggleTheme()">
+                    <span class="switch-track absolute cursor-pointer inset-0 bg-slate-300 dark:bg-slate-600 rounded-full transition"><span class="switch-thumb absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition"></span></span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700 mt-2 pt-4">
+                  <div><p class="text-sm font-medium">Push reminders</p><p class="text-xs text-slate-400">Get notified at each habit's reminder time</p></div>
+                  <label class="switch relative inline-block">
+                    <input type="checkbox" checked class="opacity-0 w-0 h-0 peer">
+                    <span class="switch-track absolute cursor-pointer inset-0 bg-slate-300 dark:bg-slate-600 rounded-full transition"><span class="switch-thumb absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition"></span></span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700 mt-2 pt-4">
+                  <div><p class="text-sm font-medium">Daily digest email</p><p class="text-xs text-slate-400">Summary of today's habits each morning</p></div>
+                  <label class="switch relative inline-block">
+                    <input type="checkbox" class="opacity-0 w-0 h-0 peer">
+                    <span class="switch-track absolute cursor-pointer inset-0 bg-slate-300 dark:bg-slate-600 rounded-full transition"><span class="switch-thumb absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition"></span></span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700 mt-2 pt-4">
+                  <div><p class="text-sm font-medium">Weekly email summary <span class="text-[10px] font-semibold text-brand-600 bg-brand-50 dark:bg-brand-700/20 px-1.5 py-0.5 rounded ml-1">NEW</span></p><p class="text-xs text-slate-400">"Your week in review" every Monday</p></div>
+                  <label class="switch relative inline-block">
+                    <input type="checkbox" checked class="opacity-0 w-0 h-0 peer">
+                    <span class="switch-track absolute cursor-pointer inset-0 bg-slate-300 dark:bg-slate-600 rounded-full transition"><span class="switch-thumb absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition"></span></span>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700 mt-2 pt-4">
+                  <div><p class="text-sm font-medium">Install RoutineMate <span class="text-[10px] font-semibold text-brand-600 bg-brand-50 dark:bg-brand-700/20 px-1.5 py-0.5 rounded ml-1">NEW</span></p><p class="text-xs text-slate-400">Add to your home screen, works offline</p></div>
+                  <button onclick="showToast('App installed (demo) — find it on your home screen')" class="text-xs font-semibold border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Install</button>
+                </div>
+                <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700 mt-2 pt-4">
+                  <div><p class="text-sm font-medium">Language <span class="text-[10px] font-semibold text-brand-600 bg-brand-50 dark:bg-brand-700/20 px-1.5 py-0.5 rounded ml-1">NEW</span></p><p class="text-xs text-slate-400">Interface language and date formats</p></div>
+                  <select onchange="showToast('Language changed to ' + this.value + ' (demo)')" class="text-sm border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg px-3 py-1.5">
+                    <option>English</option><option>Español</option><option>हिन्दी</option><option>Français</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Billing (new in MVP-03) -->
+              <div class="bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6">
+                <h3 class="font-semibold mb-4">Billing</h3>
+                <div id="billing-free-state" class="flex items-center justify-between">
+                  <div><p class="text-sm font-medium">Current plan: <span class="font-bold">Free</span></p><p class="text-xs text-slate-400">Upgrade for challenges, AI insights, calendar sync &amp; more</p></div>
+                  <button data-modal-open="modal-upgrade" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 text-white font-semibold px-4 py-2 rounded-lg text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Upgrade to Pro</button>
+                </div>
+                <div id="billing-pro-state" class="hidden flex items-center justify-between">
+                  <div><p class="text-sm font-medium">Current plan: <span class="font-bold">Pro</span> <span class="pro-badge ml-1">PRO</span></p><p class="text-xs text-slate-400">Renews Sep 18, 2026 · $6.99/mo</p></div>
+                  <button onclick="showToast('Subscription management (demo)')" class="text-sm font-medium border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Manage</button>
+                </div>
+              </div>
+
+              <div class="bg-white dark:bg-slate-800 rounded-2xl border border-rose-200 dark:border-rose-500/30 p-6">
+                <h3 class="font-semibold mb-1 text-rose-500">Danger Zone</h3>
+                <p class="text-xs text-slate-400 mb-4">Deleting your account removes all routines and history permanently.</p>
+                <button onclick="showToast('This is a prototype — no account was deleted')" class="border border-rose-300 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-sm font-semibold px-4 py-2 rounded-lg">Delete Account</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODAL: CREATE / EDIT ROUTINE ============ -->
+<div id="modal-routine" class="modal-overlay hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center px-4">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 card-shadow">
+    <div class="flex items-center justify-between mb-5">
+      <h3 id="modal-title" class="font-display font-bold text-lg">Create New Routine</h3>
+      <button onclick="closeModal('modal-routine')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="form-routine" onsubmit="submitRoutineForm(event)" class="space-y-4">
+      <div>
+        <label class="text-sm font-medium block mb-2">Quick start (optional)</label>
+        <div id="template-chips" class="flex flex-wrap gap-2">
+          <button type="button" onclick="applyTemplate(this,'💧','Drink Water','Health','Daily','08:00')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">💧 Drink Water</button>
+          <button type="button" onclick="applyTemplate(this,'🧘','Meditate','Mindfulness','Daily','06:30')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">🧘 Meditate</button>
+          <button type="button" onclick="applyTemplate(this,'📚','Read 20 pages','Learning','Daily','21:00')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">📚 Read</button>
+          <button type="button" onclick="applyTemplate(this,'🏃','Exercise','Health','Mon/Wed/Fri','06:00')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">🏃 Exercise</button>
+          <button type="button" onclick="applyTemplate(this,'😴','Sleep by 11 PM','Wellness','Daily','23:00')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">😴 Sleep</button>
+          <button type="button" onclick="applyTemplate(this,'🚭','Quit Smoking','Health','Daily','09:00')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">🚭 Quit Smoking</button>
+          <button type="button" onclick="applyTemplate(this,'✍️','Journal','Mindfulness','Daily','21:30')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">✍️ Journal</button>
+          <button type="button" onclick="applyTemplate(this,'🥗','Eat Healthy','Wellness','Daily','12:00')" class="template-chip text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">🥗 Eat Healthy</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-1">Habit name</label>
+        <input id="routine-name" required type="text" placeholder="e.g. Drink Water" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium block mb-1">Icon</label>
+          <select id="routine-emoji" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700">
+            <option value="💧">💧 Water</option>
+            <option value="🧘">🧘 Meditation</option>
+            <option value="📚">📚 Reading</option>
+            <option value="🏃">🏃 Exercise</option>
+            <option value="😴">😴 Sleep</option>
+            <option value="✅">✅ General</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm font-medium block mb-1">Category</label>
+          <select id="routine-category" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700">
+            <option>Health</option><option>Mindfulness</option><option>Learning</option><option>Wellness</option><option>Productivity</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-1">Frequency</label>
+        <select id="routine-frequency" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700">
+          <option>Daily</option><option>Mon/Wed/Fri</option><option>Weekdays</option><option>Custom</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-1">Reminder</label>
+        <div class="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 mb-2 text-sm font-medium">
+          <button type="button" id="reminder-tab-time" onclick="setReminderType('time')" class="reminder-tab active flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-clock text-xs"></i> Time-based</button>
+          <button type="button" id="reminder-tab-location" onclick="setReminderType('location')" class="reminder-tab flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-location-dot text-xs"></i> Location-based</button>
+        </div>
+        <input id="routine-time" type="time" value="08:00" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700">
+        <input id="routine-location" type="text" placeholder="e.g. Home, Gym, Office" class="hidden w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700">
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeModal('modal-routine')" class="flex-1 border border-slate-200 dark:border-slate-600 font-semibold py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
+        <button id="modal-submit-btn" type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">Create Routine</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: CREATE GOAL (new in MVP-02) ============ -->
+<div id="modal-goal" class="modal-overlay hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center px-4">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 card-shadow">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-bold text-lg">Create New Goal</h3>
+      <button onclick="closeModal('modal-goal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="form-goal" onsubmit="submitGoalForm(event)" class="space-y-4">
+      <div>
+        <label class="text-sm font-medium block mb-1">Goal title</label>
+        <input id="goal-title" required type="text" placeholder="e.g. Run a 5K" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-1">Target date</label>
+        <input id="goal-date" type="date" value="2026-09-29" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700">
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-2">Link habits (optional)</label>
+        <div class="flex flex-wrap gap-2">
+          <label class="text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="rounded"> 💧 Drink Water</label>
+          <label class="text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="rounded"> 🧘 Meditation</label>
+          <label class="text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="rounded"> 📚 Read 20 pages</label>
+          <label class="text-xs font-medium border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="rounded" checked> 🏃 Run 3km</label>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeModal('modal-goal')" class="flex-1 border border-slate-200 dark:border-slate-600 font-semibold py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
+        <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">Create Goal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: CREATE BUNDLE (new in MVP-03) ============ -->
+<div id="modal-bundle" class="modal-overlay hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center px-4">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 card-shadow">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-bold text-lg">Create Routine Bundle</h3>
+      <button onclick="closeModal('modal-bundle')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="form-bundle" onsubmit="submitBundleForm(event)" class="space-y-4">
+      <div>
+        <label class="text-sm font-medium block mb-1">Bundle name</label>
+        <input id="bundle-name" required type="text" placeholder="e.g. Evening Wind-down" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-2">Habits, in order</label>
+        <p class="text-xs text-slate-400 mb-2">Check habits in the order you want them to run.</p>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 cursor-pointer"><input type="checkbox" class="rounded"> 💧 Drink Water</label>
+          <label class="flex items-center gap-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 cursor-pointer"><input type="checkbox" class="rounded"> 🧘 Morning Meditation</label>
+          <label class="flex items-center gap-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 cursor-pointer"><input type="checkbox" class="rounded"> 📚 Read 20 pages</label>
+          <label class="flex items-center gap-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 cursor-pointer"><input type="checkbox" class="rounded"> 🏃 Run 3km</label>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeModal('modal-bundle')" class="flex-1 border border-slate-200 dark:border-slate-600 font-semibold py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
+        <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">Create Bundle</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: FOCUS TIMER (new in MVP-03) ============ -->
+<div id="modal-timer" class="modal-overlay hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center px-4">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-6 card-shadow text-center">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-bold text-lg">Focus Timer</h3>
+      <button onclick="closeModal('modal-timer')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p class="text-sm text-slate-400 mb-4">💧 Drink Water</p>
+    <p id="timer-display" class="font-display text-5xl font-bold mb-6">00:00</p>
+    <div class="flex gap-3">
+      <button id="timer-startpause-btn" onclick="toggleTimer()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg"><i class="fa-solid fa-play mr-1"></i> Start</button>
+      <button onclick="completeTimer()" class="flex-1 border border-slate-200 dark:border-slate-600 font-semibold py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Complete Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: UPGRADE TO PRO (new in MVP-03) ============ -->
+<div id="modal-upgrade" class="modal-overlay hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center px-4">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 card-shadow">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-bold text-lg">Upgrade to Pro</h3>
+      <button onclick="closeModal('modal-upgrade')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="rounded-xl bg-slate-50 dark:bg-slate-700/40 p-4 mb-4">
+      <p class="font-semibold text-sm mb-2">Pro includes:</p>
+      <ul class="space-y-1.5 text-sm text-slate-600 dark:text-slate-300">
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Unlimited challenges &amp; friends</li>
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>AI-generated weekly insights</li>
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Calendar sync &amp; focus timer</li>
+        <li><i class="fa-solid fa-check text-emerald-500 mr-2"></i>Priority support</li>
+      </ul>
+    </div>
+    <form onsubmit="submitUpgrade(event)" class="space-y-3">
+      <input required type="text" placeholder="Cardholder name" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm">
+      <input required type="text" placeholder="Card number" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm">
+      <div class="grid grid-cols-2 gap-3">
+        <input required type="text" placeholder="MM / YY" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm">
+        <input required type="text" placeholder="CVC" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm">
+      </div>
+      <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg mt-2">Subscribe — $6.99/mo</button>
+      <p class="text-center text-xs text-slate-400">Demo checkout — no card is charged.</p>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: CREATE CHALLENGE (new in MVP-03) ============ -->
+<div id="modal-challenge" class="modal-overlay hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center px-4">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 card-shadow">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display font-bold text-lg">Create Challenge</h3>
+      <button onclick="closeModal('modal-challenge')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="submitChallengeForm(event)" class="space-y-4">
+      <div>
+        <label class="text-sm font-medium block mb-1">Challenge title</label>
+        <input required type="text" placeholder="e.g. 30-Day Meditation Challenge" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-medium block mb-1">Duration (days)</label><input type="number" value="30" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700"></div>
+        <div><label class="text-sm font-medium block mb-1">Visibility</label>
+          <select class="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700"><option>Private (invite only)</option><option>Public</option></select>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeModal('modal-challenge')" class="flex-1 border border-slate-200 dark:border-slate-600 font-semibold py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
+        <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast fixed bottom-6 right-6 bg-slate-900 text-white text-sm font-medium px-5 py-3 rounded-lg shadow-lg opacity-0 pointer-events-none z-[60]">Saved</div>
+
+<script>
+  // ---------- Screen navigation ----------
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      showScreen(el.getAttribute('data-nav'));
+    });
+  });
+
+  // ---------- App shell page navigation ----------
+  const pageTitles = { 'app-dashboard':'Dashboard', 'app-routines':'Routines', 'app-routine-detail':'Routine Detail', 'app-goals':'Goals', 'app-challenges':'Challenges', 'app-challenge-detail':'Challenge Detail', 'app-friends':'Friends & Leaderboard', 'app-stats':'Stats & Insights', 'app-achievements':'Achievements', 'app-journal':'Journal', 'app-calendar':'Calendar', 'app-feedback':'Feedback', 'app-profile':'Profile & Settings' };
+  function showAppPage(id) {
+    document.querySelectorAll('.app-page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.getElementById('app-page-title').textContent = pageTitles[id] || '';
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    let navKey = id === 'app-routine-detail' ? 'app-routines' : (id === 'app-challenge-detail' ? 'app-challenges' : id);
+    const activeLink = document.querySelector('[data-appnav="'+navKey+'"]');
+    if (activeLink) activeLink.classList.add('active');
+    document.querySelector('#screen-app main').scrollTop = 0;
+    if (id === 'app-stats') renderStatsCharts();
+  }
+  document.querySelectorAll('[data-appnav]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      showAppPage(el.getAttribute('data-appnav'));
+    });
+  });
+
+  // ---------- Auth form submits ----------
+  document.getElementById('form-register').addEventListener('submit', e => {
+    e.preventDefault();
+    showScreen('screen-onboarding');
+    obGoTo(1);
+  });
+  document.getElementById('form-login').addEventListener('submit', e => {
+    e.preventDefault();
+    showScreen('screen-app');
+    showAppPage('app-dashboard');
+    showToast('Welcome back, Jane!');
+  });
+
+  // ---------- Onboarding wizard (MVP-02) ----------
+  function toggleObCategory(btn) {
+    btn.classList.toggle('selected');
+    btn.classList.toggle('border-brand-500');
+    btn.classList.toggle('bg-brand-50');
+    btn.classList.toggle('dark:bg-brand-700/20');
+    btn.classList.toggle('border-slate-200');
+    btn.classList.toggle('dark:border-slate-600');
+  }
+  function obGoTo(step) {
+    document.querySelectorAll('.ob-step').forEach(s => s.classList.add('hidden'));
+    document.getElementById('ob-step-' + step).classList.remove('hidden');
+    for (let i = 1; i <= 3; i++) {
+      const dot = document.getElementById('ob-dot-' + i);
+      dot.classList.toggle('bg-brand-600', i <= step);
+      dot.classList.toggle('bg-slate-200', i > step);
+      dot.classList.toggle('dark:bg-slate-700', i > step);
+    }
+  }
+  function finishOnboarding() {
+    showScreen('screen-app');
+    showAppPage('app-dashboard');
+    showToast('Welcome to RoutineMate! Your starter habits are ready 🎉');
+  }
+
+  // ---------- Habit check toggle + progress ring ----------
+  function toggleCheck(btn) {
+    btn.classList.toggle('completed');
+    recalcProgress();
+  }
+  function recalcProgress() {
+    const all = document.querySelectorAll('#today-list .check-btn');
+    const done = document.querySelectorAll('#today-list .check-btn.completed').length;
+    const total = all.length;
+    const pct = total ? Math.round((done/total)*100) : 0;
+    document.getElementById('progress-pct-text').textContent = pct + '%';
+    document.getElementById('progress-ring').style.setProperty('--pct', pct);
+    document.getElementById('today-count-text').textContent = done + ' of ' + total + ' done';
+  }
+
+  function markDetailComplete(btn) {
+    btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Completed Today';
+    btn.classList.remove('bg-emerald-500','hover:bg-emerald-600');
+    btn.classList.add('bg-slate-200','dark:bg-slate-700','text-slate-500','cursor-default');
+    btn.disabled = true;
+    showToast('Nice work! Streak updated 🔥');
+  }
+
+  // ---------- Modal ----------
+  function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
+  function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+  document.querySelectorAll('[data-modal-open]').forEach(el => {
+    el.addEventListener('click', () => openModal(el.getAttribute('data-modal-open')));
+  });
+  document.getElementById('modal-routine').addEventListener('click', e => {
+    if (e.target.id === 'modal-routine') closeModal('modal-routine');
+  });
+
+  let editingCard = null;
+  function prepModalForCreate() {
+    editingCard = null;
+    document.getElementById('modal-title').textContent = 'Create New Routine';
+    document.getElementById('modal-submit-btn').textContent = 'Create Routine';
+    document.getElementById('form-routine').reset();
+    document.getElementById('routine-time').value = '08:00';
+    document.querySelectorAll('.template-chip').forEach(c => c.classList.remove('selected'));
+    setReminderType('time');
+  }
+  function prepModalForEdit(el) {
+    const card = el.closest('.routine-card');
+    editingCard = card;
+    document.getElementById('modal-title').textContent = 'Edit Routine';
+    document.getElementById('modal-submit-btn').textContent = 'Save Changes';
+    document.getElementById('routine-name').value = card.dataset.name;
+    document.getElementById('routine-emoji').value = card.dataset.emoji || '✅';
+    document.querySelectorAll('.template-chip').forEach(c => c.classList.remove('selected'));
+    setReminderType('time');
+  }
+
+  // ---------- Habit template picker ----------
+  function applyTemplate(chip, emoji, name, category, frequency, time) {
+    document.querySelectorAll('.template-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    document.getElementById('routine-name').value = name;
+    document.getElementById('routine-emoji').value = emoji;
+    document.getElementById('routine-category').value = category;
+    document.getElementById('routine-frequency').value = frequency;
+    setReminderType('time');
+    document.getElementById('routine-time').value = time;
+  }
+
+  // ---------- Reminder type (time-based vs location-based) ----------
+  function setReminderType(type) {
+    const timeInput = document.getElementById('routine-time');
+    const locInput = document.getElementById('routine-location');
+    const timeTab = document.getElementById('reminder-tab-time');
+    const locTab = document.getElementById('reminder-tab-location');
+    if (type === 'location') {
+      timeInput.classList.add('hidden');
+      locInput.classList.remove('hidden');
+      locTab.classList.add('active');
+      timeTab.classList.remove('active');
+    } else {
+      locInput.classList.add('hidden');
+      timeInput.classList.remove('hidden');
+      timeTab.classList.add('active');
+      locTab.classList.remove('active');
+    }
+  }
+
+  // ---------- Routines grid/list view toggle ----------
+  function setRoutinesView(view) {
+    const grid = document.getElementById('routines-grid');
+    const gridBtn = document.getElementById('view-grid-btn');
+    const listBtn = document.getElementById('view-list-btn');
+    if (view === 'list') {
+      grid.classList.remove('grid','sm:grid-cols-2','xl:grid-cols-3','gap-5');
+      grid.classList.add('view-list');
+      listBtn.classList.add('active');
+      gridBtn.classList.remove('active');
+    } else {
+      grid.classList.add('grid','sm:grid-cols-2','xl:grid-cols-3','gap-5');
+      grid.classList.remove('view-list');
+      gridBtn.classList.add('active');
+      listBtn.classList.remove('active');
+    }
+  }
+
+  // ---------- Stats charts ----------
+  let chartsRendered = false;
+  function renderStatsCharts() {
+    if (chartsRendered) return;
+    if (typeof Chart === 'undefined') { console.error('Chart.js failed to load — check network/CDN access.'); return; }
+    chartsRendered = true;
+    const weeklyCtx = document.getElementById('chart-weekly');
+    new Chart(weeklyCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [{ label: 'Completion %', data: [80,100,60,100,80,40,60], backgroundColor: '#4F46E5', borderRadius: 6, maxBarThickness: 36 }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
+      }
+    });
+    const categoryCtx = document.getElementById('chart-category');
+    new Chart(categoryCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Health','Mindfulness','Learning','Wellness'],
+        datasets: [{ data: [2,1,1,1], backgroundColor: ['#4F46E5','#10B981','#F59E0B','#38bdf8'] }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+    });
+
+    // 30-day completion trend
+    const trendData = [55,60,58,65,70,62,68,75,72,80,78,74,82,79,85,88,83,90,86,92,89,95,91,88,94,90,96,93,89,97];
+    const trendDayLabels = Array.from({length: 30}, (_, i) => (i % 5 === 0 ? 'Day ' + (i + 1) : ''));
+    new Chart(document.getElementById('chart-trend'), {
+      type: 'line',
+      data: {
+        labels: trendDayLabels,
+        datasets: [{
+          label: 'Completion %',
+          data: trendData,
+          borderColor: '#4F46E5',
+          backgroundColor: 'rgba(79,70,229,0.12)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }, x: { ticks: { autoSkip: true, maxRotation: 0 } } }
+      }
+    });
+
+    // Activity by time of day
+    new Chart(document.getElementById('chart-timeofday'), {
+      type: 'bar',
+      data: {
+        labels: ['Morning','Afternoon','Evening','Night'],
+        datasets: [{ data: [62,8,45,20], backgroundColor: ['#4F46E5','#38bdf8','#F59E0B','#64748b'], borderRadius: 6 }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+
+    // Current streaks by habit
+    new Chart(document.getElementById('chart-streaks'), {
+      type: 'bar',
+      data: {
+        labels: ['💧 Drink Water','🧘 Meditation','📚 Read 20 pages','🏃 Run 3km','😴 Sleep by 11 PM'],
+        datasets: [{ label: 'Current streak (days)', data: [12,27,5,3,8], backgroundColor: '#10B981', borderRadius: 6, maxBarThickness: 28 }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, title: { display: true, text: 'Days' } } }
+      }
+    });
+  }
+
+  function submitRoutineForm(e) {
+    e.preventDefault();
+    const name = document.getElementById('routine-name').value || 'New Habit';
+    const emoji = document.getElementById('routine-emoji').value;
+    const category = document.getElementById('routine-category').value;
+    const frequency = document.getElementById('routine-frequency').value;
+    const isLocationBased = document.getElementById('reminder-tab-location').classList.contains('active');
+    const time = isLocationBased
+      ? ('at ' + (document.getElementById('routine-location').value || 'a location'))
+      : document.getElementById('routine-time').value;
+
+    if (editingCard) {
+      editingCard.dataset.name = name;
+      editingCard.dataset.emoji = emoji;
+      editingCard.querySelector('.text-2xl').textContent = emoji;
+      editingCard.querySelector('.font-semibold').textContent = name;
+      editingCard.querySelector('.text-xs.text-slate-400').textContent = frequency + ' · ' + time;
+      showToast('Routine updated');
+    } else {
+      const grid = document.getElementById('routines-grid');
+      const card = document.createElement('div');
+      card.className = 'routine-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5';
+      card.dataset.name = name;
+      card.dataset.emoji = emoji;
+      card.innerHTML = `
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3 cursor-pointer" onclick="showAppPage('app-routine-detail')">
+            <span class="text-2xl">${emoji}</span>
+            <div><p class="font-semibold">${name}</p><p class="text-xs text-slate-400">${frequency} · ${time}</p></div>
+          </div>
+          <div class="flex gap-1">
+            <button onclick="prepModalForEdit(this)" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" data-modal-open="modal-routine"><i class="fa-solid fa-pen text-xs"></i></button>
+            <button onclick="deleteRoutine(this)" class="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
+        </div>
+        <span class="inline-block text-xs font-medium bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2 py-1 rounded-full mb-3">${category}</span>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-amber-500 font-semibold"><i class="fa-solid fa-fire mr-1"></i>0 day streak</span>
+          <button onclick="togglePause(this)" class="text-xs font-medium text-slate-500 border border-slate-200 dark:border-slate-600 px-2.5 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700">Pause</button>
+        </div>`;
+      grid.prepend(card);
+      card.querySelectorAll('[data-modal-open]').forEach(elm => elm.addEventListener('click', () => openModal(elm.getAttribute('data-modal-open'))));
+      showToast('Routine created 🎉');
+    }
+    closeModal('modal-routine');
+  }
+
+  // ---------- Goals (MVP-02) ----------
+  function submitGoalForm(e) {
+    e.preventDefault();
+    const title = document.getElementById('goal-title').value || 'New Goal';
+    const date = document.getElementById('goal-date').value;
+    const dateLabel = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date set';
+    const linked = Array.from(document.querySelectorAll('#form-goal input[type="checkbox"]:checked'))
+      .map(cb => cb.closest('label').textContent.trim());
+    const grid = document.getElementById('goals-grid');
+    const card = document.createElement('div');
+    card.className = 'goal-card bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-6';
+    card.innerHTML = `
+      <div class="flex items-start justify-between mb-3">
+        <div><span class="text-2xl">🎯</span><h3 class="font-semibold mt-2">${title}</h3><p class="text-xs text-slate-400">Target: ${dateLabel}</p></div>
+        <span class="text-xs font-semibold bg-brand-50 dark:bg-brand-700/20 text-brand-600 px-2.5 py-1 rounded-full">Active</span>
+      </div>
+      <div class="h-2.5 rounded-full bg-slate-100 dark:bg-slate-700 mb-2"><div class="h-2.5 rounded-full bg-brand-600" style="width:0%"></div></div>
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-slate-400">0% complete</span>
+        <span class="text-xs bg-slate-50 dark:bg-slate-700 px-2 py-1 rounded-full">${linked.length ? linked.join(', ') : 'No habits linked'}</span>
+      </div>`;
+    grid.prepend(card);
+    document.getElementById('form-goal').reset();
+    closeModal('modal-goal');
+    showToast('Goal created 🎯');
+  }
+
+  function deleteRoutine(el) {
+    const card = el.closest('.routine-card');
+    card.remove();
+    showToast('Routine deleted');
+  }
+
+  function togglePause(btn) {
+    const card = btn.closest('.routine-card');
+    const paused = card.classList.toggle('opacity-60');
+    btn.textContent = paused ? 'Resume' : 'Pause';
+    showToast(paused ? 'Routine paused' : 'Routine resumed');
+  }
+
+  // ---------- Theme ----------
+  function toggleTheme() {
+    document.documentElement.classList.toggle('dark');
+  }
+
+  // ---------- Sidebar collapse/expand ----------
+  function toggleSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const collapsed = sidebar.getAttribute('data-collapsed') === 'true';
+    sidebar.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
+    sidebar.classList.toggle('w-64', collapsed);
+    sidebar.classList.toggle('w-20', !collapsed);
+  }
+
+  // ---------- Notification Center (MVP-02) ----------
+  function toggleNotifPanel() {
+    document.getElementById('notif-panel').classList.toggle('hidden');
+  }
+  function markAllNotifsRead() {
+    document.getElementById('notif-dot').classList.add('hidden');
+    showToast('All notifications marked as read');
+  }
+  document.addEventListener('click', e => {
+    const panel = document.getElementById('notif-panel');
+    if (!panel || panel.classList.contains('hidden')) return;
+    if (!panel.contains(e.target) && !e.target.closest('[onclick="toggleNotifPanel()"]')) {
+      panel.classList.add('hidden');
+    }
+  });
+
+  // ---------- Challenges (MVP-03) ----------
+  function setChalTab(tab) {
+    document.getElementById('chal-tab-discover').classList.toggle('active', tab === 'discover');
+    document.getElementById('chal-tab-mine').classList.toggle('active', tab === 'mine');
+    document.getElementById('chal-panel-discover').classList.toggle('hidden', tab !== 'discover');
+    document.getElementById('chal-panel-mine').classList.toggle('hidden', tab !== 'mine');
+  }
+  function submitChallengeForm(e) {
+    e.preventDefault();
+    closeModal('modal-challenge');
+    showToast('Challenge created — invite link copied 🎉');
+  }
+
+  // ---------- Friends & Leaderboard (MVP-03) ----------
+  function setFriendsTab(tab) {
+    document.getElementById('lb-tab-friends').classList.toggle('active', tab === 'friends');
+    document.getElementById('lb-tab-leaderboard').classList.toggle('active', tab === 'leaderboard');
+    document.getElementById('friends-panel-friends').classList.toggle('hidden', tab !== 'friends');
+    document.getElementById('friends-panel-leaderboard').classList.toggle('hidden', tab !== 'leaderboard');
+  }
+
+  // ---------- Routine Bundling (MVP-03) ----------
+  function submitBundleForm(e) {
+    e.preventDefault();
+    const name = document.getElementById('bundle-name').value || 'New Bundle';
+    const checked = Array.from(document.querySelectorAll('#form-bundle input[type="checkbox"]:checked')).map(cb => cb.closest('label').textContent.trim());
+    const grid = document.getElementById('bundles-grid');
+    const card = document.createElement('div');
+    card.className = 'bundle-card rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-5';
+    card.innerHTML = `
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-sm flex items-center gap-2"><i class="fa-solid fa-layer-group text-brand-600"></i> ${name}</h3>
+        <span class="text-xs text-amber-500 font-semibold"><i class="fa-solid fa-fire"></i> 0 day streak</span>
+      </div>
+      <div class="flex items-center gap-2 mb-3 flex-wrap"><span class="text-xs text-slate-400">${checked.length ? checked.join(' → ') : 'No habits selected'}</span></div>
+      <button onclick="showToast('Starting guided sequence: ${name}')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold py-2 rounded-lg">Start Sequence</button>`;
+    grid.appendChild(card);
+    document.getElementById('form-bundle').reset();
+    closeModal('modal-bundle');
+    showToast('Bundle created 🎉');
+  }
+
+  // ---------- Focus Timer (MVP-03) ----------
+  let timerSeconds = 0, timerInterval = null, timerRunning = false;
+  function formatTimer(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return m + ':' + sec;
+  }
+  function toggleTimer() {
+    const btn = document.getElementById('timer-startpause-btn');
+    timerRunning = !timerRunning;
+    if (timerRunning) {
+      btn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> Pause';
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        document.getElementById('timer-display').textContent = formatTimer(timerSeconds);
+      }, 1000);
+    } else {
+      btn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> Resume';
+      clearInterval(timerInterval);
+    }
+  }
+  function completeTimer() {
+    clearInterval(timerInterval);
+    const minutes = Math.max(1, Math.round(timerSeconds / 60));
+    showToast('Focus session logged — ' + minutes + ' min 🎯');
+    timerSeconds = 0;
+    timerRunning = false;
+    document.getElementById('timer-display').textContent = '00:00';
+    document.getElementById('timer-startpause-btn').innerHTML = '<i class="fa-solid fa-play mr-1"></i> Start';
+    closeModal('modal-timer');
+  }
+
+  // ---------- Calendar Sync (MVP-03) ----------
+  function connectCalendar(provider, btn) {
+    btn.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i> ' + provider + ' Connected';
+    btn.disabled = true;
+    btn.classList.add('opacity-70','cursor-default');
+    showToast(provider + ' Calendar connected — routine sessions will sync automatically');
+  }
+
+  // ---------- Billing / Upgrade to Pro (MVP-03) ----------
+  function submitUpgrade(e) {
+    e.preventDefault();
+    closeModal('modal-upgrade');
+    document.getElementById('billing-free-state').classList.add('hidden');
+    document.getElementById('billing-pro-state').classList.remove('hidden');
+    showToast('Welcome to RoutineMate Pro! 🌟');
+  }
+
+  // ---------- AI Insights (MVP-03) ----------
+  const insightVariants = [
+    'You\'re most consistent on weekday mornings — your Monday completion rate is 40% higher than weekends. Consider moving "Run 3km" to a morning slot to match your strongest habit window.',
+    'Your "Morning Meditation" streak is your most reliable habit — 97% completion. Pairing a struggling habit right after it could help it stick.',
+    'You tend to skip habits scheduled after 9 PM. Shifting "Read 20 pages" earlier in the evening may improve completion.'
+  ];
+  let insightIndex = 0;
+  function refreshInsights() {
+    insightIndex = (insightIndex + 1) % insightVariants.length;
+    document.getElementById('insight-text').textContent = insightVariants[insightIndex];
+    showToast('Insights refreshed');
+  }
+
+  // ---------- Feedback (MVP-03) ----------
+  function submitFeedback() {
+    const input = document.getElementById('feedback-input');
+    const text = input.value.trim();
+    if (!text) { showToast('Type a suggestion first'); return; }
+    const list = document.getElementById('feedback-list');
+    const item = document.createElement('div');
+    item.className = 'feedback-item bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex items-center gap-4';
+    item.innerHTML = '<button onclick="upvoteFeedback(this)" class="flex flex-col items-center px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-brand-50 dark:hover:bg-brand-700/20"><i class="fa-solid fa-caret-up text-brand-600"></i><span class="vote-count text-sm font-bold">1</span></button><div class="flex-1"><p class="text-sm font-medium">' + text.replace(/</g,'&lt;') + '</p><span class="text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-0.5 rounded-full">Under review</span></div>';
+    list.prepend(item);
+    input.value = '';
+    showToast('Thanks for the suggestion!');
+  }
+  function upvoteFeedback(btn) {
+    const countEl = btn.querySelector('.vote-count');
+    countEl.textContent = parseInt(countEl.textContent, 10) + 1;
+    btn.classList.add('bg-brand-50','dark:bg-brand-700/20');
+  }
+
+  // ---------- Journal (MVP-02) ----------
+  function selectJournalMood(btn) {
+    document.querySelectorAll('.journal-mood').forEach(b => {
+      b.classList.remove('selected','border-brand-500','bg-brand-50','dark:bg-brand-700/20');
+      b.classList.add('border-slate-200','dark:border-slate-600');
+    });
+    btn.classList.add('selected','border-brand-500','bg-brand-50','dark:bg-brand-700/20');
+    btn.classList.remove('border-slate-200','dark:border-slate-600');
+  }
+  function saveJournalEntry() {
+    const text = document.getElementById('journal-text').value.trim();
+    const moodBtn = document.querySelector('.journal-mood.selected');
+    const mood = moodBtn ? moodBtn.textContent : '🙂';
+    if (!text) { showToast('Write a quick note before saving'); return; }
+    const list = document.getElementById('journal-entries');
+    const entry = document.createElement('div');
+    entry.className = 'bg-white dark:bg-slate-800 rounded-2xl card-shadow border border-slate-100 dark:border-slate-700 p-5 flex gap-4';
+    entry.innerHTML = '<div class="text-2xl">' + mood + '</div><div><p class="text-xs text-slate-400 mb-1">Today</p><p class="text-sm">' + text.replace(/</g,'&lt;') + '</p></div>';
+    list.prepend(entry);
+    document.getElementById('journal-text').value = '';
+    showToast('Journal entry saved');
+  }
+  document.querySelectorAll('.dash-mood').forEach(btn => {
+    btn.addEventListener('click', () => showAppPage('app-journal'));
+  });
+
+  // ---------- PWA / Offline simulation (MVP-02) ----------
+  let isOffline = false;
+  function simulateOffline() {
+    isOffline = !isOffline;
+    const btn = document.getElementById('offline-btn');
+    const label = document.getElementById('offline-btn-label');
+    if (isOffline) {
+      label.textContent = 'Offline';
+      btn.classList.add('text-rose-500','border-rose-200');
+      showToast('You\'re offline — check-ins will sync when back online');
+    } else {
+      label.textContent = 'Online';
+      btn.classList.remove('text-rose-500','border-rose-200');
+      showToast('Back online — 2 check-ins synced ✓');
+    }
+  }
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+  }
+
+  // ---------- Calendar grid (August 2026) — redesigned for visibility ----------
+  (function buildCalendar(){
+    const grid = document.getElementById('calendar-grid');
+    const leadingBlanks = 6; // Aug 1 2026 approx weekday offset for demo
+    const daysInMonth = 31;
+    const today = 18;
+    const completed = [2,3,5,6,7,9,10,11,12,14,15,16,17];
+    const partial = [4,13];
+    const missed = [1,8];
+
+    for (let i=0;i<leadingBlanks;i++){
+      grid.appendChild(document.createElement('div'));
+    }
+
+    for (let d=1; d<=daysInMonth; d++){
+      const isToday = d===today;
+      const isCompleted = completed.includes(d);
+      const isPartial = partial.includes(d);
+      const isMissed = missed.includes(d);
+
+      let statusClasses = 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/40';
+      let icon = '';
+      if (isCompleted) { statusClasses = 'border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-500/10'; icon = '<i class="fa-solid fa-check text-emerald-500 text-xs"></i>'; }
+      else if (isPartial) { statusClasses = 'border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-500/10'; icon = '<i class="fa-solid fa-minus text-amber-500 text-xs"></i>'; }
+      else if (isMissed) { statusClasses = 'border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-500/10'; icon = '<i class="fa-solid fa-xmark text-rose-500 text-xs"></i>'; }
+
+      const cell = document.createElement('div');
+      cell.className = 'cal-day rounded-xl border-2 flex flex-col items-center justify-center gap-1 py-2 transition hover:scale-[1.03] cursor-pointer ' + statusClasses + (isToday ? ' ring-2 ring-brand-500 ring-offset-1' : '');
+      cell.innerHTML = '<span class="text-sm font-bold ' + (isToday ? 'text-brand-600' : 'text-slate-700 dark:text-slate-200') + '">' + d + '</span>' + (icon || '<span class="h-3"></span>');
+      grid.appendChild(cell);
+    }
+  })();
+
+  recalcProgress();
+</script>
+</body>
+</html>

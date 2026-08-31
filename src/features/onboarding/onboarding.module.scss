@@ -1,0 +1,198 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-page);
+  padding: 48px 24px;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 480px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+
+  img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+.dot {
+  height: 6px;
+  flex: 1;
+  border-radius: v.$radius-full;
+  background: var(--border-color-strong);
+}
+
+.dotActive {
+  background: v.$color-brand-600;
+}
+
+.card {
+  @include m.card;
+  padding: 32px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+}
+
+.stepLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: v.$color-brand-600;
+  margin-bottom: 4px;
+}
+
+.stepHint {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.categoryCard {
+  @include m.button-reset;
+  text-align: left;
+  border: 2px solid var(--border-color-strong);
+  border-radius: v.$radius-lg;
+  padding: 16px;
+
+  .categoryEmoji {
+    font-size: 24px;
+  }
+
+  p {
+    font-weight: 500;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+}
+
+.categoryCardSelected {
+  border-color: v.$color-brand-500;
+  background: v.$color-brand-50;
+
+  :global(html.dark) & {
+    background: rgba(99, 102, 241, 0.15);
+  }
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  @include m.button-reset;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-color-strong);
+  padding: 8px 14px;
+  border-radius: v.$radius-full;
+}
+
+.chipSelected {
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  border-color: v.$color-brand-600;
+}
+
+.stepWarning {
+  font-size: 12px;
+  color: v.$color-rose-500;
+  margin-top: 12px;
+}
+
+.timeInput {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: v.$radius-md;
+  border: 1px solid var(--border-color-strong);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.primaryButton {
+  @include m.button-reset;
+  flex: 1;
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: v.$radius-md;
+  text-align: center;
+  margin-top: 24px;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .buttonRow & {
+    margin-top: 0;
+  }
+}
+
+.secondaryButton {
+  @include m.button-reset;
+  flex: 1;
+  border: 1px solid var(--border-color-strong);
+  font-weight: 600;
+  padding: 12px;
+  border-radius: v.$radius-md;
+  text-align: center;
+
+  &:hover {
+    background: var(--bg-page);
+  }
+}

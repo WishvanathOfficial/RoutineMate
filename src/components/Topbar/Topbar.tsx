@@ -2,6 +2,8 @@ import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectTheme } from '@features/ui/ui.selectors';
 import { themeToggled } from '@features/ui/ui.slice';
 import { selectCurrentUser } from '@features/auth/auth.selectors';
+import NotificationPanel from '@components/NotificationPanel/NotificationPanel';
+import OnlineStatusBadge from '@components/OnlineStatusBadge/OnlineStatusBadge';
 import styles from './Topbar.module.scss';
 
 interface TopbarProps {
@@ -24,6 +26,7 @@ export default function Topbar({ title }: TopbarProps) {
     <header className={styles.topbar}>
       <p className={styles.title}>{title}</p>
       <div className={styles.actions}>
+        <OnlineStatusBadge />
         <button
           type="button"
           className={styles.iconButton}
@@ -35,9 +38,7 @@ export default function Topbar({ title }: TopbarProps) {
             aria-hidden="true"
           />
         </button>
-        <button type="button" className={styles.iconButton} aria-label="Notifications">
-          <i className="fa-solid fa-bell" aria-hidden="true" />
-        </button>
+        <NotificationPanel />
         <div className={`${styles.avatar} gradient-bg`}>{initials ?? 'JD'}</div>
       </div>
     </header>

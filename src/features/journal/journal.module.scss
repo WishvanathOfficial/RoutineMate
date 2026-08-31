@@ -1,0 +1,194 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.backLink {
+  @include m.button-reset;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.composeCard {
+  @include m.card;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.composeLabel {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.moodPicker {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.moodButton {
+  @include m.button-reset;
+  width: 44px;
+  height: 44px;
+  border-radius: v.$radius-full;
+  border: 2px solid var(--border-color-strong);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.moodButtonSelected {
+  border-color: v.$color-brand-600;
+  background: v.$color-brand-50;
+
+  :global(html.dark) & {
+    background: rgba(67, 56, 202, 0.2);
+  }
+}
+
+.noteInput {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: v.$radius-md;
+  border: 1px solid var(--border-color-strong);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.saveButton {
+  @include m.button-reset;
+  margin-top: 12px;
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: v.$radius-md;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.emptyState {
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+  padding: 48px 0;
+}
+
+// ---- Calendar-style entry list — docs/RoutineMate-MVP2-Scope.md §3.3 ----
+.calendarCard {
+  @include m.card;
+  padding: 24px;
+}
+
+.calendarHeader {
+  @include m.flex-between;
+  margin-bottom: 16px;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.calendarNavButton {
+  @include m.button-reset;
+  width: 32px;
+  height: 32px;
+  border-radius: v.$radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.calendarWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+
+  span {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 4px 0;
+  }
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendarDay {
+  @include m.button-reset;
+  aspect-ratio: 1;
+  min-height: 44px;
+  border-radius: v.$radius-md;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.calendarDayOutside {
+  opacity: 0.35;
+}
+
+.calendarDayToday {
+  border-color: v.$color-brand-600;
+  border-width: 2px;
+}
+
+.calendarDayNumber {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.calendarDayMood {
+  font-size: 15px;
+}

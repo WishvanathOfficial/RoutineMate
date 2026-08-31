@@ -10,6 +10,10 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface GoogleLoginPayload {
+  credential: string;
+}
+
 export interface RegisterPayload {
   name: string;
   email: string;

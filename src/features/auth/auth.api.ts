@@ -2,7 +2,12 @@ import { extractApiErrorMessage } from '@api/apiError';
 import { unwrap } from '@api/apiResponse';
 import { httpClient } from '@api/httpClient';
 import { clearAccessToken, setAccessToken } from '@api/tokenStore';
-import type { AuthSession, LoginCredentials, RegisterPayload } from './auth.types';
+import type {
+  AuthSession,
+  GoogleLoginPayload,
+  LoginCredentials,
+  RegisterPayload,
+} from './auth.types';
 
 // Real backend calls — see docs/RoutineMate-Frontend-Backend-Integration-Plan.md
 // §2.1 "Auth". Function signatures match what the old in-memory mock used to
@@ -16,6 +21,16 @@ export async function loginRequest(credentials: LoginCredentials): Promise<AuthS
     return session;
   } catch (err) {
     throw new Error(extractApiErrorMessage(err, 'Login failed.'));
+  }
+}
+
+export async function googleLoginRequest(payload: GoogleLoginPayload): Promise<AuthSession> {
+  try {
+    const session = await httpClient.post('/api/auth/google', payload).then(unwrap<AuthSession>);
+    setAccessToken(session.accessToken);
+    return session;
+  } catch (err) {
+    throw new Error(extractApiErrorMessage(err, 'Google sign-in failed.'));
   }
 }
 

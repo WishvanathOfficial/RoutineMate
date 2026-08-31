@@ -56,6 +56,45 @@
   }
 }
 
+// MVP-2: level/XP card — see docs/RoutineMate-MVP2-Scope.md §3.1 "Levels
+// shown on the profile". Mirrors achievements.module.scss's levelCard.
+.levelCard {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.levelLabel {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+
+  span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+}
+
+.levelTrack {
+  height: 8px;
+  border-radius: v.$radius-full;
+  background: var(--bg-hover);
+}
+
+.levelFill {
+  height: 100%;
+  border-radius: v.$radius-full;
+  background: linear-gradient(135deg, v.$color-brand-600, v.$color-success-500);
+}
+
+.levelHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
 .section {
   @include m.card;
   padding: 24px;
@@ -92,6 +131,47 @@
 
   &:first-child {
     border-top: none;
+  }
+}
+
+// MVP-2: "NEW" badge for weekly email summary / install-PWA rows — see
+// docs/RoutineMate-MVP2-Scope.md §3.5-3.6.
+.newBadge {
+  font-size: 10px;
+  font-weight: 600;
+  color: v.$color-brand-600;
+  background: v.$color-brand-50;
+  padding: 2px 6px;
+  border-radius: v.$radius-sm;
+  margin-left: 6px;
+
+  :global(html.dark) & {
+    background: rgba(67, 56, 202, 0.2);
+  }
+}
+
+.installButton {
+  @include m.button-reset;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border-color-strong);
+  padding: 8px 12px;
+  border-radius: v.$radius-md;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    &:hover {
+      background: none;
+    }
   }
 }
 

@@ -175,3 +175,109 @@
   flex-wrap: wrap;
   gap: 16px;
 }
+
+// MVP-2: Goals / Achievements / Journal quick-glance widgets. auto-fit so
+// this gracefully goes from 2 cards today to 3 once Journal lands, without
+// needing another CSS change.
+.widgetsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.widgetCard {
+  @include m.card;
+  padding: 24px;
+}
+
+.widgetHeader {
+  @include m.flex-between;
+  margin-bottom: 12px;
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  a {
+    font-size: 12px;
+    font-weight: 500;
+    color: v.$color-brand-600;
+  }
+}
+
+.widgetItemTitle {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.widgetEmptyText {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.widgetBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.widgetBadgeIcon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: v.$radius-md;
+  background: v.$color-amber-50;
+  color: v.$color-amber-500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+
+  :global(html.dark) & {
+    background: rgba(245, 158, 11, 0.1);
+  }
+}
+
+.widgetPromptButton {
+  @include m.button-reset;
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: v.$radius-md;
+  padding: 8px 12px;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+// MVP-2: inline save button for the Dashboard "Quick Journal" widget — see
+// docs/RoutineMate-MVP2-Scope.md §3.3 "a quick-add box on the Dashboard".
+.widgetSaveButton {
+  @include m.button-reset;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: v.$color-white;
+  background: v.$color-brand-600;
+  border-radius: v.$radius-md;
+  padding: 8px 12px;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

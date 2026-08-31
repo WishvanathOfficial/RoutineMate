@@ -1,12 +1,31 @@
-import { Transaction } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import { HabitLog, Routine, sequelize } from '../models';
 import { Routine as RoutineModel } from '../models/routine.model';
 import { ApiError } from '../utils/ApiError';
+import * as achievementsService from './achievements.service';
 import {
   CheckInInput,
   CreateRoutineInput,
   UpdateRoutineInput,
 } from '../validators/routines.validator';
+
+/**
+ * Badge/XP evaluation is a side effect of routine activity, not part of it —
+ * see achievements.service.ts. Never let it fail the routine/check-in
+ * request it's attached to.
+ */
+function evaluateAchievementsInBackground(userId: string, opts?: { justCompletedEarly?: boolean }) {
+  achievementsService.evaluateAndUnlockAchievements(userId, opts).catch(() => {
+    // Non-fatal — badges/XP simply won't reflect this action if this fails.
+  });
+}
+
+/** Same fire-and-forget contract as evaluateAchievementsInBackground above. */
+function awardCheckInXpInBackground(userId: string) {
+  achievementsService.awardCheckInXp(userId).catch(() => {
+    // Non-fatal — XP simply won't reflect this check-in if this fails.
+  });
+}
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -51,6 +70,52 @@ export async function getRoutine(userId: string, routineId: string) {
   return { ...routine.toJSON(), completedToday: log?.status === 'done' };
 }
 
+export async function getRoutineHistory(userId: string, routineId: string, days = 21) {
+  const routine = await findOwnedRoutine(userId, routineId);
+
+  const end = new Date(`${todayStr()}T00:00:00Z`);
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - (days - 1));
+  const windowStart = start.toISOString().slice(0, 10);
+  const windowEnd = end.toISOString().slice(0, 10);
+  const activeStart = routine.startDate > windowStart ? routine.startDate : windowStart;
+  const activeEnd = routine.endDate && routine.endDate < windowEnd ? routine.endDate : windowEnd;
+
+  if (activeStart > activeEnd) return [];
+
+  const logs = await HabitLog.findAll({
+    where: {
+      routineId,
+      date: {
+        [Op.between]: [activeStart, activeEnd],
+      },
+    },
+    order: [['date', 'ASC']],
+  });
+  const logsByDate = new Map(logs.map((log) => [log.date, log.status]));
+
+  const activeStartDate = new Date(`${activeStart}T00:00:00Z`);
+  const activeEndDate = new Date(`${activeEnd}T00:00:00Z`);
+  const activeDays =
+    Math.floor((activeEndDate.getTime() - activeStartDate.getTime()) / 86_400_000) + 1;
+
+  return Array.from({ length: activeDays }, (_, index) => {
+    const date = new Date(activeStartDate);
+    date.setUTCDate(date.getUTCDate() + index);
+    const dateString = date.toISOString().slice(0, 10);
+    const status = logsByDate.get(dateString);
+    return {
+      date: dateString,
+      status:
+        status === 'done'
+          ? 'completed'
+          : dateString === windowEnd && activeEnd === windowEnd
+            ? 'pending'
+            : 'missed',
+    };
+  });
+}
+
 export async function createRoutine(userId: string, input: CreateRoutineInput) {
   const routine = await Routine.create({
     userId,
@@ -67,6 +132,7 @@ export async function createRoutine(userId: string, input: CreateRoutineInput) {
     startDate: input.startDate ?? todayStr(),
     endDate: input.endDate ?? null,
   });
+  evaluateAchievementsInBackground(userId); // may unlock 'first-habit'
   return routine.toJSON();
 }
 
@@ -92,8 +158,11 @@ export async function togglePause(userId: string, routineId: string) {
   return routine.toJSON();
 }
 
-/** Whether `dateStr` is a day this routine is expected to be checked in on. */
-function isExpectedDay(routine: RoutineModel, dateStr: string): boolean {
+/** Whether `dateStr` is a day this routine is expected to be checked in on.
+ * Exported for reuse by notificationGenerator.service.ts's streak-risk rule
+ * (which needs to know whether *today* is even a day a routine is on the
+ * hook for before warning about it). */
+export function isExpectedDay(routine: RoutineModel, dateStr: string): boolean {
   const day = new Date(`${dateStr}T00:00:00Z`).getUTCDay(); // 0=Sun..6=Sat
   switch (routine.frequencyType) {
     case 'weekdays':
@@ -112,8 +181,10 @@ function isExpectedDay(routine: RoutineModel, dateStr: string): boolean {
  * design doc §5: "cached — recomputed on every check-in write, inside the same
  * transaction." Walks day-by-day from the routine's start date to today,
  * skipping days the routine isn't expected to run, and resetting the running
- * streak on any expected day that wasn't logged as 'done' (except today,
- * which may simply not have happened yet).
+ * streak on any expected day that wasn't logged as 'done' — except today
+ * when there's no log for it *at all* yet, since the day simply hasn't
+ * happened yet. Today explicitly logged as 'missed'/'skipped' still breaks
+ * the streak immediately, same as any past day.
  */
 async function recomputeStreaks(routine: RoutineModel, transaction: Transaction): Promise<void> {
   const logs = await HabitLog.findAll({
@@ -149,10 +220,15 @@ async function recomputeStreaks(routine: RoutineModel, transaction: Transaction)
     if (log?.status === 'done') {
       running += 1;
       if (running > longest) longest = running;
-    } else if (dateStr !== todayIso) {
-      running = 0; // missed an expected day that's already over
+    } else if (dateStr !== todayIso || log) {
+      // Resets the streak for: any past expected day that wasn't done, or
+      // today if it was *explicitly* checked in as something other than
+      // 'done' (e.g. 'missed'/'skipped') — a deliberate signal the habit
+      // wasn't completed, not just "hasn't happened yet".
+      running = 0;
     }
-    // if it's today and not done yet, leave `running` untouched — day isn't over
+    // if it's today and there's no log at all yet, leave `running`
+    // untouched — the day genuinely isn't over.
   }
 
   routine.currentStreak = running;
@@ -163,7 +239,9 @@ async function recomputeStreaks(routine: RoutineModel, transaction: Transaction)
 export async function checkIn(userId: string, routineId: string, input: CheckInInput) {
   const date = input.date ?? todayStr();
 
-  return sequelize.transaction(async (transaction) => {
+  let becameDone = false;
+
+  const result = await sequelize.transaction(async (transaction) => {
     const routine = await findOwnedRoutine(userId, routineId, transaction);
 
     const [log] = await HabitLog.findOrCreate({
@@ -175,20 +253,36 @@ export async function checkIn(userId: string, routineId: string, input: CheckInI
         value: input.value != null ? String(input.value) : null,
         note: input.note ?? null,
         completedAt: input.status === 'done' ? new Date() : null,
+        xpAwarded: false,
       },
       transaction,
     });
 
     // findOrCreate returns the existing row as-is on a hit — apply the new
     // check-in values explicitly so re-checking-in today overwrites it.
+    // XP is awarded at most once per (routine, date): `xpAwarded` persists
+    // across toggles, so marking a day done -> not-done -> done again
+    // doesn't re-earn it.
+    becameDone = input.status === 'done' && !log.xpAwarded;
+
     log.status = input.status;
     log.value = input.value != null ? String(input.value) : null;
     log.note = input.note ?? null;
     log.completedAt = input.status === 'done' ? new Date() : null;
+    if (becameDone) log.xpAwarded = true;
     await log.save({ transaction });
 
     await recomputeStreaks(routine, transaction);
 
     return { routine: routine.toJSON(), log: log.toJSON() };
   });
+
+  // 'Early Bird' — checked in done before 7 AM server time. Approximate by
+  // design (server-local hour, not the user's timezone) — a reasonable cut
+  // for this phase; see achievements.service.ts's module comment.
+  const justCompletedEarly = input.status === 'done' && new Date().getHours() < 7;
+  evaluateAchievementsInBackground(userId, { justCompletedEarly });
+  if (becameDone) awardCheckInXpInBackground(userId);
+
+  return result;
 }

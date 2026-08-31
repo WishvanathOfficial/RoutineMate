@@ -17,6 +17,7 @@ interface BackendPreferencesDto {
   theme: 'light' | 'dark' | 'system';
   pushRemindersEnabled: boolean;
   dailyDigestEnabled: boolean;
+  weeklyEmailEnabled: boolean;
   firstDayOfWeek: string;
 }
 
@@ -41,6 +42,7 @@ function toPreferences(dto: BackendPreferencesDto): ProfilePreferences {
   return {
     pushRemindersEnabled: dto.pushRemindersEnabled,
     dailyDigestEnabled: dto.dailyDigestEnabled,
+    weeklyEmailEnabled: dto.weeklyEmailEnabled,
   };
 }
 

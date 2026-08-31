@@ -19,7 +19,10 @@ export class UserPreferences extends Model<
   declare theme: CreationOptional<ThemeMode>;
   declare pushRemindersEnabled: CreationOptional<boolean>;
   declare dailyDigestEnabled: CreationOptional<boolean>;
+  declare weeklyEmailEnabled: CreationOptional<boolean>;
   declare firstDayOfWeek: CreationOptional<string>;
+  /** Dedupe marker for weeklyEmail.service.ts's sweep — null means "never sent". */
+  declare weeklyEmailLastSentAt: CreationOptional<Date | null>;
 
   declare readonly createdAt: CreationOptional<Date>;
   declare readonly updatedAt: CreationOptional<Date>;
@@ -55,11 +58,22 @@ UserPreferences.init(
       defaultValue: false,
       field: 'daily_digest_enabled',
     },
+    weeklyEmailEnabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'weekly_email_enabled',
+    },
     firstDayOfWeek: {
       type: DataTypes.STRING(10),
       allowNull: false,
       defaultValue: 'monday',
       field: 'first_day_of_week',
+    },
+    weeklyEmailLastSentAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'weekly_email_last_sent_at',
     },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,

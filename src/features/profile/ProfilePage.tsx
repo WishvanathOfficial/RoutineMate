@@ -1,10 +1,21 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
+import {
+  isAppInstalled,
+  isInstallAvailable,
+  promptInstall,
+  subscribeToInstallAvailability,
+} from '@app/pwaInstall';
 import { selectCurrentUser } from '@features/auth/auth.selectors';
 import { selectAllRoutines, selectBestStreak } from '@features/routines/routines.selectors';
 import { selectTheme } from '@features/ui/ui.selectors';
 import { themeToggled, toastShown } from '@features/ui/ui.slice';
+import {
+  selectAchievementsStatus,
+  selectUserXp,
+} from '@features/achievements/achievements.selectors';
+import { fetchAchievementsThunk } from '@features/achievements/achievements.thunks';
 import { selectPreferences, selectProfileStatus } from './profile.selectors';
 import {
   deleteAccountThunk,
@@ -25,13 +36,25 @@ export default function ProfilePage() {
   const theme = useAppSelector(selectTheme);
   const preferences = useAppSelector(selectPreferences);
   const profileStatus = useAppSelector(selectProfileStatus);
+  const xp = useAppSelector(selectUserXp);
+  const achievementsStatus = useAppSelector(selectAchievementsStatus);
 
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
+  const [installAvailable, setInstallAvailable] = useState(isInstallAvailable());
+  const [installed, setInstalled] = useState(isAppInstalled());
 
   useEffect(() => {
     if (profileStatus === 'idle') dispatch(fetchProfileThunk());
   }, [profileStatus, dispatch]);
+
+  // MVP-2 §3.1 "Levels shown on the profile" — Achievements page already
+  // fetches this same slice; re-fetching here (guarded by `idle`) means the
+  // level card renders correctly whether Profile or Achievements is visited
+  // first.
+  useEffect(() => {
+    if (achievementsStatus === 'idle') dispatch(fetchAchievementsThunk());
+  }, [achievementsStatus, dispatch]);
 
   // Keeps the form in sync once the fetch-on-load above (or a save) resolves
   // with the authoritative name/email from auth.slice.
@@ -50,12 +73,43 @@ export default function ProfilePage() {
     }
   };
 
-  const togglePreference = async (key: 'pushRemindersEnabled' | 'dailyDigestEnabled') => {
+  const togglePreference = async (
+    key: 'pushRemindersEnabled' | 'dailyDigestEnabled' | 'weeklyEmailEnabled',
+  ) => {
     const result = await dispatch(
       updatePreferencesThunk({ ...preferences, [key]: !preferences[key] }),
     );
     if (!updatePreferencesThunk.fulfilled.match(result)) {
       dispatch(toastShown(result.payload ?? 'Failed to save preferences.'));
+    }
+  };
+
+  // `beforeinstallprompt` (captured by src/app/pwaInstall.ts as early as
+  // possible — see main.tsx) can arrive well after this page first mounts,
+  // so this subscribes rather than reading the flag once.
+  useEffect(
+    () =>
+      subscribeToInstallAvailability(() => {
+        setInstallAvailable(isInstallAvailable());
+        setInstalled(isAppInstalled());
+      }),
+    [],
+  );
+
+  const handleInstall = async () => {
+    const outcome = await promptInstall();
+    if (outcome === 'accepted') {
+      dispatch(toastShown('Installed! Find RoutineMate on your home screen 🎉'));
+    } else if (outcome === 'dismissed') {
+      dispatch(toastShown('Install dismissed — you can try again anytime.'));
+    } else {
+      dispatch(
+        toastShown(
+          installed
+            ? 'RoutineMate is already installed.'
+            : "This browser hasn't offered an install prompt yet — try again after using the app a bit more.",
+        ),
+      );
     }
   };
 
@@ -100,6 +154,23 @@ export default function ProfilePage() {
               <p>Consistency</p>
             </div>
           </div>
+
+          {xp && (
+            <div className={styles.levelCard}>
+              <p className={styles.levelLabel}>
+                Level {xp.level} <span>· {xp.totalPoints} XP</span>
+              </p>
+              <div className={styles.levelTrack}>
+                <div
+                  className={styles.levelFill}
+                  style={{ width: `${xp.levelProgressPercent}%` }}
+                />
+              </div>
+              <p className={styles.levelHint}>
+                {xp.xpToNextLevel} XP to Level {xp.level + 1}
+              </p>
+            </div>
+          )}
         </div>
 
         <div>
@@ -154,7 +225,7 @@ export default function ProfilePage() {
               <div>
                 <p style={{ fontWeight: 500, fontSize: 14 }}>Daily digest email</p>
                 <p className={styles.mutedText} style={{ fontSize: 12 }}>
-                  Summary of today&apos;s habits each morning
+                  Summary of today&apos;s habits at 8:00 PM
                 </p>
               </div>
               <Switch
@@ -162,6 +233,52 @@ export default function ProfilePage() {
                 checked={preferences.dailyDigestEnabled}
                 onChange={() => togglePreference('dailyDigestEnabled')}
               />
+            </div>
+            <div className={styles.preferenceRow}>
+              <div>
+                <p style={{ fontWeight: 500, fontSize: 14 }}>
+                  Weekly email summary
+                  <span className={styles.newBadge}>NEW</span>
+                </p>
+                <p className={styles.mutedText} style={{ fontSize: 12 }}>
+                  &quot;Your week in review&quot; every Monday
+                </p>
+              </div>
+              <Switch
+                aria-label="Toggle weekly email summary"
+                checked={preferences.weeklyEmailEnabled}
+                onChange={() => togglePreference('weeklyEmailEnabled')}
+              />
+            </div>
+            <div className={styles.preferenceRow}>
+              <div>
+                <p style={{ fontWeight: 500, fontSize: 14 }}>
+                  Install RoutineMate
+                  <span className={styles.newBadge}>NEW</span>
+                </p>
+                <p className={styles.mutedText} style={{ fontSize: 12 }}>
+                  Add to your home screen, works offline
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.installButton}
+                onClick={handleInstall}
+                disabled={installed}
+                title={
+                  installed
+                    ? 'Already installed'
+                    : !installAvailable
+                      ? "Your browser hasn't offered an install prompt yet"
+                      : undefined
+                }
+              >
+                <i
+                  className={installed ? 'fa-solid fa-check' : 'fa-solid fa-download'}
+                  aria-hidden="true"
+                />{' '}
+                {installed ? 'Installed' : 'Install'}
+              </button>
             </div>
           </div>
 

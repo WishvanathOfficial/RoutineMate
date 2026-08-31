@@ -32,6 +32,8 @@ import * as authService from '../auth.service';
 describe('auth.service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.GOOGLE_CLIENT_ID = 'expected-client-id';
+    (global as typeof globalThis & { fetch?: jest.Mock }).fetch = jest.fn();
     (sequelize.transaction as jest.Mock).mockImplementation(async (cb: (t: unknown) => unknown) =>
       cb({}),
     );
@@ -130,6 +132,89 @@ describe('auth.service', () => {
       expect(result.user).toEqual({ id: 'u1', name: 'A', email: 'x@x.com', avatarUrl: null });
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
+    });
+  });
+
+  describe('googleLogin', () => {
+    it('verifies the Google ID token, creates the user if needed, and returns app tokens', async () => {
+      const fakeUser = {
+        id: 'u-google',
+        name: 'Google User',
+        email: 'google@example.com',
+        avatarUrl: null,
+        save: jest.fn(),
+      };
+      (User.findOne as jest.Mock).mockResolvedValue(null);
+      (User.create as jest.Mock).mockResolvedValue(fakeUser);
+      (UserPreferences.create as jest.Mock).mockResolvedValue({});
+      (hashPassword as jest.Mock).mockResolvedValue('hashed-google-pw');
+      (signAccessToken as jest.Mock).mockReturnValue('google-access-token');
+      (signRefreshToken as jest.Mock).mockReturnValue('google-refresh-token');
+      (expiresInToDate as jest.Mock).mockReturnValue(new Date('2030-01-01'));
+      (sha256 as jest.Mock).mockReturnValue('google-hash');
+      (RefreshToken.create as jest.Mock).mockResolvedValue({});
+      (global as typeof globalThis & { fetch: jest.Mock }).fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          email: 'google@example.com',
+          name: 'Google User',
+          picture: 'https://example.com/avatar.png',
+          email_verified: true,
+          aud: 'expected-client-id',
+          iss: 'https://accounts.google.com',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+        }),
+      });
+
+      const result = await authService.googleLogin({ credential: 'valid-google-id-token' });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://oauth2.googleapis.com/tokeninfo?id_token=valid-google-id-token',
+      );
+      expect(User.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'google@example.com',
+          name: 'Google User',
+          avatarUrl: 'https://example.com/avatar.png',
+        }),
+        expect.objectContaining({ transaction: expect.anything() }),
+      );
+      expect(result.accessToken).toBe('google-access-token');
+      expect(result.refreshToken).toBe('google-refresh-token');
+      expect(result.user.email).toBe('google@example.com');
+    });
+
+    it('accepts a valid Google token even when email_verified is omitted', async () => {
+      (User.findOne as jest.Mock).mockResolvedValue(null);
+      (User.create as jest.Mock).mockResolvedValue({
+        id: 'u-google-2',
+        name: 'Google User',
+        email: 'google2@example.com',
+        avatarUrl: 'https://example.com/avatar2.png',
+      });
+      (UserPreferences.create as jest.Mock).mockResolvedValue({});
+      (hashPassword as jest.Mock).mockResolvedValue('hashed-google-pw-2');
+      (signAccessToken as jest.Mock).mockReturnValue('google-access-token-2');
+      (signRefreshToken as jest.Mock).mockReturnValue('google-refresh-token-2');
+      (expiresInToDate as jest.Mock).mockReturnValue(new Date('2030-01-01'));
+      (sha256 as jest.Mock).mockReturnValue('google-hash-2');
+      (RefreshToken.create as jest.Mock).mockResolvedValue({});
+      (global as typeof globalThis & { fetch: jest.Mock }).fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          email: 'google2@example.com',
+          name: 'Google User',
+          picture: 'https://example.com/avatar2.png',
+          aud: 'expected-client-id',
+          iss: 'https://accounts.google.com',
+          exp: Math.floor(Date.now() / 1000) + 3600,
+        }),
+      });
+
+      const result = await authService.googleLogin({ credential: 'valid-google-id-token-2' });
+
+      expect(result.user.email).toBe('google2@example.com');
+      expect(result.accessToken).toBe('google-access-token-2');
     });
   });
 

@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectAllRoutines } from '@features/routines/routines.selectors';
+import { toastShown } from '@features/ui/ui.slice';
+import { moodEmoji } from '@features/journal/journal.types';
 import ChartCanvas from './components/ChartCanvas';
 import { fetchStatsThunk } from './stats.thunks';
 import { selectStatsStatus, selectStatsSummary } from './stats.selectors';
+import { buildStatsCsv, downloadTextFile, exportStatsAsPdf } from './stats.export';
 import styles from './stats.module.scss';
 
 // Shared muted axis/legend color that stays legible on both the light card
@@ -57,11 +60,39 @@ export default function StatsPage() {
     return <p>Loading stats…</p>;
   }
 
+  const handleExportCsv = () => {
+    const csv = buildStatsCsv(summary, routines);
+    const today = new Date().toISOString().slice(0, 10);
+    downloadTextFile(`routinemate-stats-${today}.csv`, `\ufeff${csv}`, 'text/csv;charset=utf-8;');
+    dispatch(toastShown('Stats exported as CSV'));
+  };
+
+  const handleExportPdf = () => {
+    const opened = exportStatsAsPdf(summary, routines);
+    dispatch(
+      toastShown(
+        opened
+          ? 'Opening the print dialog. Choose "Save as PDF" to download.'
+          : 'Please allow pop-ups for this site to export as PDF',
+      ),
+    );
+  };
+
   return (
     <div>
       <div className={styles.header}>
-        <h2>Stats &amp; Insights</h2>
-        <p>Visualize your progress and activity across every routine.</p>
+        <div>
+          <h2>Stats &amp; Insights</h2>
+          <p>Visualize your progress and activity across every routine.</p>
+        </div>
+        <div className={styles.headerActions}>
+          <button type="button" className={styles.exportButton} onClick={handleExportCsv}>
+            <i className="fa-solid fa-file-csv" aria-hidden="true" /> Export CSV
+          </button>
+          <button type="button" className={styles.exportButton} onClick={handleExportPdf}>
+            <i className="fa-solid fa-file-pdf" aria-hidden="true" /> Export PDF
+          </button>
+        </div>
       </div>
 
       <div className={styles.statGrid}>
@@ -203,6 +234,57 @@ export default function StatsPage() {
             }}
           />
         </div>
+      </div>
+
+      <div className={styles.chartCard} style={{ marginBottom: 24 }}>
+        <div className={styles.chartCardHeader}>
+          <h3>Mood vs. Habit Completion</h3>
+          <span className={styles.chartCardHint}>Last 30 days</span>
+        </div>
+        {summary.moodCorrelation.length === 0 ? (
+          <p className={styles.emptyChartState}>
+            Log a mood in your Journal on a few different days to see how it relates to your habit
+            completion.
+          </p>
+        ) : (
+          <>
+            <p className={styles.moodInsight}>
+              {summary.moodInsight ??
+                'Log a few more low- and high-mood days to see a comparison here.'}
+            </p>
+            <ChartCanvas
+              config={{
+                type: 'bar',
+                data: {
+                  labels: summary.moodCorrelation.map(
+                    (point) => `${moodEmoji(point.mood)} (${point.entryCount})`,
+                  ),
+                  datasets: [
+                    {
+                      label: 'Avg. completion %',
+                      data: summary.moodCorrelation.map((point) => point.avgCompletionPercentage),
+                      backgroundColor: '#38bdf8',
+                      borderRadius: 6,
+                      maxBarThickness: 48,
+                    },
+                  ],
+                },
+                options: {
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100,
+                      ticks: { color: CHART_TEXT_COLOR },
+                      grid: { color: CHART_GRID_COLOR },
+                    },
+                    x: { ticks: { color: CHART_TEXT_COLOR }, grid: { display: false } },
+                  },
+                },
+              }}
+            />
+          </>
+        )}
       </div>
 
       <div className={styles.chartGridEven}>

@@ -18,6 +18,12 @@ export const routineIdParamSchema = z.object({
   query: z.object({}).optional(),
 });
 
+export const routineHistorySchema = z.object({
+  body: z.object({}).optional(),
+  params: z.object({ id: z.string().uuid() }),
+  query: z.object({ days: z.coerce.number().int().min(1).max(90).optional() }).optional(),
+});
+
 export const createRoutineSchema = z.object({
   body: z.object({
     name: z.string().trim().min(1).max(120),

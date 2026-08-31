@@ -4,6 +4,13 @@ import { RefreshToken } from './refreshToken.model';
 import { Routine } from './routine.model';
 import { User } from './user.model';
 import { UserPreferences } from './userPreferences.model';
+import { Goal } from './goal.model';
+import { Achievement } from './achievement.model';
+import { UserAchievement } from './userAchievement.model';
+import { UserXp } from './userXp.model';
+import { JournalEntry } from './journalEntry.model';
+import { Notification } from './notification.model';
+import { OnboardingState } from './onboardingState.model';
 
 // Associations — see docs/RoutineMate-MVP1-Database-Design.html §4 "Relationships & Delete Behavior"
 
@@ -35,7 +42,57 @@ Routine.hasMany(HabitLog, {
 });
 HabitLog.belongsTo(Routine, { foreignKey: 'routineId', as: 'routine' });
 
-export { sequelize, User, UserPreferences, RefreshToken, Routine, HabitLog };
+// MVP-2 associations — see docs/RoutineMate-MVP2-Scope.md §5.
+
+User.hasMany(Goal, { foreignKey: 'userId', as: 'goals', onDelete: 'CASCADE' });
+Goal.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(UserAchievement, {
+  foreignKey: 'userId',
+  as: 'unlockedAchievements',
+  onDelete: 'CASCADE',
+});
+UserAchievement.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Achievement.hasMany(UserAchievement, { foreignKey: 'achievementId', as: 'unlocks' });
+UserAchievement.belongsTo(Achievement, { foreignKey: 'achievementId', as: 'achievement' });
+
+User.hasOne(UserXp, { foreignKey: 'userId', as: 'xp', onDelete: 'CASCADE' });
+UserXp.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(JournalEntry, { foreignKey: 'userId', as: 'journalEntries', onDelete: 'CASCADE' });
+JournalEntry.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications', onDelete: 'CASCADE' });
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Routine.hasMany(Notification, {
+  foreignKey: 'routineId',
+  as: 'notifications',
+  onDelete: 'CASCADE',
+});
+Notification.belongsTo(Routine, { foreignKey: 'routineId', as: 'routine' });
+
+User.hasOne(OnboardingState, {
+  foreignKey: 'userId',
+  as: 'onboardingState',
+  onDelete: 'CASCADE',
+});
+OnboardingState.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+export {
+  sequelize,
+  User,
+  UserPreferences,
+  RefreshToken,
+  Routine,
+  HabitLog,
+  Goal,
+  Achievement,
+  UserAchievement,
+  UserXp,
+  JournalEntry,
+  Notification,
+  OnboardingState,
+};
 
 export default {
   sequelize,
@@ -44,4 +101,11 @@ export default {
   RefreshToken,
   Routine,
   HabitLog,
+  Goal,
+  Achievement,
+  UserAchievement,
+  UserXp,
+  JournalEntry,
+  Notification,
+  OnboardingState,
 };

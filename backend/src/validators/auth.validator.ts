@@ -19,5 +19,14 @@ export const loginSchema = z.object({
   query: z.object({}).optional(),
 });
 
+export const googleLoginSchema = z.object({
+  body: z.object({
+    credential: z.string().trim().min(1, 'Google credential is required'),
+  }),
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>['body'];
 export type LoginInput = z.infer<typeof loginSchema>['body'];
+export type GoogleLoginInput = z.infer<typeof googleLoginSchema>['body'];

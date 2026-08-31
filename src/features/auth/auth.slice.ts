@@ -5,7 +5,13 @@ import {
   updateAccountThunk,
 } from '@features/profile/profile.thunks';
 import type { AuthState } from './auth.types';
-import { bootstrapSessionThunk, loginUser, logoutUser, registerUser } from './auth.thunks';
+import {
+  bootstrapSessionThunk,
+  loginUser,
+  loginWithGoogle,
+  logoutUser,
+  registerUser,
+} from './auth.thunks';
 
 const initialState: AuthState = {
   user: null,
@@ -48,6 +54,19 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload ?? 'Login failed.';
+      })
+      .addCase(loginWithGoogle.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(loginWithGoogle.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.user = action.payload.user;
+        state.accessToken = action.payload.accessToken;
+      })
+      .addCase(loginWithGoogle.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload ?? 'Google sign-in failed.';
       })
       .addCase(registerUser.pending, (state) => {
         state.status = 'loading';

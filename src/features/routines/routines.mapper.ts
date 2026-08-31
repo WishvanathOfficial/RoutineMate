@@ -113,18 +113,45 @@ export function fromBackendRoutine(dto: BackendRoutineDto, completedToday: boole
   };
 }
 
-export function toBackendCreatePayload(input: CreateRoutineInput): Record<string, unknown> {
+export function toBackendCreatePayload(input: CreateRoutineInput): string {
   const { frequencyType, frequencyConfig } = toBackendFrequency(input.frequency);
-  return {
+  return JSON.stringify({
     name: input.name,
     emoji: input.emoji,
     category: input.category,
     frequencyType,
-    frequencyConfig,
+    frequencyConfig: frequencyConfig ?? undefined,
     reminderType: input.reminderType,
     reminderTime: input.reminderType === 'time' ? input.reminderTime : undefined,
     reminderLocation:
       input.reminderType === 'location' ? (input.reminderLocation ?? undefined) : undefined,
+  }).replace(/./gu, (character) => {
+    if (character.charCodeAt(0) <= 0x7f) return character;
+    return [...character]
+      .map((codePoint) => `\\u${codePoint.charCodeAt(0).toString(16).padStart(4, '0')}`)
+      .join('');
+  });
+}
+
+/**
+ * Best-effort local check-in update used only while offline (see
+ * routines.thunks.ts's toggleCheckInThunk + src/offline/offlineCheckInQueue.ts)
+ * — the server is the source of truth for streak math and will overwrite
+ * this the moment the queued check-in actually syncs. This just needs to
+ * make the UI feel right in the meantime: flip completedToday and nudge
+ * streak/longestStreak by one in the matching direction.
+ */
+export function applyOptimisticCheckIn(routine: Routine, status: 'done' | 'skipped'): Routine {
+  const completedToday = status === 'done';
+  if (completedToday === routine.completedToday) return routine;
+
+  const streak = completedToday ? routine.streak + 1 : Math.max(0, routine.streak - 1);
+
+  return {
+    ...routine,
+    completedToday,
+    streak,
+    longestStreak: Math.max(routine.longestStreak, streak),
   };
 }
 
@@ -136,7 +163,7 @@ export function toBackendUpdatePayload(
   if (frequency) {
     const { frequencyType, frequencyConfig } = toBackendFrequency(frequency);
     payload.frequencyType = frequencyType;
-    payload.frequencyConfig = frequencyConfig;
+    if (frequencyConfig) payload.frequencyConfig = frequencyConfig;
   }
   return payload;
 }

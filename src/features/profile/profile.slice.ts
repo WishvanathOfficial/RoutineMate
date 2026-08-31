@@ -6,6 +6,7 @@ const initialState: ProfileState = {
   preferences: {
     pushRemindersEnabled: true,
     dailyDigestEnabled: false,
+    weeklyEmailEnabled: false,
   },
   status: 'idle',
 };

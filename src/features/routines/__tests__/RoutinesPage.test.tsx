@@ -1,7 +1,7 @@
 jest.mock('../routines.api');
 
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import routinesReducer from '../routines.slice';
@@ -62,6 +62,7 @@ describe('RoutinesPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (routinesApi.fetchRoutines as jest.Mock).mockResolvedValue(seededRoutines);
+    (routinesApi.deleteRoutine as jest.Mock).mockResolvedValue({ id: 'routine-1' });
   });
 
   it('loads and displays the seeded routines', async () => {
@@ -73,5 +74,28 @@ describe('RoutinesPage', () => {
 
     expect(screen.getByText('Morning Meditation')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /new routine/i })).toBeInTheDocument();
+  });
+
+  it('requires confirmation before deleting a routine', async () => {
+    renderWithStore();
+
+    await waitFor(() => {
+      expect(screen.getByText('Drink Water')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Drink Water' }));
+    expect(screen.getByRole('dialog', { name: 'Delete Routine' })).toBeInTheDocument();
+    expect(screen.getByText('Are you sure you want to delete this routine?')).toBeInTheDocument();
+    expect(routinesApi.deleteRoutine).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'No' }));
+    expect(screen.queryByRole('dialog', { name: 'Delete Routine' })).not.toBeInTheDocument();
+    expect(routinesApi.deleteRoutine).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Drink Water' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
+    await waitFor(() => {
+      expect(routinesApi.deleteRoutine).toHaveBeenCalledWith('routine-1');
+    });
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { toastShown } from '@features/ui/ui.slice';
 import RoutineCard from './components/RoutineCard';
+import DeleteRoutineModal from './components/DeleteRoutineModal';
 import RoutineFormModal from './components/RoutineFormModal';
 import { selectAllRoutines, selectRoutinesStatus } from './routines.selectors';
 import {
@@ -22,6 +23,8 @@ export default function RoutinesPage() {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
+  const [routineToDelete, setRoutineToDelete] = useState<Routine | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -59,8 +62,18 @@ export default function RoutinesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const result = await dispatch(deleteRoutineThunk(id));
+  const requestDelete = (id: string) => {
+    const routine = routines.find((item) => item.id === id);
+    if (routine) setRoutineToDelete(routine);
+  };
+
+  const handleDelete = async () => {
+    if (!routineToDelete) return;
+
+    setIsDeleting(true);
+    const result = await dispatch(deleteRoutineThunk(routineToDelete.id));
+    setIsDeleting(false);
+    setRoutineToDelete(null);
     if (deleteRoutineThunk.fulfilled.match(result)) {
       dispatch(toastShown('Routine deleted'));
     } else {
@@ -70,7 +83,11 @@ export default function RoutinesPage() {
 
   const handleTogglePause = async (id: string) => {
     const result = await dispatch(togglePauseThunk(id));
-    if (!togglePauseThunk.fulfilled.match(result)) {
+    if (togglePauseThunk.fulfilled.match(result)) {
+      dispatch(
+        toastShown(result.payload.status === 'paused' ? 'Routine paused' : 'Routine resumed'),
+      );
+    } else {
       dispatch(toastShown(result.payload ?? 'Failed to update routine.'));
     }
   };
@@ -119,7 +136,7 @@ export default function RoutinesPage() {
               routine={routine}
               view={view}
               onEdit={openEditModal}
-              onDelete={handleDelete}
+              onDelete={requestDelete}
               onTogglePause={handleTogglePause}
             />
           ))}
@@ -131,6 +148,13 @@ export default function RoutinesPage() {
         editingRoutine={editingRoutine}
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
+      />
+      <DeleteRoutineModal
+        isOpen={routineToDelete !== null}
+        routineName={routineToDelete?.name ?? null}
+        isDeleting={isDeleting}
+        onClose={() => setRoutineToDelete(null)}
+        onConfirm={handleDelete}
       />
     </div>
   );

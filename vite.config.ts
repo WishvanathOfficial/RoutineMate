@@ -12,6 +12,7 @@ export default defineConfig({
       '@components': path.resolve(__dirname, 'src/components'),
       '@features': path.resolve(__dirname, 'src/features'),
       '@layouts': path.resolve(__dirname, 'src/layouts'),
+      '@offline': path.resolve(__dirname, 'src/offline'),
       '@styles': path.resolve(__dirname, 'src/styles'),
       '@assets': path.resolve(__dirname, 'src/assets'),
     },

@@ -1,0 +1,334 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.backLink {
+  @include m.button-reset;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// ---- /goals/new — dedicated create-goal page ----
+.newGoalCard {
+  @include m.card;
+  padding: 24px;
+  max-width: 560px;
+}
+
+.pageHeader {
+  @include m.flex-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.newGoalButton {
+  @include m.button-reset;
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: v.$radius-md;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+}
+
+.emptyState {
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+  padding: 48px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.goalCard {
+  @include m.card;
+  padding: 24px;
+}
+
+.goalCardDone {
+  opacity: 0.7;
+}
+
+.goalCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  h3 {
+    font-weight: 600;
+    margin-top: 8px;
+  }
+}
+
+.goalEmoji {
+  font-size: 24px;
+}
+
+.goalMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.statusBadge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  background: v.$color-brand-50;
+  color: v.$color-brand-600;
+  padding: 4px 10px;
+  border-radius: v.$radius-full;
+
+  :global(html.dark) & {
+    background: rgba(99, 102, 241, 0.18);
+  }
+}
+
+.statusBadgeDone {
+  background: v.$color-success-50;
+  color: v.$color-success-600;
+
+  :global(html.dark) & {
+    background: rgba(16, 185, 129, 0.15);
+  }
+}
+
+.progressTrack {
+  height: 10px;
+  border-radius: v.$radius-full;
+  background: var(--bg-hover);
+  margin-bottom: 8px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: v.$radius-full;
+  background: v.$color-brand-600;
+}
+
+.progressFillDone {
+  background: v.$color-success-500;
+}
+
+.goalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.goalPercent {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.linkedChip {
+  font-size: 12px;
+  background: var(--bg-hover);
+  padding: 4px 10px;
+  border-radius: v.$radius-full;
+  color: var(--text-secondary);
+  text-align: right;
+  @include m.truncate;
+}
+
+// ---- Create Goal modal ----
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label,
+  .groupLabel {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  input {
+    padding: 10px 14px;
+    border-radius: v.$radius-md;
+    border: 1px solid var(--border-color-strong);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+}
+
+.helperText {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: -2px;
+}
+
+.milestoneDraftList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+    background: var(--bg-hover);
+    border-radius: v.$radius-md;
+    padding: 6px 10px;
+  }
+
+  button {
+    @include m.button-reset;
+    color: var(--text-muted);
+
+    &:hover {
+      color: v.$color-rose-500;
+    }
+  }
+}
+
+.milestoneAddRow {
+  display: flex;
+  gap: 8px;
+
+  input {
+    flex: 1;
+  }
+}
+
+.addMilestoneButton {
+  @include m.button-reset;
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 0 16px;
+  border-radius: v.$radius-md;
+  border: 1px solid var(--border-color-strong);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+// ---- Milestone checklist on a goal card (milestone-based goals) ----
+.milestoneList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.milestoneItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+
+  input {
+    accent-color: v.$color-brand-600;
+  }
+}
+
+.milestoneItemDone {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.linkChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-color-strong);
+  padding: 6px 12px;
+  border-radius: v.$radius-full;
+  cursor: pointer;
+
+  input {
+    accent-color: v.$color-brand-600;
+  }
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cancelButton,
+.submitButton {
+  flex: 1;
+  padding: 10px;
+  border-radius: v.$radius-md;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cancelButton {
+  @include m.button-reset;
+  border: 1px solid var(--border-color-strong);
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.submitButton {
+  @include m.button-reset;
+  background: v.$color-brand-600;
+  color: v.$color-white;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+}

@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { registerUser } from './auth.thunks';
 import { selectAuthError, selectAuthStatus } from './auth.selectors';
-import { toastShown } from '@features/ui/ui.slice';
 import logoIcon from '@assets/logo-icon.svg';
 import styles from './auth.module.scss';
 
@@ -23,8 +22,10 @@ export default function RegisterPage() {
     event.preventDefault();
     const result = await dispatch(registerUser({ name, email, password }));
     if (registerUser.fulfilled.match(result)) {
-      dispatch(toastShown('Welcome to RoutineMate! 🎉'));
-      navigate('/dashboard');
+      // MVP-2: new accounts go through the onboarding wizard once, right
+      // after registration, instead of landing straight on an empty
+      // dashboard — see docs/RoutineMate-MVP2-Scope.md §3.4.
+      navigate('/onboarding');
     }
   };
 

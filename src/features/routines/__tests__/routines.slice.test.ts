@@ -3,6 +3,7 @@ import {
   createRoutineThunk,
   deleteRoutineThunk,
   fetchRoutinesThunk,
+  syncOfflineCheckInsThunk,
   toggleCheckInThunk,
 } from '../routines.thunks';
 import type { Routine, RoutinesState } from '../routines.types';
@@ -56,6 +57,29 @@ describe('routines.slice', () => {
     const state = reducer(seeded, action);
     expect(state.items[0].completedToday).toBe(true);
     expect(state.items[0].streak).toBe(4);
+  });
+
+  it('merges every routine returned by a successful offline sync', () => {
+    const secondRoutine: Routine = { ...sampleRoutine, id: 'routine-2', name: 'Meditate' };
+    const seeded: RoutinesState = { ...initialState, items: [sampleRoutine, secondRoutine] };
+    const updatedFirst: Routine = { ...sampleRoutine, completedToday: true, streak: 4 };
+    const updatedSecond: Routine = { ...secondRoutine, completedToday: true, streak: 2 };
+    const action = {
+      type: syncOfflineCheckInsThunk.fulfilled.type,
+      payload: [updatedFirst, updatedSecond],
+    };
+    const state = reducer(seeded, action);
+    expect(state.items[0].completedToday).toBe(true);
+    expect(state.items[0].streak).toBe(4);
+    expect(state.items[1].completedToday).toBe(true);
+    expect(state.items[1].streak).toBe(2);
+  });
+
+  it('leaves routines untouched when an offline sync has nothing queued', () => {
+    const seeded: RoutinesState = { ...initialState, items: [sampleRoutine] };
+    const action = { type: syncOfflineCheckInsThunk.fulfilled.type, payload: [] };
+    const state = reducer(seeded, action);
+    expect(state.items).toEqual([sampleRoutine]);
   });
 
   it('stores the extracted error message when fetch is rejected', () => {

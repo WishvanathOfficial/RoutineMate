@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { Op } from 'sequelize';
 import { env } from '../config/env';
 import { RefreshToken, User, UserPreferences, sequelize } from '../models';
@@ -86,6 +86,91 @@ export async function login(input: LoginInput) {
   const isValid = await comparePassword(input.password, user.passwordHash);
   if (!isValid) {
     throw ApiError.unauthorized('Invalid email or password');
+  }
+
+  const tokens = await issueTokenPair(user);
+  return { user: toPublicUser(user), ...tokens };
+}
+
+type GoogleTokenInfo = {
+  email: string;
+  name?: string;
+  picture?: string;
+  aud?: string;
+  iss?: string;
+  email_verified?: boolean;
+  exp?: number;
+};
+
+async function verifyGoogleIdToken(credential: string): Promise<GoogleTokenInfo> {
+  const clientId = env.google.clientId;
+  if (!clientId) {
+    throw ApiError.internal('Google OAuth is not configured on the server');
+  }
+
+  const response = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+  );
+  if (!response.ok) {
+    throw ApiError.unauthorized('Google ID token is invalid');
+  }
+
+  const payload = (await response.json()) as Partial<GoogleTokenInfo>;
+  if (!payload.email) {
+    throw ApiError.unauthorized('Google account email is required');
+  }
+
+  if (payload.aud && payload.aud !== clientId) {
+    throw ApiError.unauthorized('Google ID token audience mismatch');
+  }
+
+  if (
+    payload.iss &&
+    !['https://accounts.google.com', 'accounts.google.com'].includes(payload.iss)
+  ) {
+    throw ApiError.unauthorized('Google ID token issuer mismatch');
+  }
+
+  if (payload.exp && payload.exp <= Math.floor(Date.now() / 1000)) {
+    throw ApiError.unauthorized('Google ID token has expired');
+  }
+
+  return {
+    email: payload.email,
+    name: payload.name,
+    picture: payload.picture,
+    aud: payload.aud,
+    iss: payload.iss,
+    email_verified: payload.email_verified,
+    exp: payload.exp,
+  };
+}
+
+export async function googleLogin(input: { credential: string }) {
+  const googleUser = await verifyGoogleIdToken(input.credential);
+
+  let user = await User.findOne({ where: { email: googleUser.email } });
+
+  if (!user) {
+    const generatedPassword = randomBytes(32).toString('hex');
+    const passwordHash = await hashPassword(generatedPassword);
+
+    user = await sequelize.transaction(async (transaction) => {
+      const created = await User.create(
+        {
+          name: googleUser.name || 'Google User',
+          email: googleUser.email,
+          passwordHash,
+          avatarUrl: googleUser.picture ?? null,
+        },
+        { transaction },
+      );
+      await UserPreferences.create({ userId: created.id }, { transaction });
+      return created;
+    });
+  } else if (googleUser.picture && user.avatarUrl !== googleUser.picture) {
+    user.avatarUrl = googleUser.picture;
+    await user.save();
   }
 
   const tokens = await issueTokenPair(user);

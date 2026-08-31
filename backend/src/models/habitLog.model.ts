@@ -18,6 +18,10 @@ export class HabitLog extends Model<InferAttributes<HabitLog>, InferCreationAttr
   declare value: string | null; // DECIMAL comes back as string from mysql2
   declare note: string | null;
   declare completedAt: Date | null;
+  // Guards achievements.service.ts's per-check-in XP award so repeatedly
+  // toggling the same day's check-in on/off can't farm XP — see
+  // 20260827000002-add-xp-awarded-to-habit-logs.js.
+  declare xpAwarded: CreationOptional<boolean>;
 
   declare readonly createdAt: CreationOptional<Date>;
   declare readonly updatedAt: CreationOptional<Date>;
@@ -55,6 +59,12 @@ HabitLog.init(
       type: DataTypes.DATE,
       allowNull: true,
       field: 'completed_at',
+    },
+    xpAwarded: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'xp_awarded',
     },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,

@@ -4,12 +4,20 @@ jest.mock('../../models', () => ({
   sequelize: { transaction: jest.fn() },
 }));
 
+jest.mock('../achievements.service', () => ({
+  evaluateAndUnlockAchievements: jest.fn(),
+  awardCheckInXp: jest.fn(),
+}));
+
 import { HabitLog, Routine, sequelize } from '../../models';
+import * as achievementsService from '../achievements.service';
 import * as routinesService from '../routines.service';
 
 describe('routines.service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (achievementsService.evaluateAndUnlockAchievements as jest.Mock).mockResolvedValue(undefined);
+    (achievementsService.awardCheckInXp as jest.Mock).mockResolvedValue(undefined);
   });
 
   describe('listRoutines', () => {
@@ -138,22 +146,32 @@ describe('routines.service', () => {
 
   describe('togglePause', () => {
     it('toggles active to paused', async () => {
-      const routine = { status: 'active', save: jest.fn().mockResolvedValue(undefined) };
+      const routine = {
+        status: 'active',
+        save: jest.fn().mockResolvedValue(undefined),
+        toJSON: () => ({ id: 'r1', status: 'paused' }),
+      };
       (Routine.findOne as jest.Mock).mockResolvedValue(routine);
 
-      await routinesService.togglePause('u1', 'r1');
+      const result = await routinesService.togglePause('u1', 'r1');
 
       expect(routine.status).toBe('paused');
       expect(routine.save).toHaveBeenCalled();
+      expect(result).toEqual({ id: 'r1', status: 'paused' });
     });
 
     it('toggles paused back to active', async () => {
-      const routine = { status: 'paused', save: jest.fn().mockResolvedValue(undefined) };
+      const routine = {
+        status: 'paused',
+        save: jest.fn().mockResolvedValue(undefined),
+        toJSON: () => ({ id: 'r1', status: 'active' }),
+      };
       (Routine.findOne as jest.Mock).mockResolvedValue(routine);
 
-      await routinesService.togglePause('u1', 'r1');
+      const result = await routinesService.togglePause('u1', 'r1');
 
       expect(routine.status).toBe('active');
+      expect(result).toEqual({ id: 'r1', status: 'active' });
     });
 
     it('rejects toggling an archived routine', async () => {
@@ -259,6 +277,78 @@ describe('routines.service', () => {
 
       expect(routine.currentStreak).toBe(0);
       expect(routine.longestStreak).toBe(5); // longest streak is never lowered
+    });
+
+    function makeRoutine() {
+      return {
+        id: 'r1',
+        frequencyType: 'daily' as const,
+        frequencyConfig: null,
+        startDate: '2026-08-18',
+        longestStreak: 0,
+        currentStreak: 0,
+        save: jest.fn().mockResolvedValue(undefined),
+        toJSON: () => ({ id: 'r1' }),
+      };
+    }
+
+    it('awards check-in XP the first time a fresh log becomes done', async () => {
+      (Routine.findOne as jest.Mock).mockResolvedValue(makeRoutine());
+      const logInstance = {
+        status: 'done',
+        value: null as string | null,
+        note: null as string | null,
+        completedAt: null as Date | null,
+        xpAwarded: false, // brand-new row, per the findOrCreate defaults
+        save: jest.fn().mockResolvedValue(undefined),
+        toJSON: () => ({ id: 'log-1' }),
+      };
+      (HabitLog.findOrCreate as jest.Mock).mockResolvedValue([logInstance, true]);
+      (HabitLog.findAll as jest.Mock).mockResolvedValue([]);
+
+      await routinesService.checkIn('u1', 'r1', { status: 'done' } as never);
+
+      expect(logInstance.xpAwarded).toBe(true);
+      expect(achievementsService.awardCheckInXp).toHaveBeenCalledWith('u1');
+    });
+
+    it('does not re-award XP re-confirming a day already marked xpAwarded', async () => {
+      (Routine.findOne as jest.Mock).mockResolvedValue(makeRoutine());
+      const logInstance = {
+        status: 'done',
+        value: null as string | null,
+        note: null as string | null,
+        completedAt: null as Date | null,
+        xpAwarded: true, // XP already paid out for this (routine, date) previously
+        save: jest.fn().mockResolvedValue(undefined),
+        toJSON: () => ({ id: 'log-1' }),
+      };
+      (HabitLog.findOrCreate as jest.Mock).mockResolvedValue([logInstance, false]);
+      (HabitLog.findAll as jest.Mock).mockResolvedValue([]);
+
+      await routinesService.checkIn('u1', 'r1', { status: 'done' } as never);
+
+      expect(achievementsService.awardCheckInXp).not.toHaveBeenCalled();
+    });
+
+    it('does not award XP, and leaves xpAwarded untouched, when un-checking a day back to skipped', async () => {
+      (Routine.findOne as jest.Mock).mockResolvedValue(makeRoutine());
+      const logInstance = {
+        status: 'done',
+        value: null as string | null,
+        note: null as string | null,
+        completedAt: null as Date | null,
+        xpAwarded: true,
+        save: jest.fn().mockResolvedValue(undefined),
+        toJSON: () => ({ id: 'log-1' }),
+      };
+      (HabitLog.findOrCreate as jest.Mock).mockResolvedValue([logInstance, false]);
+      (HabitLog.findAll as jest.Mock).mockResolvedValue([]);
+
+      await routinesService.checkIn('u1', 'r1', { status: 'skipped' } as never);
+
+      expect(logInstance.xpAwarded).toBe(true); // no clawback
+      expect(achievementsService.awardCheckInXp).not.toHaveBeenCalled();
     });
   });
 });

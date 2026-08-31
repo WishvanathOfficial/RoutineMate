@@ -37,6 +37,14 @@ export const login = asyncHandler(async (req, res) => {
   ApiResponse.ok(res, { user, accessToken }, 'Logged in');
 });
 
+export const googleLogin = asyncHandler(async (req, res) => {
+  const { user, accessToken, refreshToken, refreshTokenExpiresAt } = await authService.googleLogin(
+    req.body,
+  );
+  setRefreshCookie(res, refreshToken, refreshTokenExpiresAt);
+  ApiResponse.ok(res, { user, accessToken }, 'Google sign-in successful');
+});
+
 export const refresh = asyncHandler(async (req, res) => {
   const raw = req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined;
   if (!raw) throw ApiError.unauthorized('Missing refresh token');

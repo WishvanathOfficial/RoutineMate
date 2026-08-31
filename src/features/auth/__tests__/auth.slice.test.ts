@@ -4,7 +4,13 @@ import {
   updateAccountThunk,
 } from '@features/profile/profile.thunks';
 import reducer, { loggedOut, sessionExpired } from '../auth.slice';
-import { bootstrapSessionThunk, loginUser, logoutUser, registerUser } from '../auth.thunks';
+import {
+  bootstrapSessionThunk,
+  loginUser,
+  loginWithGoogle,
+  logoutUser,
+  registerUser,
+} from '../auth.thunks';
 import type { AuthSession, AuthState, User } from '../auth.types';
 
 const initialState: AuthState = {
@@ -40,6 +46,14 @@ describe('auth.slice', () => {
     const state = reducer(initialState, action);
     expect(state.status).toBe('failed');
     expect(state.error).toBe('Invalid email or password.');
+  });
+
+  it('stores the user and access token on successful Google login', () => {
+    const action = { type: loginWithGoogle.fulfilled.type, payload: fakeSession };
+    const state = reducer(initialState, action);
+    expect(state.status).toBe('succeeded');
+    expect(state.user).toEqual(fakeUser);
+    expect(state.accessToken).toBe('access-token-1');
   });
 
   it('stores the user and access token on successful registration', () => {

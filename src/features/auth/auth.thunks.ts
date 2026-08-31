@@ -1,6 +1,17 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { loginRequest, logoutRequest, refreshSessionRequest, registerRequest } from './auth.api';
-import type { AuthSession, LoginCredentials, RegisterPayload } from './auth.types';
+import {
+  googleLoginRequest,
+  loginRequest,
+  logoutRequest,
+  refreshSessionRequest,
+  registerRequest,
+} from './auth.api';
+import type {
+  AuthSession,
+  GoogleLoginPayload,
+  LoginCredentials,
+  RegisterPayload,
+} from './auth.types';
 
 export const loginUser = createAsyncThunk<AuthSession, LoginCredentials, { rejectValue: string }>(
   'auth/login',
@@ -12,6 +23,18 @@ export const loginUser = createAsyncThunk<AuthSession, LoginCredentials, { rejec
     }
   },
 );
+
+export const loginWithGoogle = createAsyncThunk<
+  AuthSession,
+  GoogleLoginPayload,
+  { rejectValue: string }
+>('auth/googleLogin', async (payload, { rejectWithValue }) => {
+  try {
+    return await googleLoginRequest(payload);
+  } catch (err) {
+    return rejectWithValue(err instanceof Error ? err.message : 'Google sign-in failed.');
+  }
+});
 
 export const registerUser = createAsyncThunk<AuthSession, RegisterPayload, { rejectValue: string }>(
   'auth/register',

@@ -20,6 +20,11 @@ interface CheckInResponse {
   log: { status: 'done' | 'partial' | 'skipped' | 'missed' };
 }
 
+export interface RoutineHistoryDay {
+  date: string;
+  status: 'completed' | 'missed' | 'pending' | 'not_active';
+}
+
 export async function fetchRoutines(): Promise<Routine[]> {
   const dtos = await httpClient.get('/api/routines').then(unwrap<ListRoutineDto[]>);
   return dtos.map((dto) => fromBackendRoutine(dto, dto.completedToday));
@@ -30,9 +35,16 @@ async function fetchRoutineById(id: string): Promise<Routine> {
   return fromBackendRoutine(dto, dto.completedToday);
 }
 
+export async function fetchRoutineHistory(id: string): Promise<RoutineHistoryDay[]> {
+  return httpClient.get(`/api/routines/${id}/history`).then(unwrap<RoutineHistoryDay[]>);
+}
+
 export async function createRoutine(input: CreateRoutineInput): Promise<Routine> {
+  const payload = toBackendCreatePayload(input);
   const dto = await httpClient
-    .post('/api/routines', toBackendCreatePayload(input))
+    .post('/api/routines', payload, {
+      headers: { 'Content-Type': 'application/json' },
+    })
     .then(unwrap<BackendRoutineDto>);
   // A routine that was just created can't have a habit_logs row for today yet.
   return fromBackendRoutine(dto, false);
@@ -52,17 +64,27 @@ export async function deleteRoutine(id: string): Promise<{ id: string }> {
 }
 
 /**
+ * Records an explicit check-in status for today. Exported directly (rather
+ * than only through `toggleCheckIn`) so the offline sync queue can replay a
+ * previously-queued status without needing to re-derive it from whatever
+ * the routine's `completedToday` happens to be by the time the connection
+ * returns — see src/offline/offlineCheckInQueue.ts.
+ */
+export async function checkInStatus(id: string, status: 'done' | 'skipped'): Promise<Routine> {
+  const { routine, log } = await httpClient
+    .post(`/api/routines/${id}/check-in`, { status })
+    .then(unwrap<CheckInResponse>);
+  return fromBackendRoutine(routine, log.status === 'done');
+}
+
+/**
  * The backend has no "toggle" — check-in always records an explicit status
  * for today. `currentlyCompleted` (the routine's completedToday right now)
  * decides which way this toggle press goes: done -> skipped, anything else
  * -> done. See integration plan §2.3, decision (a).
  */
 export async function toggleCheckIn(id: string, currentlyCompleted: boolean): Promise<Routine> {
-  const status = currentlyCompleted ? 'skipped' : 'done';
-  const { routine, log } = await httpClient
-    .post(`/api/routines/${id}/check-in`, { status })
-    .then(unwrap<CheckInResponse>);
-  return fromBackendRoutine(routine, log.status === 'done');
+  return checkInStatus(id, currentlyCompleted ? 'skipped' : 'done');
 }
 
 export async function togglePause(id: string): Promise<Routine> {

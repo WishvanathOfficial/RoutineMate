@@ -29,3 +29,14 @@ export function extractApiFieldErrors(error: unknown): unknown {
   }
   return undefined;
 }
+
+/**
+ * True for a request that never got a response at all — offline, DNS
+ * failure, the server unreachable, etc. — as opposed to one the server
+ * actively rejected (4xx/5xx, which has `error.response`). Used to decide
+ * whether a failed check-in should be queued for offline sync rather than
+ * surfaced as a normal error — see routines.thunks.ts's toggleCheckInThunk.
+ */
+export function isNetworkError(error: unknown): boolean {
+  return axios.isAxiosError(error) && !error.response;
+}

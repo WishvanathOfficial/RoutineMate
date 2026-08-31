@@ -4,6 +4,7 @@ import {
   createRoutineThunk,
   deleteRoutineThunk,
   fetchRoutinesThunk,
+  syncOfflineCheckInsThunk,
   toggleCheckInThunk,
   togglePauseThunk,
   updateRoutineThunk,
@@ -45,6 +46,12 @@ const routinesSlice = createSlice({
       .addCase(toggleCheckInThunk.fulfilled, (state, action) => {
         const index = state.items.findIndex((r) => r.id === action.payload.id);
         if (index !== -1) state.items[index] = action.payload;
+      })
+      .addCase(syncOfflineCheckInsThunk.fulfilled, (state, action) => {
+        for (const routine of action.payload) {
+          const index = state.items.findIndex((r) => r.id === routine.id);
+          if (index !== -1) state.items[index] = routine;
+        }
       })
       .addCase(togglePauseThunk.fulfilled, (state, action) => {
         const index = state.items.findIndex((r) => r.id === action.payload.id);

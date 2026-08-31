@@ -15,6 +15,7 @@ const config = {
     '^@components/(.*)$': '<rootDir>/src/components/$1',
     '^@features/(.*)$': '<rootDir>/src/features/$1',
     '^@layouts/(.*)$': '<rootDir>/src/layouts/$1',
+    '^@offline/(.*)$': '<rootDir>/src/offline/$1',
     '^@styles/(.*)$': '<rootDir>/src/styles/$1',
     '^@assets/(.*)$': '<rootDir>/src/assets/$1',
   },
