@@ -5,6 +5,7 @@ export type RoutineFrequency = 'Daily' | 'Mon/Wed/Fri' | 'Weekdays' | 'Custom';
 export type ReminderType = 'time' | 'location';
 
 export type RoutineStatus = 'active' | 'paused';
+export type RoutineVisibility = 'private' | 'friends' | 'public';
 
 export interface Routine {
   id: string;
@@ -19,6 +20,7 @@ export interface Routine {
   streak: number;
   longestStreak: number;
   completedToday: boolean;
+  visibility?: RoutineVisibility;
   createdAt: string;
 }
 
@@ -38,6 +40,7 @@ export interface CreateRoutineInput {
   reminderType: ReminderType;
   reminderTime: string;
   reminderLocation?: string | null;
+  visibility?: RoutineVisibility;
 }
 
 export type UpdateRoutineInput = Partial<CreateRoutineInput> & { id: string };

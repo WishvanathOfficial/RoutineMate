@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import * as controller from '../controllers/friends.controller';
+import { requireAuth } from '../middleware/auth.middleware';
+import { validate } from '../middleware/validate.middleware';
+import { publicProfileSchema, userSearchSchema } from '../validators/friends.validator';
+const router = Router();
+router.use(requireAuth);
+router.get('/search', validate(userSearchSchema), controller.search);
+router.get('/:id/public-profile', validate(publicProfileSchema), controller.profile);
+export default router;

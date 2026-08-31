@@ -10,6 +10,8 @@ import achievementsRoutes from './achievements.routes';
 import journalRoutes from './journal.routes';
 import notificationsRoutes from './notifications.routes';
 import onboardingRoutes from './onboarding.routes';
+import friendsRoutes from './friends.routes';
+import usersRoutes from './users.routes';
 
 const router = Router();
 
@@ -24,5 +26,7 @@ router.use('/achievements', achievementsRoutes);
 router.use('/journal', journalRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/onboarding', onboardingRoutes);
+router.use('/friends', friendsRoutes);
+router.use('/users', usersRoutes);
 
 export default router;

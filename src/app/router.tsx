@@ -16,6 +16,7 @@ import ProfilePage from '@features/profile/ProfilePage';
 import OnboardingPage from '@features/onboarding/OnboardingPage';
 import AppLayout from '@layouts/AppLayout/AppLayout';
 import ProtectedRoute from '@components/ProtectedRoute/ProtectedRoute';
+import FriendsPage from '@features/friends/FriendsPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       { path: '/journal/:date', element: <JournalEntryPage /> },
       { path: '/calendar', element: <CalendarPage /> },
       { path: '/profile', element: <ProfilePage /> },
+      { path: '/friends', element: <FriendsPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

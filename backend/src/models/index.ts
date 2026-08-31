@@ -11,6 +11,7 @@ import { UserXp } from './userXp.model';
 import { JournalEntry } from './journalEntry.model';
 import { Notification } from './notification.model';
 import { OnboardingState } from './onboardingState.model';
+import { Friendship } from './friendship.model';
 
 // Associations — see docs/RoutineMate-MVP1-Database-Design.html §4 "Relationships & Delete Behavior"
 
@@ -77,6 +78,14 @@ User.hasOne(OnboardingState, {
   onDelete: 'CASCADE',
 });
 OnboardingState.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Friendship, { foreignKey: 'requesterId', as: 'sentFriendships', onDelete: 'CASCADE' });
+User.hasMany(Friendship, {
+  foreignKey: 'addresseeId',
+  as: 'receivedFriendships',
+  onDelete: 'CASCADE',
+});
+Friendship.belongsTo(User, { foreignKey: 'requesterId', as: 'requester' });
+Friendship.belongsTo(User, { foreignKey: 'addresseeId', as: 'addressee' });
 
 export {
   sequelize,
@@ -92,6 +101,7 @@ export {
   JournalEntry,
   Notification,
   OnboardingState,
+  Friendship,
 };
 
 export default {
@@ -108,4 +118,5 @@ export default {
   JournalEntry,
   Notification,
   OnboardingState,
+  Friendship,
 };

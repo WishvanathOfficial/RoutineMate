@@ -3,6 +3,7 @@ import { z } from 'zod';
 const category = z.enum(['Health', 'Mindfulness', 'Learning', 'Wellness', 'Productivity']);
 const frequencyType = z.enum(['daily', 'weekdays', 'specific_days', 'interval']);
 const reminderType = z.enum(['time', 'location']);
+const visibility = z.enum(['private', 'friends', 'public']);
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD');
 
 const frequencyConfig = z
@@ -41,6 +42,7 @@ export const createRoutineSchema = z.object({
     targetUnit: z.string().trim().max(30).optional(),
     startDate: dateOnly.optional(),
     endDate: dateOnly.optional(),
+    visibility: visibility.optional(),
   }),
   params: z.object({}).optional(),
   query: z.object({}).optional(),

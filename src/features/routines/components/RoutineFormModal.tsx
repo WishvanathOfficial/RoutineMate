@@ -6,6 +6,7 @@ import type {
   Routine,
   RoutineCategory,
   RoutineFrequency,
+  RoutineVisibility,
 } from '../routines.types';
 import { ROUTINE_TEMPLATES } from '../routines.types';
 import styles from '../routines.module.scss';
@@ -34,6 +35,7 @@ const emptyForm: CreateRoutineInput = {
   reminderType: 'time',
   reminderTime: '08:00',
   reminderLocation: '',
+  visibility: 'private',
 };
 
 export default function RoutineFormModal({
@@ -54,6 +56,7 @@ export default function RoutineFormModal({
         reminderType: editingRoutine.reminderType,
         reminderTime: editingRoutine.reminderTime,
         reminderLocation: editingRoutine.reminderLocation ?? '',
+        visibility: editingRoutine.visibility,
       });
     } else {
       setForm(emptyForm);
@@ -105,6 +108,21 @@ export default function RoutineFormModal({
             </div>
           </div>
         )}
+
+        <div className={styles.field}>
+          <label htmlFor="routine-visibility">Privacy</label>
+          <select
+            id="routine-visibility"
+            value={form.visibility}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, visibility: e.target.value as RoutineVisibility }))
+            }
+          >
+            <option value="private">Private</option>
+            <option value="friends">Friends only</option>
+            <option value="public">Public</option>
+          </select>
+        </div>
 
         <div className={styles.field}>
           <label htmlFor="routine-name">Habit name</label>

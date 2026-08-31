@@ -21,6 +21,7 @@ router.get('/:id', validate(routineIdParamSchema), routinesController.getOne);
 router.put('/:id', validate(updateRoutineSchema), routinesController.update);
 router.delete('/:id', validate(routineIdParamSchema), routinesController.remove);
 router.patch('/:id/pause', validate(routineIdParamSchema), routinesController.pause);
+router.patch('/:id/privacy', validate(routineIdParamSchema), routinesController.updatePrivacy);
 router.post('/:id/check-in', validate(checkInSchema), routinesController.checkIn);
 
 export default router;

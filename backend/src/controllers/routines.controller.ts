@@ -43,3 +43,10 @@ export const checkIn = asyncHandler(async (req, res) => {
   const result = await routinesService.checkIn(req.user!.sub, req.params.id, req.body);
   ApiResponse.ok(res, result, 'Checked in');
 });
+
+export const updatePrivacy = asyncHandler(async (req, res) => {
+  const routine = await routinesService.updateRoutine(req.user!.sub, req.params.id, {
+    visibility: req.body.visibility,
+  });
+  ApiResponse.ok(res, routine, 'Routine privacy updated');
+});

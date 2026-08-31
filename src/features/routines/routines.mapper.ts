@@ -31,6 +31,7 @@ export interface BackendRoutineDto {
   category: RoutineCategory;
   frequencyType: BackendFrequencyType;
   frequencyConfig: BackendFrequencyConfig | null;
+  visibility?: 'private' | 'friends' | 'public';
   reminderType: ReminderType;
   reminderTime: string | null;
   reminderLocation: string | null;
@@ -109,6 +110,7 @@ export function fromBackendRoutine(dto: BackendRoutineDto, completedToday: boole
     streak: dto.currentStreak,
     longestStreak: dto.longestStreak,
     completedToday,
+    visibility: dto.visibility ?? 'private',
     createdAt: dto.createdAt,
   };
 }

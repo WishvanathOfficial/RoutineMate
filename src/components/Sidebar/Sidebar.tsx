@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/stats', label: 'Stats', icon: 'fa-solid fa-chart-simple' },
   { to: '/goals', label: 'Goals', icon: 'fa-solid fa-bullseye' },
   { to: '/achievements', label: 'Achievements', icon: 'fa-solid fa-trophy' },
+  { to: '/friends', label: 'Friends', icon: 'fa-solid fa-user-group' },
   { to: '/journal', label: 'Journal', icon: 'fa-solid fa-book-open' },
   { to: '/calendar', label: 'Calendar', icon: 'fa-solid fa-calendar-days' },
   { to: '/profile', label: 'Profile & Settings', icon: 'fa-solid fa-user-gear' },

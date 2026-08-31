@@ -12,6 +12,7 @@ export type RoutineCategory = 'Health' | 'Mindfulness' | 'Learning' | 'Wellness'
 export type RoutineFrequencyType = 'daily' | 'weekdays' | 'specific_days' | 'interval';
 export type ReminderType = 'time' | 'location';
 export type RoutineStatus = 'active' | 'paused' | 'archived';
+export type RoutineVisibility = 'private' | 'friends' | 'public';
 
 export interface FrequencyConfig {
   days?: number[]; // 0=Sunday..6=Saturday, for 'specific_days'
@@ -33,6 +34,7 @@ export class Routine extends Model<InferAttributes<Routine>, InferCreationAttrib
   declare targetValue: number | null;
   declare targetUnit: string | null;
   declare status: CreationOptional<RoutineStatus>;
+  declare visibility: CreationOptional<RoutineVisibility>;
   declare currentStreak: CreationOptional<number>;
   declare longestStreak: CreationOptional<number>;
   declare startDate: string;
@@ -108,6 +110,11 @@ Routine.init(
       type: DataTypes.ENUM('active', 'paused', 'archived'),
       allowNull: false,
       defaultValue: 'active',
+    },
+    visibility: {
+      type: DataTypes.ENUM('private', 'friends', 'public'),
+      allowNull: false,
+      defaultValue: 'private',
     },
     currentStreak: {
       type: DataTypes.INTEGER,
