@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectAllRoutines } from '@features/routines/routines.selectors';
 import { toastShown } from '@features/ui/ui.slice';
 import { selectAllGoals, selectGoalsStatus } from './goals.selectors';
-import { fetchGoalsThunk, toggleGoalMilestoneThunk } from './goals.thunks';
+import { createGoalThunk, fetchGoalsThunk, toggleGoalMilestoneThunk } from './goals.thunks';
+import GoalForm from './components/GoalForm';
+import Modal from '@components/Modal/Modal';
+import { deleteGoal } from './goals.api';
 import type { Goal } from './goals.types';
 import styles from './goals.module.scss';
 
@@ -25,10 +27,33 @@ function daysLeft(dateStr: string): number {
 
 export default function GoalsPage() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const goals = useAppSelector(selectAllGoals);
   const status = useAppSelector(selectGoalsStatus);
   const routines = useAppSelector(selectAllRoutines);
+  const [goalToDelete, setGoalToDelete] = useState<Goal | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [newGoalOpen, setNewGoalOpen] = useState(false);
+  const confirmDelete = async () => {
+    if (!goalToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteGoal(goalToDelete.id);
+      setGoalToDelete(null);
+      dispatch(fetchGoalsThunk());
+      dispatch(toastShown('Goal deleted'));
+    } catch {
+      dispatch(toastShown('Failed to delete goal.'));
+    } finally {
+      setDeleting(false);
+    }
+  };
+  const createGoal = async (input: import('./goals.types').CreateGoalInput) => {
+    const result = await dispatch(createGoalThunk(input));
+    if (createGoalThunk.fulfilled.match(result)) {
+      setNewGoalOpen(false);
+      dispatch(toastShown('Goal created 🎯'));
+    } else dispatch(toastShown(result.payload ?? 'Failed to create goal.'));
+  };
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchGoalsThunk());
@@ -54,11 +79,7 @@ export default function GoalsPage() {
           <h2>Goals</h2>
           <p>Long-term targets linked to your daily routines.</p>
         </div>
-        <button
-          type="button"
-          className={styles.newGoalButton}
-          onClick={() => navigate('/goals/new')}
-        >
+        <button type="button" className={styles.newGoalButton} onClick={() => setNewGoalOpen(true)}>
           <i className="fa-solid fa-plus" aria-hidden="true" /> New Goal
         </button>
       </div>
@@ -121,11 +142,43 @@ export default function GoalsPage() {
                 {goal.milestones.length === 0 && (
                   <span className={styles.linkedChip}>{linkedLabel(goal)}</span>
                 )}
+                <button
+                  type="button"
+                  className={styles.deleteButton}
+                  onClick={() => setGoalToDelete(goal)}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
+      <Modal
+        isOpen={goalToDelete !== null}
+        title="Delete goal?"
+        onClose={() => !deleting && setGoalToDelete(null)}
+      >
+        <p>
+          Delete <strong>{goalToDelete?.title}</strong> permanently?
+        </p>
+        <div className={styles.modalActions}>
+          <button type="button" onClick={() => setGoalToDelete(null)} disabled={deleting}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.dangerButton}
+            onClick={() => void confirmDelete()}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting…' : 'Delete goal'}
+          </button>
+        </div>
+      </Modal>
+      <Modal isOpen={newGoalOpen} title="Create New Goal" onClose={() => setNewGoalOpen(false)}>
+        <GoalForm onSubmit={createGoal} onCancel={() => setNewGoalOpen(false)} />
+      </Modal>
     </div>
   );
 }

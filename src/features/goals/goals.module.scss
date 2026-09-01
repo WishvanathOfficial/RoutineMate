@@ -72,6 +72,7 @@
 .goalCard {
   @include m.card;
   padding: 24px;
+  position: relative;
 }
 
 .goalCardDone {
@@ -331,4 +332,36 @@
   &:hover {
     background: v.$color-brand-700;
   }
+}
+.deleteButton {
+  border: 0;
+  background: transparent;
+  color: #fb7185;
+  cursor: pointer;
+  padding: 4px 0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  &:hover {
+    color: #ef4444;
+    text-decoration: underline;
+  }
+}
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color-strong);
+    cursor: pointer;
+    font-weight: 600;
+  }
+}
+.dangerButton {
+  background: #ef4444;
+  color: #fff;
+  border: 0 !important;
 }

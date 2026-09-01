@@ -34,5 +34,10 @@ export const toggleMilestoneSchema = z.object({
   }),
   query: z.object({}).optional(),
 });
+export const goalIdSchema = z.object({
+  body: z.object({}).optional(),
+  params: z.object({ id: z.string().uuid() }),
+  query: z.object({}).optional(),
+});
 
 export type CreateGoalInput = z.infer<typeof createGoalSchema>['body'];

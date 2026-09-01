@@ -21,6 +21,12 @@ function daysBetween(a: Date, b: Date): number {
   return Math.max(1, Math.round((b.getTime() - a.getTime()) / 86_400_000));
 }
 
+export async function deleteGoal(userId: string, goalId: string) {
+  const goal = await Goal.findOne({ where: { id: goalId, userId } });
+  if (!goal) throw ApiError.notFound('Goal not found');
+  await goal.destroy();
+}
+
 async function computeProgress(goal: GoalModel): Promise<number> {
   if (goal.status === 'completed') return 100;
 

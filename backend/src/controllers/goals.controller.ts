@@ -20,3 +20,7 @@ export const toggleMilestone = asyncHandler(async (req, res) => {
   );
   ApiResponse.ok(res, goal);
 });
+export const remove = asyncHandler(async (req, res) => {
+  await goalsService.deleteGoal(req.user!.sub, req.params.id);
+  ApiResponse.noContent(res);
+});

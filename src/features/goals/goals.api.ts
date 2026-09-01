@@ -18,3 +18,6 @@ export async function createGoal(input: CreateGoalInput): Promise<Goal> {
 export async function toggleGoalMilestone(goalId: string, milestoneId: string): Promise<Goal> {
   return httpClient.patch(`/api/goals/${goalId}/milestones/${milestoneId}`).then(unwrap<Goal>);
 }
+export async function deleteGoal(id: string): Promise<void> {
+  await httpClient.delete(`/api/goals/${id}`);
+}
