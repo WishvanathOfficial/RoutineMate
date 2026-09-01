@@ -17,6 +17,8 @@ import type { CreateRoutineInput, Routine } from './routines.types';
 import styles from './routines.module.scss';
 import {
   createBundle as createBundleRequest,
+  deleteBundle,
+  updateBundle,
   fetchBundles,
   type RoutineBundle,
 } from './bundles.api';
@@ -41,6 +43,9 @@ export default function RoutinesPage() {
   const [bundleCreating, setBundleCreating] = useState(false);
   const [bundlePage, setBundlePage] = useState(1);
   const [bundleTotalPages, setBundleTotalPages] = useState(1);
+  const [bundleToDelete, setBundleToDelete] = useState<RoutineBundle | null>(null);
+  const [bundleDeleting, setBundleDeleting] = useState(false);
+  const [bundleEditing, setBundleEditing] = useState<RoutineBundle | null>(null);
   const [routinePage, setRoutinePage] = useState(1);
   const routinesPerPage = 6;
   const routineTotalPages = Math.max(1, Math.ceil(routines.length / routinesPerPage));
@@ -63,21 +68,34 @@ export default function RoutinesPage() {
     setEditingRoutine(null);
     setModalOpen(true);
   };
+  const openEditBundle = (bundle: RoutineBundle) => {
+    setBundleEditing(bundle);
+    setBundleTitle(bundle.title);
+    setBundleRoutineIds(bundle.items.map((item) => item.routineId));
+    setBundleModalOpen(true);
+  };
   const createBundle = async () => {
-    if (bundleRoutineIds.length < 1 || bundleCreating) return;
+    if (bundleRoutineIds.length < 1 || !bundleTitle.trim() || bundleCreating) return;
     setBundleCreating(true);
     try {
-      await createBundleRequest({
-        title: bundleTitle.trim() || 'My Routine Bundle',
+      const payload = {
+        title: bundleTitle.trim(),
         routineIds: bundleRoutineIds,
-      });
+      };
+      if (bundleEditing) await updateBundle(bundleEditing.id, payload);
+      else await createBundleRequest(payload);
       const refreshed = await fetchBundles(bundlePage, 6);
       setBundles(refreshed.items);
       setBundleTotalPages(refreshed.meta.totalPages);
       setBundleModalOpen(false);
       setBundleTitle('');
       setBundleRoutineIds([]);
-      dispatch(toastShown('Bundle created successfully 🎉'));
+      dispatch(
+        toastShown(
+          bundleEditing ? 'Bundle updated successfully 🎉' : 'Bundle created successfully 🎉',
+        ),
+      );
+      setBundleEditing(null);
     } catch (error) {
       dispatch(toastShown(extractApiErrorMessage(error, 'Failed to create bundle.')));
     } finally {
@@ -88,6 +106,22 @@ export default function RoutinesPage() {
   const openEditModal = (routine: Routine) => {
     setEditingRoutine(routine);
     setModalOpen(true);
+  };
+  const handleDeleteBundle = async () => {
+    if (!bundleToDelete) return;
+    setBundleDeleting(true);
+    try {
+      await deleteBundle(bundleToDelete.id);
+      setBundleToDelete(null);
+      const refreshed = await fetchBundles(bundlePage, 6);
+      setBundles(refreshed.items);
+      setBundleTotalPages(refreshed.meta.totalPages);
+      dispatch(toastShown('Bundle deleted'));
+    } catch (error) {
+      dispatch(toastShown(extractApiErrorMessage(error, 'Failed to delete bundle.')));
+    } finally {
+      setBundleDeleting(false);
+    }
   };
 
   const handleSubmit = async (input: CreateRoutineInput, editingId?: string) => {
@@ -191,6 +225,22 @@ export default function RoutinesPage() {
                   <i className="fa-solid fa-layer-group" aria-hidden="true" /> {bundle.title}
                 </h3>
                 <span className={styles.streak}>🔥 {bundle.streak} day streak</span>
+                <button
+                  type="button"
+                  className={styles.bundleEditButton}
+                  aria-label={`Edit ${bundle.title}`}
+                  onClick={() => openEditBundle(bundle)}
+                >
+                  <i className="fa-solid fa-pen" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className={styles.bundleDeleteButton}
+                  aria-label={`Delete ${bundle.title}`}
+                  onClick={() => setBundleToDelete(bundle)}
+                >
+                  <i className="fa-solid fa-trash" aria-hidden="true" />
+                </button>
               </div>
               <p className={styles.bundleSteps}>
                 {bundle.items.map((item) => item.routine?.emoji ?? '•').join(' → ')}{' '}
@@ -202,7 +252,9 @@ export default function RoutinesPage() {
             </div>
           ))
         )}
-        <Pagination page={bundlePage} totalPages={bundleTotalPages} onChange={setBundlePage} />
+        {bundles.length > 0 && (
+          <Pagination page={bundlePage} totalPages={bundleTotalPages} onChange={setBundlePage} />
+        )}
       </section>
       <p className={styles.sectionLabel}>ALL ROUTINES</p>
       {routines.length === 0 ? (
@@ -242,13 +294,15 @@ export default function RoutinesPage() {
       />
       <Modal
         isOpen={bundleModalOpen}
-        title="Create Routine Bundle"
+        title={bundleEditing ? 'Edit Routine Bundle' : 'Create Routine Bundle'}
         onClose={() => setBundleModalOpen(false)}
       >
         <div className={styles.bundleForm}>
           <label htmlFor="bundle-name">Bundle name</label>
           <input
             id="bundle-name"
+            required
+            aria-required="true"
             placeholder="e.g. Evening Wind-down"
             value={bundleTitle}
             onChange={(e) => setBundleTitle(e.target.value)}
@@ -288,10 +342,45 @@ export default function RoutinesPage() {
             <button
               type="button"
               className={styles.sequenceButton}
-              disabled={bundleRoutineIds.length < 1 || bundleCreating}
+              disabled={bundleRoutineIds.length < 1 || !bundleTitle.trim() || bundleCreating}
               onClick={() => void createBundle()}
             >
-              {bundleCreating ? 'Creating…' : 'Create Bundle'}
+              {bundleCreating
+                ? bundleEditing
+                  ? 'Saving…'
+                  : 'Creating…'
+                : bundleEditing
+                  ? 'Save Changes'
+                  : 'Create Bundle'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={bundleToDelete !== null}
+        title="Delete bundle?"
+        onClose={() => !bundleDeleting && setBundleToDelete(null)}
+      >
+        <div className={styles.deleteConfirmation}>
+          <p>
+            This will permanently remove <strong>{bundleToDelete?.title}</strong> and its sequence.
+          </p>
+          <div className={styles.deleteConfirmationActions}>
+            <button
+              type="button"
+              className={styles.cancelButton}
+              disabled={bundleDeleting}
+              onClick={() => setBundleToDelete(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.deleteConfirmButton}
+              disabled={bundleDeleting}
+              onClick={() => void handleDeleteBundle()}
+            >
+              {bundleDeleting ? 'Deleting…' : 'Delete bundle'}
             </button>
           </div>
         </div>

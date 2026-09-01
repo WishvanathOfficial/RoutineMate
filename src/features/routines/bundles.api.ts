@@ -14,6 +14,9 @@ export const fetchBundles = (page = 1, pageSize = 6) =>
   httpClient.get('/api/routine-bundles', { params: { page, pageSize } }).then(unwrap<BundlePage>);
 export const createBundle = (input: { title: string; routineIds: string[] }) =>
   httpClient.post('/api/routine-bundles', input).then(unwrap<RoutineBundle>);
+export const deleteBundle = (id: string) => httpClient.delete(`/api/routine-bundles/${id}`);
+export const updateBundle = (id: string, input: { title: string; routineIds: string[] }) =>
+  httpClient.patch(`/api/routine-bundles/${id}`, input).then(unwrap<RoutineBundle>);
 export const fetchBundle = (id: string) =>
   httpClient.get(`/api/routine-bundles/${id}`).then(unwrap<RoutineBundle>);
 export const checkInBundle = (id: string, completed: boolean) =>

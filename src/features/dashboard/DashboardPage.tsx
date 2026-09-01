@@ -176,11 +176,13 @@ export default function DashboardPage() {
                   </span>
                 </div>
               ))}
-            <Pagination
-              page={routinePage}
-              totalPages={routineTotalPages}
-              onChange={setRoutinePage}
-            />
+            {routines.length > 0 && (
+              <Pagination
+                page={routinePage}
+                totalPages={routineTotalPages}
+                onChange={setRoutinePage}
+              />
+            )}
           </div>
         </div>
 
