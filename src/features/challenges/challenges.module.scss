@@ -28,29 +28,37 @@
 
 .tabs {
   display: flex;
+  width: min(100%, 360px);
+  gap: 4px;
   background: var(--bg-hover);
   border-radius: v.$radius-md;
   padding: 4px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 
   button {
+    display: flex;
     flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
     border: 0;
     background: transparent;
-    padding: 10px;
+    padding: 7px 12px;
     font-weight: 600;
-    color: var(--text-primary);
+    font-size: 13px;
+    color: var(--text-secondary);
     border-radius: v.$radius-sm;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-      opacity: 0.7;
+      color: var(--text-primary);
     }
 
     &.active {
       background: v.$color-brand-600;
       color: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
     }
   }
 }
