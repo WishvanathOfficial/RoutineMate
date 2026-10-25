@@ -1,5 +1,6 @@
 import { runNotificationSweep } from '../services/notificationGenerator.service';
 import { runWeeklyEmailSweep } from '../services/weeklyEmail.service';
+import { archiveExpiredChallenges } from '../services/challenges.service';
 import { logger } from '../utils/logger';
 
 // docs/RoutineMate-MVP2-Scope.md §6 "Notification-generation engine".
@@ -43,6 +44,12 @@ async function tick(): Promise<void> {
     }
   } catch (err) {
     logger.error('Weekly email sweep failed unexpectedly:', err);
+  }
+
+  try {
+    await archiveExpiredChallenges();
+  } catch (err) {
+    logger.error('Challenge archive sweep failed unexpectedly:', err);
   }
 }
 

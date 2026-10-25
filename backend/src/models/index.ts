@@ -22,6 +22,9 @@ import { CalendarConnection } from './calendarConnection.model';
 import { Insight } from './insight.model';
 import { FeedbackItem } from './feedbackItem.model';
 import { FeedbackVote } from './feedbackVote.model';
+import { Challenge } from './challenge.model';
+import { ChallengeCheckIn } from './challengeCheckIn.model';
+import { ChallengeReaction } from './challengeReaction.model';
 
 // Associations — see docs/RoutineMate-MVP1-Database-Design.html §4 "Relationships & Delete Behavior"
 
@@ -114,6 +117,26 @@ BundleCheckIn.belongsTo(RoutineBundle, { foreignKey: 'bundleId', as: 'bundle' })
 User.hasOne(Subscription, { foreignKey: 'userId', as: 'subscription', onDelete: 'CASCADE' });
 Subscription.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// MVP-3 Challenge associations
+User.hasMany(Challenge, { foreignKey: 'creatorId', as: 'createdChallenges', onDelete: 'CASCADE' });
+Challenge.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
+
+Challenge.hasMany(ChallengeCheckIn, {
+  foreignKey: 'challengeId',
+  as: 'checkIns',
+  onDelete: 'CASCADE',
+});
+ChallengeCheckIn.belongsTo(Challenge, { foreignKey: 'challengeId', as: 'challenge' });
+ChallengeCheckIn.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+ChallengeCheckIn.hasMany(ChallengeReaction, {
+  foreignKey: 'checkInId',
+  as: 'reactions',
+  onDelete: 'CASCADE',
+});
+ChallengeReaction.belongsTo(ChallengeCheckIn, { foreignKey: 'checkInId', as: 'checkIn' });
+ChallengeReaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 export {
   sequelize,
   User,
@@ -139,6 +162,9 @@ export {
   Insight,
   FeedbackItem,
   FeedbackVote,
+  Challenge,
+  ChallengeCheckIn,
+  ChallengeReaction,
 };
 
 export default {
@@ -166,4 +192,7 @@ export default {
   Insight,
   FeedbackItem,
   FeedbackVote,
+  Challenge,
+  ChallengeCheckIn,
+  ChallengeReaction,
 };

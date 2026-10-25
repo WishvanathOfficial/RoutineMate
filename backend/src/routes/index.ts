@@ -19,6 +19,7 @@ import focusSessionsRoutes from './focusSessions.routes';
 import calendarSyncRoutes from './calendarSync.routes';
 import insightsRoutes from './insights.routes';
 import feedbackRoutes from './feedback.routes';
+import challengesRoutes from './challenges.routes';
 
 const router = Router();
 
@@ -42,6 +43,7 @@ router.use('/focus-sessions', focusSessionsRoutes);
 router.use('/calendar-sync', calendarSyncRoutes);
 router.use('/calendar', calendarSyncRoutes);
 router.use('/insights', insightsRoutes);
+router.use('/challenges', challengesRoutes);
 router.use('/', feedbackRoutes);
 
 export default router;

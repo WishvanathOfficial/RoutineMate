@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '@app/hooks';
 import { createRoutineThunk } from '@features/routines/routines.thunks';
 import { ROUTINE_TEMPLATES, type RoutineCategory } from '@features/routines/routines.types';
@@ -14,6 +14,8 @@ const TOTAL_STEPS = 3;
 export default function OnboardingPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as { redirectTo?: string } | null)?.redirectTo;
 
   const [step, setStep] = useState(1);
   const [categories, setCategories] = useState<RoutineCategory[]>(['Health']);
@@ -85,7 +87,7 @@ export default function OnboardingPage() {
     } else {
       dispatch(toastShown('Welcome to RoutineMate! Your starter habits are ready 🎉'));
     }
-    navigate('/dashboard');
+    navigate(redirectTo ?? '/dashboard', { replace: true });
   };
 
   return (

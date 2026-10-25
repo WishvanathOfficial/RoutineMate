@@ -12,6 +12,10 @@ jest.mock('../../services/weeklyEmail.service', () => ({
   runWeeklyEmailSweep: jest.fn().mockResolvedValue(0),
 }));
 
+jest.mock('../../services/challenges.service', () => ({
+  archiveExpiredChallenges: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('../../utils/logger', () => ({
   logger: {
     info: jest.fn(),
@@ -22,10 +26,12 @@ jest.mock('../../utils/logger', () => ({
 
 import { runNotificationSweep } from '../../services/notificationGenerator.service';
 import { runWeeklyEmailSweep } from '../../services/weeklyEmail.service';
+import { archiveExpiredChallenges } from '../../services/challenges.service';
 import { startNotificationScheduler, stopNotificationScheduler } from '../notificationScheduler';
 
 const mockRunNotificationSweep = runNotificationSweep as jest.Mock;
 const mockRunWeeklyEmailSweep = runWeeklyEmailSweep as jest.Mock;
+const mockArchiveExpiredChallenges = archiveExpiredChallenges as jest.Mock;
 
 describe('notificationScheduler', () => {
   beforeEach(() => {
@@ -38,6 +44,7 @@ describe('notificationScheduler', () => {
       errors: [],
     });
     mockRunWeeklyEmailSweep.mockResolvedValue(0);
+    mockArchiveExpiredChallenges.mockResolvedValue(undefined);
     jest.useFakeTimers();
   });
 
@@ -62,6 +69,14 @@ describe('notificationScheduler', () => {
     await jest.advanceTimersByTimeAsync(60_000);
 
     expect(mockRunWeeklyEmailSweep).toHaveBeenCalledTimes(1);
+  });
+
+  it('archives challenges whose end date has passed on every tick', async () => {
+    startNotificationScheduler();
+
+    await jest.advanceTimersByTimeAsync(60_000);
+
+    expect(mockArchiveExpiredChallenges).toHaveBeenCalledTimes(1);
   });
 
   it('still runs the weekly email sweep even if the notification sweep rejects', async () => {

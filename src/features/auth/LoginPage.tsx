@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { loginUser, loginWithGoogle } from './auth.thunks';
 import { selectAuthError, selectAuthStatus } from './auth.selectors';
@@ -14,6 +14,13 @@ type GoogleCredentialResponse = {
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (
+    location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null
+  )?.from;
+  const destination = redirectTo
+    ? `${redirectTo.pathname ?? '/dashboard'}${redirectTo.search ?? ''}${redirectTo.hash ?? ''}`
+    : '/dashboard';
   const status = useAppSelector(selectAuthStatus);
   const error = useAppSelector(selectAuthError);
 
@@ -46,7 +53,7 @@ export default function LoginPage() {
           const result = await dispatch(loginWithGoogle({ credential }));
           if (loginWithGoogle.fulfilled.match(result)) {
             dispatch(toastShown(`Welcome back, ${result.payload.user.name.split(' ')[0]}!`));
-            navigate('/dashboard');
+            navigate(destination, { replace: true });
           }
         },
       });
@@ -80,14 +87,14 @@ export default function LoginPage() {
       const el = document.getElementById(scriptId);
       if (el) el.remove();
     };
-  }, [dispatch, googleClientId, navigate]);
+  }, [dispatch, destination, googleClientId, navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const result = await dispatch(loginUser({ email, password }));
     if (loginUser.fulfilled.match(result)) {
       dispatch(toastShown(`Welcome back, ${result.payload.user.name.split(' ')[0]}!`));
-      navigate('/dashboard');
+      navigate(destination, { replace: true });
     }
   };
 
@@ -157,7 +164,10 @@ export default function LoginPage() {
           </form>
 
           <p className={styles.footer}>
-            Don&apos;t have an account? <Link to="/register">Sign up</Link>
+            Don&apos;t have an account?{' '}
+            <Link to="/register" state={location.state}>
+              Sign up
+            </Link>
           </p>
         </div>
 

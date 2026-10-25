@@ -24,6 +24,7 @@ import RoadmapPage from '@features/feedback/RoadmapPage';
 import FeedbackPage from '@features/feedback/FeedbackPage';
 import LanguageSettingsPage from '@features/profile/LanguageSettingsPage';
 import ChallengesPage from '@features/challenges/ChallengesPage';
+import ChallengeDetailPage from '@features/challenges/ChallengeDetailPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: '/feedback', element: <FeedbackPage /> },
       { path: '/settings/language', element: <LanguageSettingsPage /> },
       { path: '/challenges', element: <ChallengesPage /> },
+      { path: '/challenges/:id', element: <ChallengeDetailPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

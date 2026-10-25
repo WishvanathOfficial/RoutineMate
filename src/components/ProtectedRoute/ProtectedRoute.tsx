@@ -1,5 +1,5 @@
 import { useEffect, type PropsWithChildren } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectAuthInitialized, selectIsAuthenticated } from '@features/auth/auth.selectors';
 import {
@@ -39,6 +39,7 @@ function LoadingScreen() {
 }
 
 export default function ProtectedRoute({ children, onboardingRoute = false }: ProtectedRouteProps) {
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const initialized = useAppSelector(selectAuthInitialized);
@@ -67,14 +68,22 @@ export default function ProtectedRoute({ children, onboardingRoute = false }: Pr
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // `onboardingStatus === 'failed'` fails open (treated as already
   // onboarded) rather than trapping the user behind a permanent redirect
   // loop over what's likely a transient network error.
   if (!onboardingRoute && onboardingStatus === 'succeeded' && !onboardingCompleted) {
-    return <Navigate to="/onboarding" replace />;
+    return (
+      <Navigate
+        to="/onboarding"
+        state={{
+          redirectTo: `${location.pathname}${location.search}${location.hash}`,
+        }}
+        replace
+      />
+    );
   }
   if (onboardingRoute && onboardingCompleted) {
     return <Navigate to="/dashboard" replace />;

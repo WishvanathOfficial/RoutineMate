@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { loginWithGoogle, registerUser } from './auth.thunks';
 import { selectAuthError, selectAuthStatus } from './auth.selectors';
@@ -9,6 +9,13 @@ import styles from './auth.module.scss';
 export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (
+    location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null
+  )?.from;
+  const onboardingDestination = redirectTo
+    ? `${redirectTo.pathname ?? '/dashboard'}${redirectTo.search ?? ''}${redirectTo.hash ?? ''}`
+    : undefined;
   const status = useAppSelector(selectAuthStatus);
   const error = useAppSelector(selectAuthError);
 
@@ -29,7 +36,9 @@ export default function RegisterPage() {
         callback: async (response) => {
           if (!response.credential) return;
           const result = await dispatch(loginWithGoogle({ credential: response.credential }));
-          if (loginWithGoogle.fulfilled.match(result)) navigate('/onboarding');
+          if (loginWithGoogle.fulfilled.match(result)) {
+            navigate('/onboarding', { state: { redirectTo: onboardingDestination } });
+          }
         },
       });
       googleButtonRef.current.replaceChildren();
@@ -54,7 +63,7 @@ export default function RegisterPage() {
       script.onload = initialize;
       document.head.appendChild(script);
     }
-  }, [dispatch, googleClientId, navigate]);
+  }, [dispatch, googleClientId, navigate, onboardingDestination]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -63,7 +72,7 @@ export default function RegisterPage() {
       // MVP-2: new accounts go through the onboarding wizard once, right
       // after registration, instead of landing straight on an empty
       // dashboard — see docs/RoutineMate-MVP2-Scope.md §3.4.
-      navigate('/onboarding');
+      navigate('/onboarding', { state: { redirectTo: onboardingDestination } });
     }
   };
 
@@ -132,7 +141,10 @@ export default function RegisterPage() {
           )}
 
           <p className={styles.footer}>
-            Already have an account? <Link to="/login">Log in</Link>
+            Already have an account?{' '}
+            <Link to="/login" state={location.state}>
+              Log in
+            </Link>
           </p>
         </form>
 
