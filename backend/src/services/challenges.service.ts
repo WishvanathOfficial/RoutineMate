@@ -18,6 +18,20 @@ function daysBetween(a: Date, b: Date): number {
   return Math.max(1, Math.floor((b.getTime() - a.getTime()) / 86_400_000));
 }
 
+function challengeDayCount(startDate: string, endDate: string): number {
+  return (
+    Math.floor(
+      (Date.parse(`${endDate}T00:00:00Z`) - Date.parse(`${startDate}T00:00:00Z`)) / 86_400_000,
+    ) + 1
+  );
+}
+
+function isDateOnly(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 function getParticipantIds(challenge: ChallengeModel): string[] {
   return (challenge.participantIds as string[] | null) || [];
 }
@@ -39,6 +53,8 @@ function toDto(
   userParticipating: boolean,
   userProgress?: number,
   userRank?: number,
+  userCompletedDays?: number,
+  userEligibleDays?: number,
 ) {
   const now = new Date();
   const daysLeft = daysBetween(now, new Date(challenge.endDate + 'T23:59:59Z'));
@@ -61,6 +77,8 @@ function toDto(
     daysLeft,
     userProgress: userProgress ?? 0,
     userRank: userRank ?? 0,
+    userCompletedDays: userCompletedDays ?? 0,
+    userEligibleDays: userEligibleDays ?? challengeDayCount(challenge.startDate, challenge.endDate),
   };
 }
 
@@ -71,8 +89,8 @@ export async function createChallenge(userId: string, input: CreateChallengeInpu
   const startDate = new Date(input.startDate);
   const endDate = new Date(input.endDate);
 
-  if (endDate <= startDate) {
-    throw ApiError.badRequest('End date must be after start date');
+  if (endDate < startDate) {
+    throw ApiError.badRequest('End date must be on or after the start date');
   }
 
   const challenge = await Challenge.create({
@@ -139,8 +157,15 @@ export async function getUserChallenges(userId: string, limit = 20, offset = 0) 
 
   return Promise.all(
     paginatedChallenges.map(async (c) => {
-      const userProgress = await getChallengeUserProgress(c.id, userId);
-      return toDto(c, getParticipantIds(c).includes(userId), userProgress);
+      const progress = await getChallengeUserProgress(c, userId);
+      return toDto(
+        c,
+        getParticipantIds(c).includes(userId),
+        progress.percentage,
+        undefined,
+        progress.completedDays,
+        progress.eligibleDays,
+      );
     }),
   );
 }
@@ -167,7 +192,9 @@ export async function getChallengeDetail(
     throw ApiError.forbidden('You do not have access to this challenge');
   }
 
-  const userProgress = userParticipating ? await getChallengeUserProgress(challengeId, userId) : 0;
+  const progress = userParticipating
+    ? await getChallengeUserProgress(challenge, userId)
+    : { percentage: 0, completedDays: 0, eligibleDays: 0 };
 
   // Get feed (latest check-ins with reactions)
   const feed = await ChallengeCheckIn.findAll({
@@ -194,7 +221,14 @@ export async function getChallengeDetail(
   }));
 
   return {
-    ...toDto(challenge, userParticipating, userProgress),
+    ...toDto(
+      challenge,
+      userParticipating,
+      progress.percentage,
+      undefined,
+      progress.completedDays,
+      progress.eligibleDays,
+    ),
     feed: feedDto,
   };
 }
@@ -284,6 +318,16 @@ export async function submitCheckIn(
   if (!getParticipantIds(challenge).includes(userId)) {
     throw ApiError.forbidden('Not participating in this challenge');
   }
+  if (
+    !isDateOnly(date) ||
+    date < challenge.startDate ||
+    date > challenge.endDate ||
+    date > new Date().toISOString().slice(0, 10)
+  ) {
+    throw ApiError.badRequest(
+      'Check-in date must be today or earlier and within the challenge dates',
+    );
+  }
 
   // Upsert check-in
   const [checkIn] = await ChallengeCheckIn.findOrCreate({
@@ -335,23 +379,29 @@ export async function addReaction(checkInId: string, userId: string, emoji: stri
 /**
  * Get challenge user progress (completion percentage)
  */
-async function getChallengeUserProgress(challengeId: string, userId: string): Promise<number> {
-  const challenge = await Challenge.findByPk(challengeId);
-  if (!challenge) return 0;
+async function getChallengeUserProgress(challenge: ChallengeModel, userId: string) {
+  const today = new Date().toISOString().slice(0, 10);
+  const eligibleEndDate = today < challenge.endDate ? today : challenge.endDate;
+  const eligibleDays =
+    today < challenge.startDate ? 0 : challengeDayCount(challenge.startDate, eligibleEndDate);
+  if (eligibleDays === 0) {
+    return { percentage: 0, completedDays: 0, eligibleDays };
+  }
 
-  const startDate = new Date(challenge.startDate);
-  const endDate = new Date(challenge.endDate + 'T23:59:59Z');
-  const totalDays = daysBetween(startDate, endDate);
-
-  const completed = await ChallengeCheckIn.count({
+  const completedDays = await ChallengeCheckIn.count({
     where: {
-      challengeId,
+      challengeId: challenge.id,
       userId,
       completed: true,
+      date: { [Op.between]: [challenge.startDate, eligibleEndDate] },
     },
   });
 
-  return Math.round((completed / totalDays) * 100);
+  return {
+    percentage: Math.round((completedDays / eligibleDays) * 100),
+    completedDays,
+    eligibleDays,
+  };
 }
 
 /**
@@ -365,12 +415,12 @@ export async function getChallengeLeaderboard(challengeId: string, limit = 50) {
 
   const leaderboard = await Promise.all(
     participantIds.map(async (userId) => {
-      const progress = await getChallengeUserProgress(challengeId, userId);
+      const progress = await getChallengeUserProgress(challenge, userId);
       const user = await User.findByPk(userId, { attributes: ['id', 'email'] });
       return {
         userId,
         userName: (user as any)?.email?.split('@')[0] || 'User',
-        progress,
+        progress: progress.percentage,
       };
     }),
   );

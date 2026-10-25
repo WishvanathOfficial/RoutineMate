@@ -9,11 +9,15 @@ export interface Challenge {
   participantCount: number;
   visibility: 'public' | 'private';
   daysLeft: number;
+  startDate: string;
+  endDate: string;
   status: 'active' | 'completed' | 'archived';
   creatorId: string;
   inviteToken?: string;
   joined?: boolean;
   userProgress?: number;
+  userCompletedDays?: number;
+  userEligibleDays?: number;
   userRank?: number;
 }
 

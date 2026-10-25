@@ -5,6 +5,7 @@ import { toastShown } from '@features/ui/ui.slice';
 import { extractApiErrorMessage } from '@api/apiError';
 import styles from './challengeDetail.module.scss';
 import Button from '@components/Button/Button';
+import Modal from '@components/Modal/Modal';
 import {
   getChallengeDetail,
   joinChallenge,
@@ -38,6 +39,9 @@ export default function ChallengeDetailPage() {
   const [checkInNotes, setCheckInNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [leaveConfirmationOpen, setLeaveConfirmationOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
 
   const loadChallenge = async () => {
     if (!id) return;
@@ -78,7 +82,7 @@ export default function ChallengeDetailPage() {
   };
 
   const handleSubmitCheckIn = async () => {
-    if (!id) return;
+    if (!id || !challenge || submitting) return;
 
     setSubmitting(true);
     try {
@@ -87,8 +91,9 @@ export default function ChallengeDetailPage() {
       setCheckInCompleted(true);
       setCheckInNotes('');
       await loadChallenge();
-    } catch (err) {
-      console.error('Failed to submit check-in:', err);
+      dispatch(toastShown('Check-in saved'));
+    } catch (error) {
+      dispatch(toastShown(extractApiErrorMessage(error, 'Could not save your check-in.')));
     } finally {
       setSubmitting(false);
     }
@@ -105,14 +110,18 @@ export default function ChallengeDetailPage() {
     }
   };
 
-  const handleLeavechallenge = async () => {
-    if (!id || !window.confirm('Are you sure you want to leave this challenge?')) return;
+  const handleLeaveChallenge = async () => {
+    if (!id || leaving) return;
 
+    setLeaving(true);
     try {
       await leaveChallenge(id);
+      dispatch(toastShown('You left the challenge'));
       navigate('/challenges');
-    } catch (err) {
-      console.error('Failed to leave challenge:', err);
+    } catch (error) {
+      dispatch(toastShown(extractApiErrorMessage(error, 'Could not leave the challenge.')));
+    } finally {
+      setLeaving(false);
     }
   };
 
@@ -123,6 +132,10 @@ export default function ChallengeDetailPage() {
   if (!challenge) {
     return <div className={styles.page}>Challenge not found</div>;
   }
+
+  const canCheckInToday =
+    challenge.status === 'active' && today >= challenge.startDate && today <= challenge.endDate;
+  const progressPercentage = Math.min(100, Math.max(0, challenge.userProgress ?? 0));
 
   return (
     <div className={styles.page}>
@@ -152,6 +165,12 @@ export default function ChallengeDetailPage() {
             {challenge.participantCount}{' '}
             {challenge.participantCount === 1 ? 'participant' : 'participants'}
           </span>
+          {challenge.joined && (
+            <span className={styles.badge}>
+              {challenge.userCompletedDays ?? 0}/{challenge.userEligibleDays ?? 0} days ·{' '}
+              {Math.round(progressPercentage)}%
+            </span>
+          )}
           {!challenge.joined && challenge.status === 'active' && (
             <Button onClick={handleJoinChallenge} disabled={joining}>
               {joining ? 'Joining...' : 'Join Challenge'}
@@ -181,9 +200,6 @@ export default function ChallengeDetailPage() {
                         </span>
                       </div>
                     </div>
-                    <div className={styles.streak}>
-                      🔥 {Math.floor(Math.random() * 30) + 1} day streak
-                    </div>
                   </div>
 
                   {item.notes && <p className={styles.notes}>{item.notes}</p>}
@@ -209,50 +225,69 @@ export default function ChallengeDetailPage() {
           )}
 
           {/* Check-In Form */}
-          {challenge.joined && challenge.status === 'active' && (
-            <div className={styles.checkInForm}>
-              <h3>Daily Check-In</h3>
+          {challenge.joined &&
+            challenge.status === 'active' &&
+            (canCheckInToday ? (
+              <div className={styles.checkInForm}>
+                <h3>Daily Check-In</h3>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="challenge-check-in-date">Date</label>
-                <input
-                  id="challenge-check-in-date"
-                  type="date"
-                  value={checkInDate}
-                  onChange={(e) => setCheckInDate(e.target.value)}
-                />
+                <div className={styles.formGroup}>
+                  <label htmlFor="challenge-check-in-date">Date</label>
+                  <input
+                    id="challenge-check-in-date"
+                    type="date"
+                    min={challenge.startDate}
+                    max={challenge.endDate < today ? challenge.endDate : today}
+                    value={checkInDate}
+                    onChange={(e) => {
+                      setCheckInDate(e.target.value);
+                      setCheckInCompleted(e.target.value === today);
+                    }}
+                  />
+                </div>
+
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={checkInCompleted}
+                    onChange={(e) => setCheckInCompleted(e.target.checked)}
+                  />
+                  <span>Completed today</span>
+                </label>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="challenge-check-in-notes">Notes</label>
+                  <textarea
+                    id="challenge-check-in-notes"
+                    placeholder="Share your thoughts or progress..."
+                    value={checkInNotes}
+                    onChange={(e) => setCheckInNotes(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                <div className={styles.formActions}>
+                  <Button
+                    onClick={() => handleSubmitCheckIn()}
+                    disabled={
+                      submitting ||
+                      checkInDate < challenge.startDate ||
+                      checkInDate > challenge.endDate ||
+                      checkInDate > today
+                    }
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Check-In'}
+                  </Button>
+                  <Button onClick={() => setLeaveConfirmationOpen(true)} variant="secondary">
+                    Leave Challenge
+                  </Button>
+                </div>
               </div>
-
-              <label className={styles.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={checkInCompleted}
-                  onChange={(e) => setCheckInCompleted(e.target.checked)}
-                />
-                <span>Completed today</span>
-              </label>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="challenge-check-in-notes">Notes</label>
-                <textarea
-                  id="challenge-check-in-notes"
-                  placeholder="Share your thoughts or progress..."
-                  value={checkInNotes}
-                  onChange={(e) => setCheckInNotes(e.target.value)}
-                  rows={3}
-                />
+            ) : (
+              <div className={styles.empty}>
+                Check-ins are available from {challenge.startDate} through {challenge.endDate}.
               </div>
-
-              <div className={styles.formActions}>
-                <Button onClick={() => handleSubmitCheckIn()} disabled={submitting}>
-                  {submitting ? 'Submitting...' : 'Submit Check-In'}
-                </Button>
-                <Button onClick={() => handleLeavechallenge()} variant="secondary">
-                  Leave Challenge
-                </Button>
-              </div>
-            </div>
-          )}
+            ))}
           {challenge.status === 'archived' && (
             <div className={styles.empty}>This challenge has ended and is now archived.</div>
           )}
@@ -281,20 +316,48 @@ export default function ChallengeDetailPage() {
                       <div className={styles.progressBar}>
                         <div
                           className={styles.progressFill}
-                          style={{ width: `${entry.progress * 100}%` }}
+                          style={{ width: `${Math.min(100, Math.max(0, entry.progress))}%` }}
                         />
                       </div>
-                      <span>{Math.round(entry.progress * 100)}%</span>
+                      <span>{Math.round(entry.progress)}%</span>
                     </div>
                   </div>
-
-                  <span className={styles.streak}>🔥 {entry.streak}</span>
                 </div>
               ))}
             </div>
           )}
         </aside>
       </div>
+      <Modal
+        isOpen={leaveConfirmationOpen}
+        title="Leave Challenge"
+        onClose={() => {
+          if (!leaving) setLeaveConfirmationOpen(false);
+        }}
+      >
+        <div className={styles.leaveConfirmation}>
+          <p>Are you sure you want to leave this challenge?</p>
+          <strong>{challenge.title}</strong>
+          <div className={styles.leaveConfirmationActions}>
+            <button
+              type="button"
+              className={styles.leaveCancelButton}
+              onClick={() => setLeaveConfirmationOpen(false)}
+              disabled={leaving}
+            >
+              No
+            </button>
+            <button
+              type="button"
+              className={styles.leaveConfirmButton}
+              onClick={() => void handleLeaveChallenge()}
+              disabled={leaving}
+            >
+              {leaving ? 'Leaving…' : 'Yes'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

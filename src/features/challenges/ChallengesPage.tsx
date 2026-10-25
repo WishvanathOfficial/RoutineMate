@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectCurrentUser } from '@features/auth/auth.selectors';
 import { featureFlags } from '../../config/featureFlags';
@@ -63,7 +64,7 @@ export default function ChallengesPage() {
     try {
       const today = new Date();
       const startDate = today.toISOString().split('T')[0];
-      const endDate = new Date(today.getTime() + createForm.duration * 86400000)
+      const endDate = new Date(today.getTime() + (createForm.duration - 1) * 86400000)
         .toISOString()
         .split('T')[0];
 
@@ -238,44 +239,52 @@ export default function ChallengesPage() {
         <div className={styles.grid}>
           {challenges.map((challenge) => (
             <article className={styles.card} key={challenge.id}>
-              <div className={styles.cardHeader}>
-                <span className={styles.emoji}>{challenge.emoji}</span>
-                <span
-                  className={`${styles.badge} ${
-                    challenge.status === 'archived' ? styles.archivedBadge : ''
-                  }`}
-                >
-                  {challenge.status === 'archived' ? 'Archived' : `${challenge.daysLeft} days left`}
-                </span>
-              </div>
-
-              <div className={styles.cardBody}>
-                <h3>{challenge.title}</h3>
-                {challenge.description && (
-                  <p className={styles.description}>{challenge.description}</p>
-                )}
-
-                <div className={styles.meta}>
-                  <span className={styles.participants}>
-                    <i className="fa-solid fa-users" /> {challenge.participantCount}
+              <Link className={styles.cardLink} to={`/challenges/${challenge.id}`}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.emoji}>{challenge.emoji}</span>
+                  <span
+                    className={`${styles.badge} ${
+                      challenge.status === 'archived' ? styles.archivedBadge : ''
+                    }`}
+                  >
+                    {challenge.status === 'archived'
+                      ? 'Archived'
+                      : `${challenge.daysLeft} days left`}
                   </span>
-                  <span className={styles.visibility}>{challenge.visibility}</span>
                 </div>
 
-                {tab === 'mine' && challenge.userProgress !== undefined && (
-                  <div className={styles.progress}>
-                    <div className={styles.progressBar}>
-                      <div
-                        className={styles.progressFill}
-                        style={{ width: `${challenge.userProgress * 100}%` }}
-                      />
-                    </div>
-                    <span className={styles.progressText}>
-                      {Math.round(challenge.userProgress * 100)}%
+                <div className={styles.cardBody}>
+                  <h3>{challenge.title}</h3>
+                  {challenge.description && (
+                    <p className={styles.description}>{challenge.description}</p>
+                  )}
+
+                  <div className={styles.meta}>
+                    <span className={styles.participants}>
+                      <i className="fa-solid fa-users" /> {challenge.participantCount}
                     </span>
+                    <span className={styles.visibility}>{challenge.visibility}</span>
                   </div>
-                )}
-              </div>
+
+                  {tab === 'mine' && challenge.userProgress !== undefined && (
+                    <div className={styles.progress}>
+                      <div className={styles.progressBar}>
+                        <div
+                          className={styles.progressFill}
+                          style={{
+                            width: `${Math.min(100, Math.max(0, challenge.userProgress))}%`,
+                          }}
+                        />
+                      </div>
+                      <span className={styles.progressText}>
+                        {challenge.userCompletedDays ?? 0}/{challenge.userEligibleDays ?? 0} days
+                        {' · '}
+                        {Math.round(challenge.userProgress)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </Link>
 
               <div className={styles.cardFooter}>
                 {tab === 'discover' && challenge.status === 'active' ? (

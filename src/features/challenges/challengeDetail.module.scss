@@ -215,6 +215,50 @@
   }
 }
 
+.leaveConfirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.leaveConfirmationActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  button {
+    flex: 0 0 auto;
+    min-width: 108px;
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: v.$radius-md;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+  }
+}
+
+.leaveCancelButton {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.leaveConfirmButton {
+  background: v.$color-rose-500;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: v.$color-rose-400;
+  }
+}
+
 .formGroup {
   display: flex;
   flex-direction: column;
