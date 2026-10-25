@@ -1,4 +1,5 @@
 jest.mock('../../models', () => ({
+  Friendship: { destroy: jest.fn() },
   User: { findByPk: jest.fn(), findOne: jest.fn() },
   UserPreferences: { findOrCreate: jest.fn() },
   RefreshToken: { update: jest.fn() },
@@ -6,7 +7,8 @@ jest.mock('../../models', () => ({
   sequelize: { transaction: jest.fn() },
 }));
 
-import { RefreshToken, Routine, User, UserPreferences, sequelize } from '../../models';
+import { Op } from 'sequelize';
+import { Friendship, RefreshToken, Routine, User, UserPreferences, sequelize } from '../../models';
 import * as profileService from '../profile.service';
 
 describe('profile.service', () => {
@@ -128,6 +130,11 @@ describe('profile.service', () => {
 
       expect(Routine.destroy).toHaveBeenCalledWith(
         expect.objectContaining({ where: { userId: 'u1' } }),
+      );
+      expect(Friendship.destroy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { [Op.or]: [{ requesterId: 'u1' }, { addresseeId: 'u1' }] },
+        }),
       );
       expect(RefreshToken.update).toHaveBeenCalledWith(
         { revokedAt: expect.any(Date) },

@@ -17,15 +17,21 @@ export async function list(userId: string) {
     ],
     order: [['createdAt', 'DESC']],
   });
-  return rows.map((r) => ({
-    id: r.id,
-    status: r.status,
-    direction: r.requesterId === userId ? 'outgoing' : 'incoming',
-    user: publicUser(
-      (r.requesterId === userId ? (r as any).addressee : (r as any).requester) as User,
-    ),
-    inviteToken: r.requesterId === userId ? r.inviteToken : undefined,
-  }));
+  return rows.flatMap((r) => {
+    const friend = (r.requesterId === userId ? (r as any).addressee : (r as any).requester) as
+      User | null | undefined;
+    if (!friend) return [];
+
+    return [
+      {
+        id: r.id,
+        status: r.status,
+        direction: r.requesterId === userId ? 'outgoing' : 'incoming',
+        user: publicUser(friend),
+        inviteToken: r.requesterId === userId ? r.inviteToken : undefined,
+      },
+    ];
+  });
 }
 
 export async function request(

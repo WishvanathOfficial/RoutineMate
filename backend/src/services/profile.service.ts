@@ -1,4 +1,5 @@
-import { RefreshToken, Routine, User, UserPreferences, sequelize } from '../models';
+import { Op } from 'sequelize';
+import { Friendship, RefreshToken, Routine, User, UserPreferences, sequelize } from '../models';
 import { ApiError } from '../utils/ApiError';
 import { UpdatePreferencesInput, UpdateProfileInput } from '../validators/profile.validator';
 
@@ -43,6 +44,10 @@ export async function deleteAccount(userId: string): Promise<void> {
     // Sequelize's onDelete: CASCADE only fires on a real DB-level DELETE, not
     // a paranoid soft delete — so related rows are soft-deleted/revoked here
     // explicitly to keep the "cascade" behavior the design doc describes.
+    await Friendship.destroy({
+      where: { [Op.or]: [{ requesterId: userId }, { addresseeId: userId }] },
+      transaction,
+    });
     await Routine.destroy({ where: { userId }, transaction });
     await RefreshToken.update(
       { revokedAt: new Date() },

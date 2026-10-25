@@ -9,6 +9,9 @@ module.exports = {
       invite_expires_at: { type: Sequelize.DATE, allowNull: true },
       created_at: { type: Sequelize.DATE, allowNull: false },
       updated_at: { type: Sequelize.DATE, allowNull: false },
+    }, {
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_unicode_ci',
     });
     await queryInterface.addIndex('friendships', ['requester_id', 'addressee_id'], { unique: true });
     await queryInterface.addIndex('friendships', ['addressee_id', 'status']);
