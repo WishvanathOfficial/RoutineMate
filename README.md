@@ -257,4 +257,6 @@ Most application endpoints require authentication. `/api/roadmap` is public, and
 
 ## License
 
-The repository does not currently include a license file.
+Copyright (C) 2026 Wishvanath Sah.
+
+This project is licensed under the GNU General Public License v3.0 only (`GPL-3.0-only`). See [LICENSE](LICENSE) for the complete license text.
