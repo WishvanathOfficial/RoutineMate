@@ -133,7 +133,13 @@ describe('auth.slice', () => {
         type: fetchProfileThunk.fulfilled.type,
         payload: {
           user: fetchedUser,
-          preferences: { pushRemindersEnabled: true, dailyDigestEnabled: false },
+          preferences: {
+            pushRemindersEnabled: true,
+            dailyDigestEnabled: false,
+            weeklyEmailEnabled: false,
+            language: 'en',
+            units: 'metric',
+          },
         },
       };
       const state = reducer(loggedInState, action);

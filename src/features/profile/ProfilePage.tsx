@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import {
   isAppInstalled,
@@ -8,7 +8,14 @@ import {
   subscribeToInstallAvailability,
 } from '@app/pwaInstall';
 import { selectCurrentUser } from '@features/auth/auth.selectors';
-import { selectAllRoutines, selectBestStreak } from '@features/routines/routines.selectors';
+import {
+  selectAllRoutines,
+  selectBestStreak,
+  selectRoutinesStatus,
+} from '@features/routines/routines.selectors';
+import { fetchRoutinesThunk } from '@features/routines/routines.thunks';
+import { fetchStatsThunk } from '@features/stats/stats.thunks';
+import { selectStatsStatus, selectStatsSummary } from '@features/stats/stats.selectors';
 import { selectTheme } from '@features/ui/ui.selectors';
 import { themeToggled, toastShown } from '@features/ui/ui.slice';
 import {
@@ -16,7 +23,7 @@ import {
   selectUserXp,
 } from '@features/achievements/achievements.selectors';
 import { fetchAchievementsThunk } from '@features/achievements/achievements.thunks';
-import { selectPreferences, selectProfileStatus } from './profile.selectors';
+import { selectPreferences, selectProfileError, selectProfileStatus } from './profile.selectors';
 import {
   deleteAccountThunk,
   fetchProfileThunk,
@@ -28,16 +35,35 @@ import Switch from '@components/Switch/Switch';
 import styles from './profile.module.scss';
 import { httpClient } from '@api/httpClient';
 import { unwrap } from '@api/apiResponse';
+import Modal from '@components/Modal/Modal';
+
+interface BillingSubscription {
+  plan: 'free' | 'pro';
+  status: string;
+  renewsAt: string | null;
+}
+
+function formatBillingStatus(status: string): string {
+  return status
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectCurrentUser);
   const routines = useAppSelector(selectAllRoutines);
+  const routinesStatus = useAppSelector(selectRoutinesStatus);
   const bestStreak = useAppSelector(selectBestStreak);
+  const statsSummary = useAppSelector(selectStatsSummary);
+  const statsStatus = useAppSelector(selectStatsStatus);
   const theme = useAppSelector(selectTheme);
   const preferences = useAppSelector(selectPreferences);
   const profileStatus = useAppSelector(selectProfileStatus);
+  const profileError = useAppSelector(selectProfileError);
   const xp = useAppSelector(selectUserXp);
   const achievementsStatus = useAppSelector(selectAchievementsStatus);
 
@@ -45,31 +71,66 @@ export default function ProfilePage() {
   const [email, setEmail] = useState(user?.email ?? '');
   const [installAvailable, setInstallAvailable] = useState(isInstallAvailable());
   const [installed, setInstalled] = useState(isAppInstalled());
-  const [subscription, setSubscription] = useState<{ plan: string; status: string } | null>(null);
+  const [subscription, setSubscription] = useState<BillingSubscription | null>(null);
+  const [billingRequest, setBillingRequest] = useState(0);
+  const [billingStatus, setBillingStatus] = useState<'loading' | 'succeeded' | 'failed'>('loading');
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [billingActionPending, setBillingActionPending] = useState(false);
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [preferenceSaving, setPreferenceSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     if (profileStatus === 'idle') dispatch(fetchProfileThunk());
   }, [profileStatus, dispatch]);
   useEffect(() => {
+    if (routinesStatus === 'idle') dispatch(fetchRoutinesThunk());
+  }, [routinesStatus, dispatch]);
+  useEffect(() => {
+    if (statsStatus === 'idle') dispatch(fetchStatsThunk());
+  }, [statsStatus, dispatch]);
+  useEffect(() => {
+    let active = true;
+    setBillingStatus('loading');
     void httpClient
       .get('/api/billing/subscription')
-      .then(unwrap<{ plan: string; status: string }>)
-      .then(setSubscription)
-      .catch(() => undefined);
-  }, []);
+      .then(unwrap<BillingSubscription>)
+      .then((result) => {
+        if (!active) return;
+        setSubscription(result);
+        setBillingStatus('succeeded');
+        setBillingError(null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setBillingStatus('failed');
+        setBillingError('Unable to load billing details.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [billingRequest]);
   const billingAction = async (path: string) => {
-    const result = await httpClient
-      .post(`/api/billing/${path}`)
-      .then(unwrap<{ url: string | null; status: string }>);
-    if (result.url) window.location.assign(result.url);
-    else
-      dispatch(
-        toastShown(
-          result.status === 'configuration_required'
-            ? 'Billing is not configured yet.'
-            : 'Billing action started.',
-        ),
-      );
+    setBillingActionPending(true);
+    try {
+      const result = await httpClient
+        .post(`/api/billing/${path}`)
+        .then(unwrap<{ url: string | null; status: string }>);
+      if (result.url) window.location.assign(result.url);
+      else
+        dispatch(
+          toastShown(
+            result.status === 'configuration_required'
+              ? 'Billing is not configured yet.'
+              : 'Billing action started.',
+          ),
+        );
+    } catch {
+      dispatch(toastShown('Unable to start this billing action. Please try again.'));
+    } finally {
+      setBillingActionPending(false);
+    }
   };
 
   // MVP-2 §3.1 "Levels shown on the profile" — Achievements page already
@@ -89,7 +150,9 @@ export default function ProfilePage() {
 
   const handleSaveAccount = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setAccountSaving(true);
     const result = await dispatch(updateAccountThunk({ name, email }));
+    setAccountSaving(false);
     if (updateAccountThunk.fulfilled.match(result)) {
       dispatch(toastShown('Account details saved'));
     } else {
@@ -100,11 +163,29 @@ export default function ProfilePage() {
   const togglePreference = async (
     key: 'pushRemindersEnabled' | 'dailyDigestEnabled' | 'weeklyEmailEnabled',
   ) => {
+    if (preferenceSaving) return;
+    setPreferenceSaving(true);
     const result = await dispatch(
       updatePreferencesThunk({ ...preferences, [key]: !preferences[key] }),
     );
-    if (!updatePreferencesThunk.fulfilled.match(result)) {
+    setPreferenceSaving(false);
+    if (updatePreferencesThunk.fulfilled.match(result)) {
+      dispatch(toastShown('Preference saved'));
+    } else {
       dispatch(toastShown(result.payload ?? 'Failed to save preferences.'));
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    const result = await dispatch(deleteAccountThunk());
+    setDeletingAccount(false);
+    if (deleteAccountThunk.fulfilled.match(result)) {
+      setDeleteDialogOpen(false);
+      dispatch(toastShown('Account deleted'));
+      navigate('/');
+    } else {
+      dispatch(toastShown(result.payload ?? 'Failed to delete account.'));
     }
   };
 
@@ -137,16 +218,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    const result = await dispatch(deleteAccountThunk());
-    if (deleteAccountThunk.fulfilled.match(result)) {
-      dispatch(toastShown('Account deleted'));
-      navigate('/');
-    } else {
-      dispatch(toastShown(result.payload ?? 'Failed to delete account.'));
-    }
-  };
-
   const initials = name
     .split(' ')
     .map((part) => part[0])
@@ -157,21 +228,124 @@ export default function ProfilePage() {
   return (
     <div>
       <h2 style={{ marginBottom: 24 }}>Profile &amp; Settings</h2>
+      {profileStatus === 'failed' && (
+        <div className={styles.errorMessage} role="alert">
+          <span>{profileError ?? 'Unable to load your profile settings.'}</span>
+          <button type="button" onClick={() => dispatch(fetchProfileThunk())}>
+            Retry
+          </button>
+        </div>
+      )}
       <section className={styles.section} aria-labelledby="billing-heading">
-        <h3 id="billing-heading">Billing</h3>
-        <p>
-          Current plan: <strong>{subscription?.plan === 'pro' ? 'Pro' : 'Free'}</strong>
-        </p>
-        {subscription?.plan === 'pro' ? (
-          <button type="button" onClick={() => void billingAction('portal')}>
-            Manage subscription
-          </button>
+        <div className={styles.billingHeader}>
+          <div>
+            <h3 id="billing-heading">Billing &amp; plan</h3>
+            <p className={styles.billingSubtitle}>Manage your RoutineMate subscription.</p>
+          </div>
+          <i className="fa-regular fa-credit-card" aria-hidden="true" />
+        </div>
+        {billingStatus === 'loading' ? (
+          <p className={styles.billingState} role="status">
+            <i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />
+            Loading your plan…
+          </p>
+        ) : billingStatus === 'failed' ? (
+          <div className={`${styles.errorMessage} ${styles.billingError}`} role="alert">
+            <span>{billingError}</span>
+            <button type="button" onClick={() => setBillingRequest((request) => request + 1)}>
+              Retry
+            </button>
+          </div>
+        ) : subscription ? (
+          <div className={styles.billingBody}>
+            <div className={styles.planIdentity}>
+              <span
+                className={`${styles.planIcon} ${subscription.plan === 'pro' ? styles.proPlanIcon : ''}`}
+                aria-hidden="true"
+              >
+                <i
+                  className={
+                    subscription.plan === 'pro' ? 'fa-solid fa-crown' : 'fa-solid fa-seedling'
+                  }
+                />
+              </span>
+              <div>
+                <p className={styles.planEyebrow}>CURRENT PLAN</p>
+                <div className={styles.planNameRow}>
+                  <h4>{subscription.plan === 'pro' ? 'RoutineMate Pro' : 'RoutineMate Free'}</h4>
+                  {subscription.plan === 'pro' && (
+                    <span className={`${styles.planStatus} ${styles.proStatus}`}>PRO</span>
+                  )}
+                </div>
+                <p className={styles.planDescription}>
+                  {subscription.plan === 'pro'
+                    ? 'Your account has access to the Pro plan.'
+                    : 'Your core routines, streaks, and basic stats stay free.'}
+                </p>
+              </div>
+            </div>
+            <div className={styles.billingDetails}>
+              <span
+                className={`${styles.planStatus} ${
+                  subscription.status === 'active'
+                    ? styles.activeStatus
+                    : ['past_due', 'unpaid', 'incomplete'].includes(subscription.status)
+                      ? styles.attentionStatus
+                      : styles.neutralStatus
+                }`}
+              >
+                <span className={styles.statusDot} />
+                {formatBillingStatus(subscription.status)}
+              </span>
+              {subscription.plan === 'pro' && subscription.renewsAt && (
+                <p className={styles.renewalDate}>
+                  {subscription.status === 'canceled' ? 'Access through' : 'Next billing date'}
+                  <strong>
+                    {new Date(subscription.renewsAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </strong>
+                </p>
+              )}
+              {subscription.plan === 'pro' ? (
+                <button
+                  type="button"
+                  className={styles.billingPrimaryButton}
+                  onClick={() => void billingAction('portal')}
+                  disabled={billingActionPending}
+                >
+                  <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true" />
+                  {billingActionPending ? 'Opening…' : 'Manage plan'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.billingPrimaryButton}
+                  onClick={() => void billingAction('checkout')}
+                  disabled={billingActionPending}
+                >
+                  <i className="fa-solid fa-sparkles" aria-hidden="true" />
+                  {billingActionPending ? 'Opening…' : 'Explore Pro'}
+                </button>
+              )}
+            </div>
+          </div>
         ) : (
-          <button type="button" onClick={() => void billingAction('checkout')}>
-            Upgrade to Pro
-          </button>
+          <div className={`${styles.errorMessage} ${styles.billingError}`} role="alert">
+            <span>Billing information is unavailable.</span>
+            <button type="button" onClick={() => setBillingRequest((request) => request + 1)}>
+              Retry
+            </button>
+          </div>
         )}
-        <p className={styles.helpText}>Core tracking, streaks, and basic stats remain free.</p>
+        {billingStatus === 'succeeded' && (
+          <div className={styles.billingFooter}>
+            <i className="fa-regular fa-circle-info" aria-hidden="true" />
+            <p>Plan and billing details are shown here when available.</p>
+          </div>
+        )}
       </section>
       <div className={styles.grid}>
         <div className={styles.profileCard}>
@@ -180,6 +354,16 @@ export default function ProfilePage() {
           <p className={styles.mutedText} style={{ fontSize: 13 }}>
             {user?.email}
           </p>
+          {user?.createdAt && (
+            <p className={styles.memberSince}>
+              Member since{' '}
+              {new Date(user.createdAt).toLocaleDateString(undefined, {
+                month: 'short',
+                year: 'numeric',
+                timeZone: 'UTC',
+              })}
+            </p>
+          )}
           <div className={styles.statsRow}>
             <div>
               <p>{routines.length}</p>
@@ -190,7 +374,7 @@ export default function ProfilePage() {
               <p>Best streak</p>
             </div>
             <div>
-              <p>83%</p>
+              <p>{statsSummary ? `${statsSummary.completionRate}%` : '—'}</p>
               <p>Consistency</p>
             </div>
           </div>
@@ -209,6 +393,9 @@ export default function ProfilePage() {
               <p className={styles.levelHint}>
                 {xp.xpToNextLevel} XP to Level {xp.level + 1}
               </p>
+              <Link className={styles.textLink} to="/achievements">
+                View achievements
+              </Link>
             </div>
           )}
         </div>
@@ -219,18 +406,29 @@ export default function ProfilePage() {
             <div className={styles.fieldRow}>
               <div>
                 <label htmlFor="profile-name">Full name</label>
-                <input id="profile-name" value={name} onChange={(e) => setName(e.target.value)} />
+                <input
+                  id="profile-name"
+                  autoComplete="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </div>
               <div>
                 <label htmlFor="profile-email">Email</label>
                 <input
                   id="profile-email"
+                  type="email"
+                  autoComplete="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={accountSaving || profileStatus === 'loading'}>
+              {accountSaving ? 'Saving…' : 'Save Changes'}
+            </Button>
           </form>
 
           <div className={styles.section}>
@@ -259,6 +457,7 @@ export default function ProfilePage() {
                 aria-label="Toggle push reminders"
                 checked={preferences.pushRemindersEnabled}
                 onChange={() => togglePreference('pushRemindersEnabled')}
+                disabled={preferenceSaving || profileStatus !== 'succeeded'}
               />
             </div>
             <div className={styles.preferenceRow}>
@@ -272,6 +471,7 @@ export default function ProfilePage() {
                 aria-label="Toggle daily digest email"
                 checked={preferences.dailyDigestEnabled}
                 onChange={() => togglePreference('dailyDigestEnabled')}
+                disabled={preferenceSaving || profileStatus !== 'succeeded'}
               />
             </div>
             <div className={styles.preferenceRow}>
@@ -288,7 +488,24 @@ export default function ProfilePage() {
                 aria-label="Toggle weekly email summary"
                 checked={preferences.weeklyEmailEnabled}
                 onChange={() => togglePreference('weeklyEmailEnabled')}
+                disabled={preferenceSaving || profileStatus !== 'succeeded'}
               />
+            </div>
+            <div className={styles.preferenceRow}>
+              <div>
+                <p style={{ fontWeight: 500, fontSize: 14 }}>
+                  Language &amp; units
+                  <span className={styles.newBadge}>NEW</span>
+                </p>
+                <p className={styles.mutedText} style={{ fontSize: 12 }}>
+                  Interface language and measurement units
+                </p>
+              </div>
+              <Link className={styles.installButton} to="/settings/language">
+                {preferences.language.toUpperCase()} ·{' '}
+                {preferences.units === 'metric' ? 'Metric' : 'Imperial'}
+                <i className="fa-solid fa-chevron-right" aria-hidden="true" />
+              </Link>
             </div>
             <div className={styles.preferenceRow}>
               <div>
@@ -325,12 +542,42 @@ export default function ProfilePage() {
           <div className={styles.dangerZone}>
             <h3>Danger Zone</h3>
             <p>Deleting your account removes all routines and history permanently.</p>
-            <Button variant="danger" onClick={handleDeleteAccount}>
+            <Button variant="danger" onClick={() => setDeleteDialogOpen(true)}>
               Delete Account
             </Button>
           </div>
         </div>
       </div>
+      <Modal
+        isOpen={deleteDialogOpen}
+        title="Delete account?"
+        onClose={() => {
+          if (!deletingAccount) setDeleteDialogOpen(false);
+        }}
+      >
+        <p className={styles.deleteConfirmation}>
+          This permanently removes your account, routines, and history. This action cannot be
+          undone.
+        </p>
+        <div className={styles.dialogActions}>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={deletingAccount}
+            onClick={() => setDeleteDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            disabled={deletingAccount}
+            onClick={() => void handleDeleteAccount()}
+          >
+            {deletingAccount ? 'Deleting…' : 'Delete permanently'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -3,6 +3,8 @@ import type { RootState } from '@app/store';
 
 export const selectAchievementsStatus = (state: RootState) => state.achievements.status;
 
+export const selectAchievementsError = (state: RootState) => state.achievements.error;
+
 export const selectAllAchievements = (state: RootState) => state.achievements.items;
 
 export const selectUserXp = (state: RootState) => state.achievements.xp;

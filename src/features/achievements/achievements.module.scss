@@ -16,6 +16,42 @@
   }
 }
 
+.loadingState,
+.emptyState {
+  color: var(--text-secondary);
+  padding: 24px 0;
+}
+
+.errorState {
+  @include m.card;
+  align-items: center;
+  border-color: v.$color-rose-500;
+  color: v.$color-rose-500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 16px;
+}
+
+.retryButton {
+  @include m.button-reset;
+  color: v.$color-brand-600;
+  font-size: 14px;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.collectionSummary {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
 .levelCard {
   @include m.card;
   @include m.flex-between;
@@ -42,7 +78,7 @@
   }
 }
 
-.levelBarWrap {
+.levelProgress {
   flex: 1;
   max-width: 280px;
 }

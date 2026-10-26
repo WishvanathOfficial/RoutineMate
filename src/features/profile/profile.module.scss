@@ -22,6 +22,104 @@
   color: var(--text-muted);
 }
 
+.memberSince {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.languagePage {
+  max-width: 720px;
+}
+
+.pageHeader {
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.languageField {
+  margin-bottom: 16px;
+
+  label {
+    color: var(--text-secondary);
+    display: block;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color-strong);
+    border-radius: v.$radius-md;
+    color: var(--text-primary);
+    max-width: 360px;
+    padding: 9px 12px;
+    width: 100%;
+  }
+}
+
+.successMessage {
+  color: v.$color-success-600;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.errorMessage {
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid v.$color-rose-400;
+  border-radius: v.$radius-md;
+  color: v.$color-rose-500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+
+  button {
+    @include m.button-reset;
+    color: v.$color-brand-600;
+    font-weight: 600;
+  }
+}
+
+.textLink {
+  color: v.$color-brand-600;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.deleteConfirmation {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
 .avatar {
   width: 80px;
   height: 80px;
@@ -99,6 +197,224 @@
   @include m.card;
   padding: 24px;
   margin-bottom: 24px;
+}
+
+.billingHeader {
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  > i {
+    align-items: center;
+    background: var(--bg-hover);
+    border-radius: v.$radius-md;
+    color: var(--text-secondary);
+    display: flex;
+    height: 40px;
+    justify-content: center;
+    width: 40px;
+  }
+}
+
+.billingSubtitle {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.billingBody {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.planIdentity {
+  align-items: center;
+  display: flex;
+  flex: 1 1 320px;
+  gap: 14px;
+  min-width: 0;
+}
+
+.planIcon {
+  align-items: center;
+  background: v.$color-brand-50;
+  border-radius: v.$radius-lg;
+  color: v.$color-brand-600;
+  display: flex;
+  flex: 0 0 48px;
+  font-size: 20px;
+  height: 48px;
+  justify-content: center;
+
+  :global(html.dark) & {
+    background: rgba(67, 56, 202, 0.2);
+    color: v.$color-brand-400;
+  }
+}
+
+.proPlanIcon {
+  background: v.$color-amber-50;
+  color: v.$color-amber-500;
+
+  :global(html.dark) & {
+    background: rgba(245, 158, 11, 0.12);
+    color: v.$color-amber-400;
+  }
+}
+
+.planEyebrow {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+}
+
+.planNameRow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  h4 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+
+.planDescription {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.billingDetails {
+  align-items: flex-end;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.planStatus {
+  align-items: center;
+  border-radius: v.$radius-full;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 600;
+  gap: 6px;
+  padding: 5px 9px;
+}
+
+.proStatus {
+  background: v.$color-amber-50;
+  color: v.$color-amber-500;
+}
+
+.activeStatus {
+  background: v.$color-success-50;
+  color: v.$color-success-600;
+
+  :global(html.dark) & {
+    background: rgba(16, 185, 129, 0.12);
+    color: v.$color-success-400;
+  }
+}
+
+.neutralStatus {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.attentionStatus {
+  background: v.$color-amber-50;
+  color: v.$color-amber-500;
+
+  :global(html.dark) & {
+    background: rgba(245, 158, 11, 0.12);
+  }
+}
+
+.statusDot {
+  background: currentColor;
+  border-radius: 50%;
+  height: 6px;
+  width: 6px;
+}
+
+.renewalDate {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: right;
+
+  strong {
+    color: var(--text-primary);
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+}
+
+.billingPrimaryButton {
+  @include m.button-reset;
+  align-items: center;
+  background: v.$color-brand-600;
+  border-radius: v.$radius-md;
+  color: v.$color-white;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 8px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 14px;
+  white-space: nowrap;
+
+  &:hover {
+    background: v.$color-brand-700;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+}
+
+.billingFooter {
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  font-size: 11px;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 12px;
+}
+
+.billingState {
+  align-items: center;
+  color: var(--text-secondary);
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.billingError {
+  margin-bottom: 0;
 }
 
 .fieldRow {

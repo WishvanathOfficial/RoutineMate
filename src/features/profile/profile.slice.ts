@@ -7,8 +7,11 @@ const initialState: ProfileState = {
     pushRemindersEnabled: true,
     dailyDigestEnabled: false,
     weeklyEmailEnabled: false,
+    language: 'en',
+    units: 'metric',
   },
   status: 'idle',
+  error: null,
 };
 
 const profileSlice = createSlice({
@@ -19,23 +22,37 @@ const profileSlice = createSlice({
     builder
       .addCase(fetchProfileThunk.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(fetchProfileThunk.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.preferences = action.payload.preferences;
       })
-      .addCase(fetchProfileThunk.rejected, (state) => {
+      .addCase(fetchProfileThunk.rejected, (state, action) => {
         state.status = 'failed';
+        state.error = action.payload ?? 'Failed to load profile.';
       })
       .addCase(updateAccountThunk.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(updateAccountThunk.fulfilled, (state) => {
         state.status = 'succeeded';
       })
+      .addCase(updateAccountThunk.rejected, (state) => {
+        state.status = 'succeeded';
+        state.error = null;
+      })
+      .addCase(updatePreferencesThunk.pending, (state) => {
+        state.error = null;
+      })
       .addCase(updatePreferencesThunk.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.preferences = action.payload;
+        state.error = null;
+      })
+      .addCase(updatePreferencesThunk.rejected, (state, action) => {
+        state.error = action.payload ?? 'Failed to save preferences.';
       });
   },
 });

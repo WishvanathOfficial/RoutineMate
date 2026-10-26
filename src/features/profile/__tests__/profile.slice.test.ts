@@ -3,8 +3,15 @@ import { fetchProfileThunk, updatePreferencesThunk } from '../profile.thunks';
 import type { ProfileState } from '../profile.types';
 
 const initialState: ProfileState = {
-  preferences: { pushRemindersEnabled: true, dailyDigestEnabled: false, weeklyEmailEnabled: false },
+  preferences: {
+    pushRemindersEnabled: true,
+    dailyDigestEnabled: false,
+    weeklyEmailEnabled: false,
+    language: 'en',
+    units: 'metric',
+  },
   status: 'idle',
+  error: null,
 };
 
 describe('profile.slice', () => {
@@ -13,6 +20,8 @@ describe('profile.slice', () => {
       pushRemindersEnabled: false,
       dailyDigestEnabled: true,
       weeklyEmailEnabled: true,
+      language: 'es',
+      units: 'imperial',
     };
     const action = { type: updatePreferencesThunk.fulfilled.type, payload: nextPreferences };
     const state = reducer(initialState, action);
@@ -31,6 +40,8 @@ describe('profile.slice', () => {
       pushRemindersEnabled: false,
       dailyDigestEnabled: true,
       weeklyEmailEnabled: true,
+      language: 'es',
+      units: 'imperial',
     };
     const action = {
       type: fetchProfileThunk.fulfilled.type,

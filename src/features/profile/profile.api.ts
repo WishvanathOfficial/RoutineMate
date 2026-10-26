@@ -11,6 +11,7 @@ interface BackendUserDto {
   name: string;
   email: string;
   avatarUrl: string | null;
+  createdAt?: string;
 }
 
 interface BackendPreferencesDto {
@@ -19,6 +20,8 @@ interface BackendPreferencesDto {
   dailyDigestEnabled: boolean;
   weeklyEmailEnabled: boolean;
   firstDayOfWeek: string;
+  language: ProfilePreferences['language'];
+  units: ProfilePreferences['units'];
 }
 
 /** GET /api/profile nests preferences under the Sequelize association alias. */
@@ -32,7 +35,13 @@ export interface ProfileSnapshot {
 }
 
 function toUser(dto: BackendUserDto): User {
-  return { id: dto.id, name: dto.name, email: dto.email, avatarUrl: dto.avatarUrl };
+  return {
+    id: dto.id,
+    name: dto.name,
+    email: dto.email,
+    avatarUrl: dto.avatarUrl,
+    createdAt: dto.createdAt,
+  };
 }
 
 function toPreferences(dto: BackendPreferencesDto): ProfilePreferences {
@@ -43,6 +52,8 @@ function toPreferences(dto: BackendPreferencesDto): ProfilePreferences {
     pushRemindersEnabled: dto.pushRemindersEnabled,
     dailyDigestEnabled: dto.dailyDigestEnabled,
     weeklyEmailEnabled: dto.weeklyEmailEnabled,
+    language: dto.language,
+    units: dto.units,
   };
 }
 
