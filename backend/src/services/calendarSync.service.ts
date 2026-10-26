@@ -499,7 +499,11 @@ async function deleteStaleRoutineEvents(
       accessToken,
       { method: 'DELETE' },
     );
-    if (!deleted.response.ok && deleted.response.status !== 404) {
+    if (
+      !deleted.response.ok &&
+      deleted.response.status !== 404 &&
+      deleted.response.status !== 410
+    ) {
       throw new ApiError(502, `Google Calendar event removal failed (${deleted.response.status}).`);
     }
   }

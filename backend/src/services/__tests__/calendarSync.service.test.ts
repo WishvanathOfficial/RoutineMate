@@ -156,7 +156,7 @@ describe('calendarSync.service', () => {
           { status: 200 },
         ),
       )
-      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 410 }))
       .mockResolvedValueOnce(new Response('{}', { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ items: [] }), { status: 200 }));
 
