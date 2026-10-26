@@ -1,0 +1,470 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.page {
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.header {
+  @include m.flex-between;
+  align-items: flex-end;
+  gap: 20px;
+  margin-bottom: 28px;
+
+  h2 {
+    font-size: 26px;
+    font-weight: 750;
+  }
+
+  > div > p:last-child {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 6px;
+  }
+}
+
+.eyebrow {
+  color: v.$color-brand-600;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+}
+
+.backLink {
+  @include m.button-reset;
+  align-items: center;
+  color: var(--text-secondary);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 8px;
+  text-decoration: none;
+
+  &:hover {
+    color: v.$color-brand-600;
+  }
+}
+
+.layout {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.8fr);
+}
+
+.timerCard,
+.summaryCard,
+.historyCard {
+  @include m.card;
+}
+
+.timerCard {
+  min-width: 0;
+  overflow: hidden;
+  padding: 24px;
+  position: relative;
+
+  &::before {
+    background: linear-gradient(90deg, v.$color-brand-600, v.$color-success-500);
+    content: '';
+    height: 4px;
+    inset: 0 0 auto;
+    position: absolute;
+  }
+}
+
+.timerTopline,
+.sessionBadge {
+  align-items: center;
+  display: flex;
+}
+
+.timerTopline {
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.sessionBadge {
+  background: var(--bg-hover);
+  border-radius: v.$radius-full;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 650;
+  gap: 7px;
+  padding: 6px 10px;
+}
+
+.sessionActive {
+  background: v.$color-success-50;
+  color: v.$color-success-600;
+}
+
+.statusDot {
+  background: currentColor;
+  border-radius: 50%;
+  height: 7px;
+  width: 7px;
+}
+
+.sessionType {
+  color: var(--text-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routineField {
+  display: grid;
+  gap: 8px;
+  margin: 24px auto 0;
+  max-width: 360px;
+
+  span {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  select {
+    appearance: none;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color-strong);
+    border-radius: v.$radius-md;
+    color: var(--text-primary);
+    font-size: 14px;
+    padding: 11px 14px;
+    width: 100%;
+  }
+}
+
+.timerFace {
+  display: flex;
+  justify-content: center;
+  padding: 28px 0 24px;
+}
+
+.timerRing {
+  align-items: center;
+  aspect-ratio: 1;
+  background:
+    radial-gradient(circle at center, var(--bg-surface) 64%, transparent 65%),
+    conic-gradient(v.$color-brand-200 0deg, v.$color-brand-100 360deg);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 280px;
+  width: min(68vw, 280px);
+  transition: background 0.2s ease;
+
+  > i {
+    color: v.$color-brand-600;
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  > span {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+}
+
+.timerRingRunning {
+  background:
+    radial-gradient(circle at center, var(--bg-surface) 64%, transparent 65%),
+    conic-gradient(v.$color-success-500 0deg, v.$color-brand-100 360deg);
+
+  > i {
+    color: v.$color-success-600;
+  }
+}
+
+.timerDisplay {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(38px, 6vw, 56px);
+  font-weight: 750;
+  letter-spacing: -0.055em;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.selectedRoutine {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: -8px 0 18px;
+  text-align: center;
+
+  span {
+    margin-right: 6px;
+  }
+}
+
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.primaryButton,
+.completeButton,
+.cancelButton {
+  @include m.button-reset;
+  align-items: center;
+  border-radius: v.$radius-md;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 650;
+  gap: 8px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+}
+
+.primaryButton {
+  background: v.$color-brand-600;
+  color: v.$color-white;
+  min-width: 160px;
+
+  &:hover:not(:disabled) {
+    background: v.$color-brand-700;
+  }
+}
+
+.completeButton {
+  background: v.$color-success-50;
+  border: 1px solid v.$color-success-400;
+  color: v.$color-success-600;
+
+  &:hover:not(:disabled) {
+    background: v.$color-success-100;
+  }
+}
+
+.cancelButton {
+  color: var(--text-secondary);
+
+  &:hover:not(:disabled) {
+    color: v.$color-rose-500;
+  }
+}
+
+.errorMessage,
+.successMessage {
+  border-radius: v.$radius-md;
+  font-size: 13px;
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.errorMessage {
+  background: v.$color-rose-50;
+  color: v.$color-rose-500;
+}
+
+.successMessage {
+  background: v.$color-success-50;
+  color: v.$color-success-600;
+}
+
+.historyColumn {
+  display: grid;
+  gap: 16px;
+}
+
+.summaryCard,
+.historyCard {
+  padding: 20px;
+}
+
+.sectionHeading {
+  @include m.flex-between;
+  align-items: flex-start;
+  gap: 12px;
+
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  > i {
+    color: v.$color-brand-600;
+  }
+}
+
+.totalFocus {
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  margin-top: 22px;
+}
+
+.summaryCaption {
+  color: var(--text-secondary);
+  display: block;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.sessionCount {
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  display: flex;
+  font-size: 12px;
+  gap: 9px;
+  margin-top: 18px;
+  padding-top: 14px;
+
+  i {
+    color: v.$color-brand-600;
+  }
+}
+
+.summaryError {
+  align-items: flex-start;
+  background: v.$color-rose-50;
+  border-radius: v.$radius-md;
+  color: v.$color-rose-500;
+  display: flex;
+  font-size: 11px;
+  gap: 8px;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 9px;
+
+  button {
+    @include m.button-reset;
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+  }
+}
+
+.sessionList {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.sessionRow {
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 0;
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.sessionIcon {
+  align-items: center;
+  background: v.$color-success-50;
+  border-radius: 50%;
+  color: v.$color-success-600;
+  display: inline-flex;
+  flex: 0 0 28px;
+  height: 28px;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.sessionDetails {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+
+  strong {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: var(--text-muted);
+    font-size: 10px;
+    margin-top: 3px;
+  }
+}
+
+.sessionDuration {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.historyState {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 10px;
+  justify-content: center;
+  min-height: 110px;
+  text-align: center;
+
+  i {
+    color: v.$color-brand-400;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .historyColumn {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .historyColumn {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .timerCard {
+    padding: 18px;
+  }
+
+  .timerFace {
+    padding: 24px 0 20px;
+  }
+}

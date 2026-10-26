@@ -16,6 +16,12 @@
   }
 }
 
+.online {
+  background: v.$color-success-50;
+  border-color: v.$color-success-400;
+  color: v.$color-success-600;
+}
+
 .offline {
   color: v.$color-rose-500;
   border-color: v.$color-rose-400;
