@@ -1,6 +1,10 @@
 export const locales = ['en', 'hi', 'es'] as const;
 export type Locale = (typeof locales)[number];
 
+export function intlLocale(locale: Locale): string {
+  return { en: 'en-GB', hi: 'hi-IN', es: 'es-ES' }[locale];
+}
+
 const translations: Record<Locale, Record<string, string>> = {
   en: {},
   hi: {
@@ -230,7 +234,7 @@ export function translate(
 }
 
 export function formatDate(date: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
+  return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: 'medium' }).format(
     new Date(`${date}T00:00:00Z`),
   );
 }

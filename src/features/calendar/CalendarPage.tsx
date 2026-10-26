@@ -15,7 +15,7 @@ import {
 import type { CalendarConnection } from './calendar.types';
 import styles from './calendar.module.scss';
 import { useTranslation } from '../../i18n/useTranslation';
-import type { Locale } from '../../i18n/catalog';
+import { intlLocale, type Locale } from '../../i18n/catalog';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -32,7 +32,7 @@ function shiftMonth(month: string, offset: number): string {
 
 function formatDate(month: string, day: number, locale: Locale): string {
   const [year, monthNumber] = month.split('-').map(Number);
-  return new Date(year, monthNumber - 1, day).toLocaleDateString(locale, {
+  return new Date(year, monthNumber - 1, day).toLocaleDateString(intlLocale(locale), {
     weekday: 'long',
     month: 'long',
     day: 'numeric',

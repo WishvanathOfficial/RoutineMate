@@ -247,6 +247,7 @@ Most application endpoints require authentication. `/api/roadmap` is public, and
 ## Documentation
 
 - [Architecture overview](ARCHITECTURE.md)
+- [Frontend and backend deployment guide](docs/RoutineMate-Deployment-Guide.md)
 - [MVP-1 prototype](docs/RoutineMate-MVP1-Prototype.html)
 - [MVP-2 prototype and scope](docs/RoutineMate-MVP2-Prototype.html) · [MVP-2 scope](docs/RoutineMate-MVP2-Scope.md)
 - [MVP-3 prototype and scope](docs/RoutineMate-MVP3-Prototype.html) · [MVP-3 scope](docs/RoutineMate-MVP3-Scope.md)
