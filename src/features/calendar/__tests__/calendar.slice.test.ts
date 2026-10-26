@@ -2,13 +2,14 @@ import reducer from '../calendar.slice';
 import { fetchCalendarThunk } from '../calendar.thunks';
 import type { CalendarMonth, CalendarState } from '../calendar.types';
 
-const initialState: CalendarState = { month: null, status: 'idle' };
+const initialState: CalendarState = { month: null, status: 'idle', error: null };
 
 const sampleMonth: CalendarMonth = {
+  month: '2026-08',
   label: 'August 2026',
   leadingBlanks: 6,
   today: 18,
-  days: [{ date: 1, status: 'missed' }],
+  days: [{ date: 1, status: 'missed', completed: 0, total: 1 }],
 };
 
 describe('calendar.slice', () => {

@@ -41,6 +41,15 @@ export const env = {
     get clientId() {
       return process.env.GOOGLE_CLIENT_ID ?? '';
     },
+    get calendarClientId() {
+      return process.env.GOOGLE_CALENDAR_CLIENT_ID ?? '';
+    },
+    get calendarClientSecret() {
+      return process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? '';
+    },
+    get calendarRedirectUri() {
+      return process.env.GOOGLE_CALENDAR_REDIRECT_URI ?? '';
+    },
   },
   billing: {
     stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? '',

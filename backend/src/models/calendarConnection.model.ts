@@ -16,6 +16,7 @@ export class CalendarConnection extends Model<
   declare encryptedAccessToken: string;
   declare encryptedRefreshToken: string;
   declare expiresAt: Date | null;
+  declare timeZone: CreationOptional<string>;
   declare status: CreationOptional<string>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
@@ -36,6 +37,12 @@ CalendarConnection.init(
       field: 'encrypted_refresh_token',
     },
     expiresAt: { type: DataTypes.DATE, allowNull: true, field: 'expires_at' },
+    timeZone: {
+      type: DataTypes.STRING(64),
+      allowNull: false,
+      defaultValue: 'UTC',
+      field: 'time_zone',
+    },
     status: { type: DataTypes.STRING(30), allowNull: false, defaultValue: 'connected' },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,

@@ -44,7 +44,9 @@ export function toCalendarMonth(dto: BackendCalendarMonth): CalendarMonth {
   const days: CalendarDay[] = dto.days.map((day) => ({
     date: Number(day.date.slice(8, 10)),
     status: day.status,
+    completed: day.completed,
+    total: day.total,
   }));
 
-  return { label, leadingBlanks, today, days };
+  return { month: dto.month, label, leadingBlanks, today, days };
 }

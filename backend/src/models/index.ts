@@ -19,6 +19,7 @@ import { Subscription } from './subscription.model';
 import { BillingEvent } from './billingEvent.model';
 import { FocusSession } from './focusSession.model';
 import { CalendarConnection } from './calendarConnection.model';
+import { CalendarOAuthState } from './calendarOAuthState.model';
 import { Insight } from './insight.model';
 import { FeedbackItem } from './feedbackItem.model';
 import { FeedbackVote } from './feedbackVote.model';
@@ -159,6 +160,7 @@ export {
   BillingEvent,
   FocusSession,
   CalendarConnection,
+  CalendarOAuthState,
   Insight,
   FeedbackItem,
   FeedbackVote,
@@ -189,6 +191,7 @@ export default {
   BillingEvent,
   FocusSession,
   CalendarConnection,
+  CalendarOAuthState,
   Insight,
   FeedbackItem,
   FeedbackVote,

@@ -11,11 +11,242 @@
     font-size: 24px;
     font-weight: 700;
   }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
 }
 
-.card {
+.monthControls {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.monthLabel {
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 140px;
+  text-align: center;
+}
+
+.monthButton {
+  @include m.button-reset;
+  align-items: center;
+  border: 1px solid var(--border-color-strong);
+  border-radius: v.$radius-md;
+  color: var(--text-secondary);
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.5;
+  }
+}
+
+.connectionCard,
+.calendarCard {
   @include m.card;
   padding: 24px;
+}
+
+.connectionCard {
+  margin-bottom: 24px;
+}
+
+.connectionHeader {
+  @include m.flex-between;
+  border-bottom: 1px solid var(--border-color);
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  > i {
+    color: v.$color-brand-600;
+    font-size: 18px;
+  }
+}
+
+.connectionState,
+.connectionEmpty,
+.pageState {
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.connectionList {
+  list-style: none;
+  margin-bottom: 16px;
+}
+
+.connectionItem {
+  @include m.flex-between;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.connectionProvider {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 9px;
+}
+
+.connectedBadge {
+  align-items: center;
+  background: v.$color-success-50;
+  border-radius: v.$radius-full;
+  color: v.$color-success-600;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 600;
+  gap: 5px;
+  padding: 4px 8px;
+}
+
+.reconnectBadge {
+  @extend .connectedBadge;
+  background: v.$color-amber-50;
+  color: v.$color-amber-500;
+}
+
+.statusDot {
+  background: currentColor;
+  border-radius: 50%;
+  height: 6px;
+  width: 6px;
+}
+
+.disconnectButton {
+  @include m.button-reset;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    color: v.$color-rose-500;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.5;
+  }
+}
+
+.connectionActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.connectButton,
+.syncButton {
+  @include m.button-reset;
+  align-items: center;
+  border: 1px solid var(--border-color-strong);
+  border-radius: v.$radius-md;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 8px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 12px;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.connectButton {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--bg-hover);
+  }
+
+  i {
+    color: #ea4335;
+  }
+}
+
+.syncButton {
+  background: v.$color-brand-600;
+  border-color: v.$color-brand-600;
+  color: v.$color-white;
+
+  &:hover:not(:disabled) {
+    background: v.$color-brand-700;
+  }
+}
+
+.syncMessage {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.pageError,
+.inlineError {
+  align-items: center;
+  border: 1px solid v.$color-rose-400;
+  border-radius: v.$radius-md;
+  color: v.$color-rose-500;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.pageError {
+  @include m.card;
+  margin-bottom: 24px;
+}
+
+.inlineError {
+  margin: 10px 0;
+
+  button {
+    @include m.button-reset;
+    color: v.$color-brand-600;
+    font-weight: 600;
+  }
 }
 
 .legend {
@@ -72,7 +303,13 @@
   gap: 8px;
 }
 
+.gridLoading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .day {
+  @include m.button-reset;
   min-height: 64px;
   border-radius: v.$radius-md;
   border: 2px solid v.$color-slate-100;
@@ -106,5 +343,65 @@
 
   &.none {
     color: v.$color-slate-400;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.selectedDay {
+  outline: 2px solid v.$color-brand-500;
+  outline-offset: 1px;
+}
+
+.dayCount {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.dayDetail {
+  align-items: center;
+  background: var(--bg-hover);
+  border-radius: v.$radius-md;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 6px 12px;
+  margin-top: 20px;
+  padding: 12px 14px;
+
+  span {
+    color: var(--text-secondary);
+  }
+}
+
+@media (max-width: 600px) {
+  .connectionCard,
+  .calendarCard {
+    padding: 16px;
+  }
+
+  .header {
+    align-items: flex-start;
+  }
+
+  .monthControls {
+    width: 100%;
+  }
+
+  .monthLabel {
+    flex: 1;
+  }
+
+  .weekdayRow,
+  .grid {
+    gap: 4px;
+  }
+
+  .day {
+    border-width: 1px;
+    min-height: 48px;
   }
 }

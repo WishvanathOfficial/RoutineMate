@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as c from '../controllers/calendarSync.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 const r = Router();
+r.get('/oauth/callback', c.googleOAuthCallback);
 r.use(requireAuth);
 r.get('/connections', c.connections);
 r.get('/connect/google', c.connectGoogle);
