@@ -187,7 +187,7 @@ export default function ChallengesPage() {
             Invite friends and build routine bundles while the challenge experience is being
             finalized.
           </p>
-          <a href="/routines/bundles/new">Create a routine bundle</a>
+          <Link to="/routines">Manage routines and bundles</Link>
         </div>
       </div>
     );

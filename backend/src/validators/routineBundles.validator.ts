@@ -15,7 +15,7 @@ export const bundleIdSchema = z.object({
 export const createBundleSchema = z.object({
   body: z.object({
     title: z.string().trim().min(1).max(120),
-    routineIds: z.array(z.string().uuid()).min(1).max(50),
+    routineIds: z.array(z.string().uuid()).min(2).max(50),
   }),
   params: z.object({}).optional(),
   query: z.object({}).optional(),

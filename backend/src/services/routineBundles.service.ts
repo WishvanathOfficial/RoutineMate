@@ -41,8 +41,8 @@ export async function list(userId: string, page = 1, pageSize = 6) {
   return { items: result.rows.map(serialize), meta: paginationMeta(page, pageSize, result.count) };
 }
 export async function create(userId: string, title: string, routineIds: string[]) {
-  if (routineIds.length < 1 || new Set(routineIds).size !== routineIds.length)
-    throw ApiError.badRequest('Select at least one routine');
+  if (routineIds.length < 2 || new Set(routineIds).size !== routineIds.length)
+    throw ApiError.badRequest('A bundle needs at least two unique routines');
   const count = await Routine.count({ where: { id: routineIds, userId } });
   if (count !== routineIds.length) throw ApiError.forbidden('All routines must belong to you');
   const bundle = await RoutineBundle.create({ userId, title, streak: 0 });

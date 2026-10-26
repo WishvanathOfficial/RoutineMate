@@ -1,973 +1,378 @@
-# RoutineMate MVP1 Architecture Analysis
+# RoutineMate Architecture
 
-**Author:** Wishvanath Sah
+**Document status:** Implementation-based architecture overview
 
-## Overview
-RoutineMate MVP1 is a full-stack web application built with a modern tech stack featuring a React frontend and Node.js/Express backend, both written in TypeScript. The application helps users manage and track their daily habits and routines with features like habit logging, progress tracking, calendar views, and statistics.
+**Last reviewed:** 2026-10-26
 
----
+This document describes the architecture present in the repository, rather than the original MVP design or future product plans. It is intended to help developers understand application boundaries, request/data flow, persistence, integrations, and known operational constraints. For setup commands and environment variables, see the [README](README.md); for Calendar OAuth setup, see [Google Calendar Sync Setup](docs/Google-Calendar-Sync-Setup.md).
 
-## 1. Frontend Architecture
+## 1. System overview
 
-### 1.1 Technology Stack
-- **React** (v18.3.1): UI framework for building component-based interfaces
-- **TypeScript** (v5.5.4): Type-safe development with strict mode enabled
-- **Redux Toolkit** (v2.2.7): State management with simplified Redux patterns
-- **React Router DOM** (v6.26.1): Client-side routing for navigation
-- **Vite** (v5.4.1): Modern build tool and dev server (ESM-first)
-- **SCSS/Sass** (v1.77.8): CSS preprocessing with variables and mixins
-- **Axios** (v1.7.7): HTTP client with interceptors for API communication
-- **Chart.js** (v4.4.4): Data visualization for statistics and analytics
-- **Jest** (v29.7.0) + **React Testing Library** (v16.0.0): Testing framework
-- **ESLint** (v8.57.0) + **Prettier** (v3.3.3): Code quality and formatting
-- **Husky** (v9.1.4) + **lint-staged** (v15.2.9): Git hooks for commit quality
+RoutineMate is a TypeScript full-stack web application organized as a frontend and backend in one repository:
 
-### 1.2 Project Structure
+- **Frontend:** React 18, React Router, Redux Toolkit, Axios, and Vite.
+- **Backend:** Node.js, Express, TypeScript, Sequelize, and MySQL.
+- **Persistence:** MySQL schema is managed by versioned Sequelize migrations; Sequelize models represent persisted domain entities.
+- **Authentication:** short-lived bearer access tokens and rotating refresh tokens delivered in an HTTP-only cookie.
+- **Deployment shape:** one browser application communicates with one JSON API. The backend also runs a process-local scheduler for notifications, weekly emails, and challenge cleanup.
 
-```
-src/
-├── api/                    # HTTP client and API integration layer
-│   ├── httpClient.ts       # Axios instance with JWT interceptors & token refresh logic
-│   ├── apiResponse.ts      # ApiEnvelope<T> type and unwrap() utility
-│   ├── apiError.ts         # Error handling and API error types
-│   ├── tokenStore.ts       # Local storage management for access tokens
-│   └── env.ts              # API configuration (base URL, environment)
-│
-├── app/                    # Global app state and configuration
-│   ├── store.ts            # Redux store configuration with all slices
-│   ├── router.tsx          # React Router setup with route definitions
-│   ├── hooks.ts            # useAppDispatch & useAppSelector typed hooks
-│   ├── ThemeSync.tsx       # Theme synchronization logic
-│   └── AuthSessionBridge.tsx # Session bootstrap and lifecycle management
-│
-├── components/             # Reusable UI components
-│   ├── Button/             # Primary CTA button component
-│   ├── Modal/              # Modal dialog wrapper
-│   ├── ProgressRing/       # Circular progress indicator
-│   ├── ProtectedRoute/     # Route guard for authenticated pages
-│   ├── Sidebar/            # Navigation sidebar
-│   ├── Switch/             # Toggle switch component
-│   ├── Toast/              # Toast notification system
-│   └── Topbar/             # App header/navigation bar
-│
-├── features/               # Feature-based modules (ducks pattern)
-│   ├── auth/               # Authentication feature
-│   ├── calendar/           # Calendar view feature
-│   ├── dashboard/          # Dashboard/home feature
-│   ├── landing/            # Landing page feature
-│   ├── profile/            # User profile management
-│   ├── routines/           # Routine CRUD and management
-│   ├── stats/              # Statistics and analytics
-│   └── ui/                 # Global UI state (theme, modals, toasts)
-│
-├── layouts/
-│   └── AppLayout/          # Main app layout wrapper for authenticated pages
-│
-├── styles/                 # Global styles and design tokens
-│   ├── _mixins.scss        # Reusable SCSS mixins
-│   ├── _variables.scss     # CSS variables and design tokens
-│   └── global.scss         # Global styles and resets
-│
-├── test/
-│   └── setupTests.ts       # Jest test environment setup
-│
-└── main.tsx               # React app entry point
+```text
+Browser
+  ├── React application (Vite build)
+  ├── Redux state + page-local state
+  ├── Axios API client ─────────────────────────────┐
+  ├── IndexedDB queue for offline routine check-ins  │
+  └── app-shell service worker (production)           │
+                                                      ▼
+                                           Express API (/api)
+                                              │
+                         auth / validation / controllers
+                                              │
+                                         services
+                                              │
+                              Sequelize models and queries
+                                              │
+                                           MySQL
+                                              │
+                    ┌─────────────────────────┴─────────────────────┐
+                    │                                               │
+             Google OAuth/Calendar                         Resend email
+             (optional integration)                       (optional)
 ```
 
-### 1.3 Feature Folder Structure (Ducks Pattern)
+The application is domain-feature-oriented on the frontend and layered on the backend. The feature folders are not independent deployable services: they share a Redux store and API client on the frontend and one Express process and database on the backend.
 
-Each feature follows the "ducks" pattern for modular Redux organization:
+## 2. Repository map
 
-```
-features/auth/
-├── LoginPage.tsx           # Login UI component
-├── RegisterPage.tsx        # Registration UI component
-├── auth.api.ts             # API calls (loginRequest, registerRequest, etc.)
-├── auth.slice.ts           # Redux slice (reducers + state)
-├── auth.thunks.ts          # Async thunks (loginUser, registerUser, etc.)
-├── auth.types.ts           # TypeScript interfaces (AuthState, User, etc.)
-├── auth.selectors.ts       # Selector functions for accessing state
-├── auth.module.scss        # Feature-specific styles
-└── __tests__/              # Unit and integration tests
-```
-
-**Redux Slices Defined in store.ts:**
-- `auth`: User authentication and session state
-- `ui`: Global UI state (theme, modal visibility, toasts)
-- `routines`: Routines CRUD and list state
-- `dashboard`: Dashboard data and summaries
-- `stats`: Statistics and progress tracking
-- `calendar`: Calendar view state and events
-- `profile`: User profile data
-- `landing`: Landing page state
-
-### 1.4 Routing Configuration
-
-**Router Setup** ([src/app/router.tsx](src/app/router.tsx)):
-- Landing page: `/` (public)
-- Auth pages: `/login`, `/register` (public)
-- Protected routes wrapped in `<ProtectedRoute>`:
-  - `/dashboard` - Main dashboard
-  - `/routines` - Routines list
-  - `/routines/:id` - Routine detail page
-  - `/stats` - Statistics view
-  - `/calendar` - Calendar view
-  - `/profile` - User profile
-- Catch-all: `*` redirects to `/`
-
-**Route Protection:**
-- `<ProtectedRoute>` component checks `auth.user` state
-- Redirects unauthenticated users to login page
-- Guards all routes under `<AppLayout />`
-
-### 1.5 API Integration Patterns
-
-**HTTP Client Setup** ([src/api/httpClient.ts](src/api/httpClient.ts)):
-
-```typescript
-httpClient = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,  // For httpOnly refresh-token cookie
-  headers: { 'Content-Type': 'application/json' }
-})
-```
-
-**Request Interceptor:**
-- Attaches `Authorization: Bearer <accessToken>` header to all requests
-- Token retrieved from localStorage via `getAccessToken()`
-
-**Response Interceptor (Smart Refresh Logic):**
-1. Detects 401 responses (token expired)
-2. Implements concurrent request batching to prevent multiple refresh calls
-3. Calls `/api/auth/refresh` using httpOnly cookie
-4. On success: Updates access token and retries original request
-5. On failure: Clears token, dispatches `SESSION_EXPIRED_EVENT`
-6. Returns refreshed response or error
-
-**API Response Envelope:**
-```typescript
-interface ApiEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-```
-
-**Usage in Thunks:**
-```typescript
-export const loginUser = createAsyncThunk<AuthSession, LoginCredentials>(
-  'auth/login',
-  async (credentials, { rejectWithValue }) => {
-    try {
-      return await loginRequest(credentials);  // Returns unwrapped data
-    } catch (err) {
-      return rejectWithValue(err?.message);
-    }
-  }
-);
-```
-
-### 1.6 State Management (Redux Toolkit)
-
-**Store Configuration:**
-- Uses `configureStore()` from Redux Toolkit
-- No middleware customization (uses defaults: thunk, immutability checks)
-- All slices combined in single store
-
-**Redux Slice Pattern:**
-```typescript
-const authSlice = createSlice({
-  name: 'auth',
-  initialState,
-  reducers: {
-    loggedOut(state) { /* sync mutations */ },
-    sessionExpired(state) { /* handle session loss */ }
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(loginUser.pending, ...)
-      .addCase(loginUser.fulfilled, ...)
-      .addCase(loginUser.rejected, ...)
-  }
-});
-```
-
-**Typed Hooks** ([src/app/hooks.ts](src/app/hooks.ts)):
-```typescript
-export const useAppDispatch: () => AppDispatch = useDispatch;
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
-```
-
-**Session Bootstrap:**
-- `bootstrapSessionThunk` runs on app startup (via `AuthSessionBridge`)
-- Attempts to restore session using httpOnly refresh cookie
-- Sets `auth.initialized` flag after completion
-- Never rejects (swallows failures gracefully)
-
-### 1.7 Key npm Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `npm run dev` | Start frontend + backend concurrently |
-| `npm run dev:frontend` | Start Vite dev server on :5173 |
-| `npm run dev:backend` | Start backend dev server |
-| `npm run build` | Type-check + build with Vite |
-| `npm run preview` | Preview production build |
-| `npm run test` | Run Jest once |
-| `npm run test:watch` | Run Jest in watch mode |
-| `npm run test:coverage` | Generate coverage report |
-| `npm run typecheck` | Run TSC type checking |
-| `npm run lint` | Check code quality |
-| `npm run lint:fix` | Fix linting issues |
-| `npm run format` | Format code with Prettier |
-
-### 1.8 Vite Configuration
-
-**Alias Paths:**
-```typescript
-'@api': 'src/api'
-'@app': 'src/app'
-'@components': 'src/components'
-'@features': 'src/features'
-'@layouts': 'src/layouts'
-'@styles': 'src/styles'
-'@assets': 'src/assets'
-```
-
-**SCSS Setup:**
-- Modern Dart Sass compiler enabled
-- Preprocessor options configured for performance
-
-**Dev Server:**
-- Port: 5173
-- Auto-open: disabled
-- CORS: configured to communicate with backend at :4000
-
-### 1.9 Testing Strategy
-
-**Jest Configuration** ([jest.config.js](jest.config.js)):
-- Environment: jsdom (DOM simulation)
-- Preset: ts-jest
-- Module mapping for CSS (identity-obj-proxy) and path aliases
-- Special env.jest.ts mock for import.meta.env
-- Coverage collection excludes tests, types, and main.tsx
-
-**Testing Libraries:**
-- `@testing-library/react`: Component testing utilities
-- `@testing-library/jest-dom`: DOM matchers
-- `@testing-library/user-event`: User interaction simulation
-- Organized in `__tests__` directories within features
-
----
-
-## 2. Backend Architecture
-
-### 2.1 Technology Stack
-- **Node.js** with **Express.js** (v4.19.2): Web server framework
-- **TypeScript** (v5.5.4): Type-safe server-side code
-- **Sequelize** (v6.37.3): ORM for MySQL database
-- **MySQL2** (v3.11.0): MySQL driver
-- **JWT** (jsonwebtoken v9.0.2): Token-based authentication
-- **bcryptjs** (v2.4.3): Password hashing
-- **Zod** (v3.23.8): Schema validation
-- **Helmet** (v7.1.0): HTTP security headers
-- **CORS** (v2.8.5): Cross-Origin Resource Sharing
-- **Morgan** (v1.10.0): HTTP request logging
-- **Sequelize CLI** (v6.6.2): Database migrations and seeds
-- **Jest** + **Supertest** (v7.0.0): API testing
-
-### 2.2 Project Structure
-
-```
-backend/
+```text
+.
 ├── src/
-│   ├── app.ts                  # Express app factory
-│   ├── server.ts               # Server bootstrap and entry point
-│   │
-│   ├── config/
-│   │   ├── database.ts         # Sequelize instance and connection setup
-│   │   └── env.ts              # Environment variable validation
-│   │
-│   ├── controllers/            # Request handlers for each resource
-│   │   ├── auth.controller.ts
-│   │   ├── routines.controller.ts
-│   │   ├── calendar.controller.ts
-│   │   ├── dashboard.controller.ts
-│   │   ├── stats.controller.ts
-│   │   ├── profile.controller.ts
-│   │   └── __tests__/
-│   │
-│   ├── middleware/             # Express middleware
-│   │   ├── auth.middleware.ts  # JWT verification and user attachment
-│   │   ├── error.middleware.ts # Centralized error handling
-│   │   ├── notFound.middleware.ts # 404 handler
-│   │   └── validate.middleware.ts # Request body/params validation
-│   │
-│   ├── models/                 # Sequelize ORM models
-│   │   ├── user.model.ts
-│   │   ├── routine.model.ts
-│   │   ├── habitLog.model.ts
-│   │   ├── userPreferences.model.ts
-│   │   ├── refreshToken.model.ts
-│   │   └── index.ts            # Model exports and associations
-│   │
-│   ├── routes/                 # Route definitions
-│   │   ├── index.ts            # Main router combining all routes
-│   │   ├── auth.routes.ts      # Auth endpoints
-│   │   ├── routines.routes.ts  # Routines CRUD endpoints
-│   │   ├── calendar.routes.ts  # Calendar endpoints
-│   │   ├── stats.routes.ts     # Statistics endpoints
-│   │   ├── dashboard.routes.ts # Dashboard endpoints
-│   │   └── profile.routes.ts   # Profile endpoints
-│   │
-│   ├── services/               # Business logic layer
-│   │   ├── auth.service.ts     # Auth registration, login, token refresh
-│   │   ├── routines.service.ts
-│   │   ├── calendar.service.ts
-│   │   ├── stats.service.ts
-│   │   ├── dashboard.service.ts
-│   │   └── profile.service.ts
-│   │
-│   ├── validators/             # Zod schema validation
-│   │   └── auth.validator.ts   # RegisterInput, LoginInput schemas
-│   │
-│   ├── utils/                  # Utility functions
-│   │   ├── ApiError.ts         # Custom error class with HTTP status
-│   │   ├── ApiResponse.ts      # Standardized API response wrapper
-│   │   ├── asyncHandler.ts     # Async/await error wrapper for middleware
-│   │   ├── hash.ts             # SHA-256 hashing
-│   │   ├── jwt.ts              # JWT signing/verification functions
-│   │   ├── password.ts         # Password hashing with bcrypt
-│   │   └── logger.ts           # Logging utility
-│   │
-│   ├── migrations/             # Database schema migrations
-│   │   ├── 20260820000001-create-users.js
-│   │   ├── 20260820000002-create-user-preferences.js
-│   │   ├── 20260820000003-create-refresh-tokens.js
-│   │   ├── 20260820000004-create-routines.js
-│   │   └── 20260820000005-create-habit-logs.js
-│   │
-│   ├── seeders/                # Database seed data
-│   │
-│   └── types/                  # TypeScript type definitions
-│       └── express.d.ts        # Augments Express Request with req.user
-│
-├── config/
-│   └── config.js               # Sequelize config for CLI
-│
-├── scripts/
-│   └── bootstrap.js            # Pre-migration bootstrap script
-│
-└── jest.config.js              # Jest testing configuration
+│   ├── api/                 # Axios client, auth token store, envelopes, errors
+│   ├── app/                 # Store, router, app-wide bridges, install support
+│   ├── components/          # Reusable shared UI
+│   ├── config/              # Frontend feature switches
+│   ├── features/            # Product domains and page-level modules
+│   ├── layouts/             # Authenticated application shell
+│   ├── offline/             # IndexedDB check-in queue
+│   ├── styles/              # Global SCSS and design tokens
+│   └── test/                # Jest setup
+├── backend/
+│   ├── config/              # Sequelize CLI configuration
+│   ├── scripts/             # Database bootstrap for dev/start
+│   └── src/
+│       ├── config/           # Runtime environment and Sequelize connection
+│       ├── controllers/      # HTTP request/response handling
+│       ├── jobs/             # In-process scheduled sweeps
+│       ├── middleware/       # Authentication, validation, errors
+│       ├── migrations/       # Database schema history
+│       ├── models/           # Sequelize models and associations
+│       ├── routes/           # API route groups
+│       ├── seeders/          # Development/demo data
+│       ├── services/         # Domain logic and provider integrations
+│       ├── types/            # Express request augmentation
+│       ├── utils/            # Shared backend helpers
+│       └── validators/       # Zod input schemas
+├── docs/                     # Product scope, prototypes, and setup guides
+├── public/                   # PWA manifest, icons, and service worker
+├── package.json              # Frontend and root development scripts
+└── README.md
 ```
 
-### 2.3 Route Structure & API Endpoints
+Frontend product feature folders currently include `achievements`, `auth`, `calendar`, `challenges`, `dashboard`, `feedback`, `friends`, `goals`, `journal`, `landing`, `notifications`, `onboarding`, `profile`, `routines`, `stats`, and `ui`.
 
-**Main Router** ([backend/src/routes/index.ts](backend/src/routes/index.ts)):
-```typescript
-router.use('/auth', authRoutes);           // /api/auth/*
-router.use('/dashboard', dashboardRoutes); // /api/dashboard/*
-router.use('/routines', routinesRoutes);   // /api/routines/*
-router.use('/calendar', calendarRoutes);   // /api/calendar/*
-router.use('/stats', statsRoutes);         // /api/stats/*
-router.use('/profile', profileRoutes);     // /api/profile/*
+## 3. Frontend architecture
+
+### 3.1 Application bootstrap
+
+`src/main.tsx` mounts the React tree under Redux's `<Provider>` and React Router's `<RouterProvider>`. It also mounts three app-wide behaviors:
+
+- `ThemeSync` applies the selected theme to the document.
+- `AuthSessionBridge` restores the current session on startup and listens for unrecoverable refresh failures.
+- `OfflineSyncBridge` retries queued routine check-ins at startup and on the browser's `online` event.
+
+The PWA install listener is imported early so the browser's `beforeinstallprompt` event can be captured. The service worker is registered only in production; it caches an app shell and same-origin static assets but deliberately bypasses `/api/` requests.
+
+### 3.2 Routing and access control
+
+Routes are declared in `src/app/router.tsx`.
+
+- Public routes: `/`, `/login`, `/register`, and `/roadmap`.
+- Authenticated onboarding route: `/onboarding`.
+- Other application pages are nested under `AppLayout` and `ProtectedRoute`.
+- A catch-all route redirects unknown locations to `/`.
+
+`ProtectedRoute` waits for the initial session bootstrap before redirecting. It also loads onboarding state and routes an authenticated user through onboarding when required. The onboarding-state failure path currently fails open to avoid trapping a user in a redirect loop.
+
+The route guard is a user-experience boundary, not an authorization boundary. The API independently checks bearer tokens and resource ownership.
+
+### 3.3 Feature modules and state ownership
+
+Feature folders co-locate page components, API adapters, TypeScript types, styles, Redux slices/thunks/selectors, and tests where appropriate. Product domains include routines, dashboard, goals, statistics, achievements, calendar, journal, profile, onboarding, authentication, and notifications.
+
+State management is intentionally **hybrid**, rather than every page using Redux:
+
+- Redux Toolkit stores shared application and domain state. Current store slices are `auth`, `ui`, `routines`, `dashboard`, `stats`, `calendar`, `profile`, `landing`, `onboarding`, `goals`, `achievements`, `journal`, and `notifications`.
+- Pages with short-lived interaction state (for example form visibility, selected filters, action status, or billing requests) use React component state.
+- Several later feature screens and their small API adapters (such as feedback, friends, focus sessions, and parts of challenges/bundles) use page-local state and call the shared HTTP client directly rather than adding a Redux slice.
+
+This avoids globalizing ephemeral UI state, but it means data-fetching conventions and cache lifetime differ between modules. Adding a new shared cross-page domain should include a deliberate choice of local state versus a Redux slice.
+
+### 3.4 API client and authentication lifecycle
+
+`src/api/httpClient.ts` is the shared Axios client. It reads `VITE_API_BASE_URL`, sends credentials for the refresh cookie, and attaches the in-memory access token as a bearer token.
+
+```text
+Application startup
+  → POST /api/auth/refresh using cookie
+  → store returned access token in module memory
+  → protected routes resolve
+
+Later API request returns 401
+  → one shared refresh request is created for concurrent failures
+  → original request is retried with the new access token
+  → if refresh fails, clear token and emit session-expired event
+  → AuthSessionBridge clears authenticated Redux state
 ```
 
-**Authentication Endpoints** (auth.routes.ts):
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/refresh` - Refresh access token
-- `POST /api/auth/logout` - Logout and revoke refresh token
+The access token is not persisted to local storage. Persistence across page reloads comes from the HTTP-only refresh-token cookie. API success responses use `{ success, message, data }`; `src/api/apiResponse.ts` provides an `unwrap` helper for Axios responses.
 
-**Routines Endpoints** (routines.routes.ts):
-- `GET /api/routines` - List user's routines
-- `POST /api/routines` - Create new routine
-- `GET /api/routines/:id` - Get routine details
-- `PUT /api/routines/:id` - Update routine
-- `DELETE /api/routines/:id` - Delete routine
+### 3.5 Offline and installable behavior
 
-**Other Resources:**
-- `/api/calendar/*` - Calendar events and views
-- `/api/stats/*` - Progress statistics and analytics
-- `/api/dashboard/*` - Dashboard summaries
-- `/api/profile/*` - User profile CRUD
+Offline support is deliberately narrow:
 
-### 2.4 Database Architecture
+- `public/sw.js` caches the application shell and static same-origin assets. It does not cache API responses and does not intercept API requests.
+- A failed routine check-in can be stored in IndexedDB (`routinemate-offline`, `checkin-queue`).
+- The queue stores the latest pending status per routine, ordered by queue time, and the app bridge retries entries when connectivity returns.
+- The online badge reflects the browser's `navigator.onLine` state. It is not an active probe of API or database availability.
+- Install support uses the browser's native PWA install prompt when the browser exposes it.
 
-**Database: MySQL 8.0+**
-- Charset: utf8mb4 (supports 4-byte Unicode including emojis)
-- Collation: utf8mb4_unicode_ci
+This is not a general offline-first application: most API-backed pages need connectivity, and their responses are not cached by the service worker.
 
-**Core Models:**
+### 3.6 Styling, aliases, and build
 
-**1. Users Table**
-```typescript
-export class User extends Model {
-  id: string (UUID, PK)
-  name: string
-  email: string (unique)
-  passwordHash: string
-  avatarUrl: string | null
-  emailVerifiedAt: Date | null
-  createdAt: Date
-  updatedAt: Date
-  deletedAt: Date | null (soft delete - paranoid: true)
-}
+SCSS Modules scope feature and component styles; `src/styles/global.scss` and its variables/mixins provide global styles and design tokens. Vite and TypeScript configure aliases such as `@features/*`, `@components/*`, and `@api/*`. Jest has matching alias mappings and redirects the Vite environment module to a Jest-specific implementation.
+
+## 4. Backend architecture
+
+### 4.1 Process startup and request pipeline
+
+`backend/src/server.ts` verifies the database connection, creates the Express application, starts listening, and starts the process-local notification scheduler. `backend/src/app.ts` exports an app factory and configures middleware and routes.
+
+The request pipeline is:
+
+```text
+HTTP request
+  → Helmet
+  → credentialed CORS for configured frontend origin
+  → JSON / URL-encoded body parsing and cookie parsing
+  → Morgan request logging outside production
+  → /health or /api route
+  → route-level authentication and Zod validation
+  → controller
+  → service
+  → Sequelize model / MySQL
+  → shared success envelope or centralized error response
 ```
 
-**2. Routines Table** (MVP-1 core)
-```typescript
-export class Routine extends Model {
-  id: string (UUID, PK)
-  userId: string (FK -> users)
-  name: string
-  emoji: string (default: '✅')
-  category: enum ('Health' | 'Mindfulness' | 'Learning' | 'Wellness' | 'Productivity')
-  frequencyType: enum ('daily' | 'weekdays' | 'specific_days' | 'interval')
-  frequencyConfig: JSON (flexible config for frequency)
-  reminderType: enum ('time' | 'location')
-  reminderTime: time | null
-  reminderLocation: string | null
-  targetValue: integer | null (quantified goals)
-  targetUnit: string | null
-  status: enum ('active' | 'paused' | 'archived')
-  currentStreak: integer (days)
-  longestStreak: integer (days)
-  startDate: string
-  endDate: string | null
-  createdAt: Date
-  updatedAt: Date
-  deletedAt: Date | null (soft delete)
-}
-```
+`asyncHandler` forwards rejected async handlers to the centralized error middleware. The not-found middleware runs after application routes. `/health` reports API process health; it does not represent an end-to-end check of every external integration.
+
+### 4.2 Layer responsibilities
+
+- **Routes** define HTTP methods, path groups, authentication policy, and validation middleware.
+- **Middleware** verifies JWT access tokens, validates request data, and standardizes errors.
+- **Controllers** translate request inputs into service calls and HTTP responses.
+- **Services** own domain rules, database operations, transactions, and provider calls.
+- **Models** define persisted attributes and Sequelize associations.
+- **Migrations** are the source of truth for incremental schema changes; seeders create demo data.
+
+Not every legacy or newer endpoint follows an identical amount of validation. Most write operations use Zod validators, but route-level validation should be checked when adding endpoints rather than assumed globally.
+
+### 4.3 API route groups
+
+The backend mounts route groups beneath `/api`:
+
+| Group                                 | Representative responsibilities                                       |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| `/auth`                               | Registration, password login, Google sign-in, refresh, logout         |
+| `/dashboard`                          | Greeting and overview data                                            |
+| `/routines`                           | Routine CRUD, history, pause/privacy, check-ins                       |
+| `/calendar`                           | Routine activity by month; Calendar sync routes are also mounted here |
+| `/calendar-sync`                      | Google OAuth callback, connections, sync, disconnect, conflicts       |
+| `/focus-sessions`                     | Start, update, complete, and summarize focus sessions                 |
+| `/goals`                              | Goal CRUD and progress updates                                        |
+| `/stats`                              | User statistics summary                                               |
+| `/achievements`                       | Achievement/XP state                                                  |
+| `/journal`                            | Entry list, lookup by date, create/update                             |
+| `/profile`                            | Profile, preferences, account deletion                                |
+| `/onboarding`                         | Onboarding state and completion                                       |
+| `/notifications`                      | List, mark read, and snooze                                           |
+| `/friends`, `/users`, `/leaderboards` | Friend requests, user lookup/public profile, friend ranking           |
+| `/routine-bundles`                    | Bundle CRUD, ordered items, bundle check-ins                          |
+| `/challenges`                         | Discovery, membership, check-ins, reactions, leaderboard              |
+| `/insights`                           | Weekly insight retrieval and feedback                                 |
+| `/feedback`                           | Idea listing/creation, votes, and status                              |
+| `/roadmap`                            | Public roadmap list                                                   |
+| `/billing`                            | Subscription status, checkout/portal actions, webhook                 |
+
+Authentication is applied at route-group or endpoint level; public exceptions include the public roadmap and the Google Calendar OAuth callback. Check the individual route module for the exact policy and validators.
+
+### 4.4 API response and errors
+
+Successful responses use:
 
-**3. Habit Logs Table**
-- Tracks completions per routine
-- Links routines to calendar view
-
-**4. User Preferences Table**
-- Stores user-specific settings
-- Created automatically on signup
-
-**5. Refresh Tokens Table**
-- Stores token metadata for revocation
-- Contains token hash, expiration, revocation status
-
-**Key Design Features:**
-- **Soft Deletes:** paranoid: true on User and Routine (keeps historical data)
-- **Timestamps:** All tables have createdAt/updatedAt
-- **UUID Primary Keys:** Better distribution than auto-increment
-- **ENUM Fields:** Strictly typed frequency/reminder types
-- **JSON Storage:** Flexible frequencyConfig for complex scheduling
-- **Scopes:** User model has default scope excluding passwordHash
-
-**Migrations:**
-- 001: Create users table
-- 002: Create user preferences table
-- 003: Create refresh tokens table
-- 004: Create routines table
-- 005: Create habit logs table
-
-### 2.5 Controllers & Services Pattern
-
-**Layered Architecture:**
-```
-Routes -> Controllers -> Services -> Models -> Database
-```
-
-**Controller Example** ([auth.controller.ts](backend/src/controllers/auth.controller.ts)):
-```typescript
-export const register = asyncHandler(async (req, res) => {
-  const { user, accessToken, refreshToken, refreshTokenExpiresAt } = 
-    await authService.register(req.body);
-  setRefreshCookie(res, refreshToken, refreshTokenExpiresAt);
-  ApiResponse.created(res, { user, accessToken }, 'Account created');
-});
-```
-
-**Service Example** ([auth.service.ts](backend/src/services/auth.service.ts)):
-```typescript
-export async function register(input: RegisterInput) {
-  const existing = await User.findOne({ where: { email: input.email } });
-  if (existing) throw ApiError.conflict('Email already registered');
-  
-  const passwordHash = await hashPassword(input.password);
-  const user = await sequelize.transaction(async (transaction) => {
-    const created = await User.create({ ...input, passwordHash }, { transaction });
-    await UserPreferences.create({ userId: created.id }, { transaction });
-    return created;
-  });
-  
-  return { user: toPublicUser(user), ...await issueTokenPair(user) };
-}
-```
-
-**Key Patterns:**
-- Services handle all business logic
-- Controllers handle request/response
-- `asyncHandler()` wrapper catches async errors
-- Transactions for multi-step operations
-- Clear separation of concerns
-
-### 2.6 Authentication & Authorization
-
-**JWT Token Strategy:**
-
-1. **Access Token:**
-   - Short-lived (default: 15 minutes)
-   - Payload: `{ sub: userId, email }`
-   - Sent in `Authorization: Bearer <token>` header
-   - Stored in memory (frontend)
-
-2. **Refresh Token:**
-   - Long-lived (default: 30 days)
-   - Payload: `{ sub: userId, tokenId }`
-   - Stored in httpOnly, secure cookie
-   - Browser sends automatically with CORS credentials
-
-3. **Token Refresh Flow:**
-   - Client detects 401 on expired access token
-   - Frontend axios interceptor calls `POST /api/auth/refresh`
-   - Backend verifies refresh token and issues new access token
-   - New token returned in response body
-   - Process repeats silently without user interaction
-
-**Authorization:**
-
-```typescript
-// Middleware that requires valid access token
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
-    throw ApiError.unauthorized('Missing or malformed Authorization header');
-  }
-  
-  const token = header.slice('Bearer '.length);
-  try {
-    req.user = verifyAccessToken(token);
-    next();
-  } catch {
-    throw ApiError.unauthorized('Invalid or expired access token');
-  }
-}
-```
-
-**Route Protection:**
-- Protected routes use `requireAuth` middleware
-- User ID extracted from token: `req.user.sub`
-- Database queries filtered by `req.user.sub` (user isolation)
-
-### 2.7 Middleware Stack
-
-**Order in Express:**
-```typescript
-app.use(helmet());                    // Security headers
-app.use(cors({ credentials: true })); // CORS with cookie support
-app.use(express.json());              // JSON body parsing
-app.use(express.urlencoded());        // URL-encoded parsing
-app.use(cookieParser());              // Cookie parsing
-app.use(morgan('dev'));               // HTTP logging (dev only)
-
-app.get('/health', ...);              // Health check
-app.use('/api', routes);              // API routes
-app.use(notFoundHandler);             // 404 handling
-app.use(errorHandler);                // Global error catching
-```
-
-**Error Handling Middleware:**
-- Catches all thrown errors from async handlers
-- Formats into standardized ApiResponse
-- Returns appropriate HTTP status codes
-- Logs errors in production
-
-### 2.8 Configuration & Environment
-
-**Environment Variables** ([config/env.ts](backend/src/config/env.ts)):
-```typescript
-NODE_ENV              // 'development' or 'production'
-PORT                  // Server port (default: 4000)
-DB_HOST               // MySQL hostname
-DB_PORT               // MySQL port (default: 3306)
-DB_NAME               // Database name (default: 'routinemate')
-DB_USER               // MySQL user
-DB_PASSWORD           // MySQL password
-JWT_ACCESS_SECRET     // Secret for signing access tokens (required)
-JWT_ACCESS_EXPIRES_IN // Access token TTL (default: '15m')
-JWT_REFRESH_SECRET    // Secret for signing refresh tokens (required)
-JWT_REFRESH_EXPIRES_IN// Refresh token TTL (default: '30d')
-CORS_ORIGIN           // Allowed origin (default: 'http://localhost:5173')
-```
-
-**Validation:**
-- `required()` function throws on missing critical env vars
-- Fallbacks provided for non-critical vars
-- Type-safe access via `env` singleton
-
-**Sequelize Database Configuration:**
-- Connection pooling: min=0, max=10
-- Acquire timeout: 30s
-- Idle timeout: 10s
-- UTF8MB4 charset for emoji support
-
-### 2.9 Key npm Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `npm run dev` | Start dev server with nodemon (watches src/) |
-| `npm run build` | TypeScript compilation to dist/ |
-| `npm run start` | Run compiled JS from dist/ |
-| `npm run test` | Run Jest tests once |
-| `npm run test:watch` | Run Jest in watch mode |
-| `npm run typecheck` | Run TSC type checking |
-| `npm run lint` | Check code quality |
-| `npm run lint:fix` | Fix linting issues |
-| `npm run format` | Format code with Prettier |
-| `npm run db:migrate` | Run pending migrations |
-| `npm run db:migrate:undo` | Rollback last migration |
-| `npm run db:seed` | Run all seeders |
-
-### 2.10 Testing Strategy
-
-**Jest Configuration** ([backend/jest.config.js](backend/jest.config.js)):
-- Environment: node (not jsdom)
-- Preset: ts-jest
-- Test discovery: `**/__tests__/**/*.test.ts` or `**/*.test.ts`
-- Coverage excludes: server.ts, migrations, seeders, models
-- Verbose output enabled
-
-**Testing Libraries:**
-- Jest: Test runner and assertions
-- Supertest (v7.0.0): HTTP assertion for API testing
-- Organized in `__tests__` directories
-
-**Example API Test:**
-```typescript
-import request from 'supertest';
-import app from '../app';
-
-describe('POST /api/auth/login', () => {
-  it('should login user with valid credentials', async () => {
-    const res = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'user@test.com', password: 'password123' });
-    
-    expect(res.statusCode).toBe(200);
-    expect(res.body.data.accessToken).toBeDefined();
-  });
-});
-```
-
----
-
-## 3. Technology Stack Summary
-
-### Frontend Dependencies
-| Category | Package | Version | Purpose |
-|----------|---------|---------|---------|
-| **Core** | react | 18.3.1 | UI framework |
-| | react-dom | 18.3.1 | DOM rendering |
-| | typescript | 5.5.4 | Type safety |
-| **State** | @reduxjs/toolkit | 2.2.7 | Predictable state management |
-| | react-redux | 9.1.2 | Redux bindings for React |
-| **Routing** | react-router-dom | 6.26.1 | Client-side routing |
-| **HTTP** | axios | 1.7.7 | Promise-based HTTP client |
-| **Visualization** | chart.js | 4.4.4 | Charts and graphs |
-| **Styling** | sass | 1.77.8 | CSS preprocessing |
-| **Build** | vite | 5.4.1 | Fast build tool |
-| | @vitejs/plugin-react | 4.3.1 | React plugin for Vite |
-| **Linting** | eslint | 8.57.0 | Code quality |
-| | @typescript-eslint/... | 7.16.1 | TS linting support |
-| | prettier | 3.3.3 | Code formatting |
-| **Testing** | jest | 29.7.0 | Test runner |
-| | @testing-library/react | 16.0.0 | React component testing |
-| **Git Hooks** | husky | 9.1.4 | Git lifecycle hooks |
-| | lint-staged | 15.2.9 | Run linters on staged files |
-
-### Backend Dependencies
-| Category | Package | Version | Purpose |
-|----------|---------|---------|---------|
-| **Core** | express | 4.19.2 | Web server framework |
-| | typescript | 5.5.4 | Type safety |
-| **Database** | sequelize | 6.37.3 | ORM for MySQL |
-| | mysql2 | 3.11.0 | MySQL driver |
-| | sequelize-cli | 6.6.2 | Migration/seeding CLI |
-| **Authentication** | jsonwebtoken | 9.0.2 | JWT tokens |
-| | bcryptjs | 2.4.3 | Password hashing |
-| **Security** | helmet | 7.1.0 | HTTP security headers |
-| | cors | 2.8.5 | CORS middleware |
-| | cookie-parser | 1.4.6 | Cookie parsing |
-| **Validation** | zod | 3.23.8 | Schema validation |
-| **Logging** | morgan | 1.10.0 | HTTP request logging |
-| **Environment** | dotenv | 16.4.5 | .env file loading |
-| **Utilities** | uuid | 9.0.1 | UUID generation |
-| **Dev** | nodemon | 3.1.4 | Auto-reload on file changes |
-| | ts-node | 10.9.2 | Direct TS execution |
-| **Testing** | jest | 29.7.0 | Test runner |
-| | supertest | 7.0.0 | HTTP testing library |
-| | ts-jest | 29.2.3 | Jest + TypeScript |
-
----
-
-## 4. Key Architectural Patterns & Decisions
-
-### 4.1 Frontend Patterns
-
-1. **Feature-Based Organization (Ducks):**
-   - Each feature (auth, routines, etc.) is a self-contained module
-   - Contains reducers, actions, API calls, components, types
-   - Easy to split into separate bundles or microservices later
-   - Clear dependencies between features
-
-2. **Redux Middleware for API Calls:**
-   - API calls abstracted into thunks
-   - Services layer separate from components
-   - Error handling centralized in reducer
-   - Optimistic updates possible via action creators
-
-3. **HTTP Interceptor Pattern:**
-   - Single axios instance with request/response interceptors
-   - Automatic JWT token injection
-   - Silent token refresh on 401
-   - No manual token management in components
-
-4. **Protected Routes:**
-   - Route guard component checks `auth.user` state
-   - Unauthenticated users redirected to /login
-   - Prevents access to sensitive pages
-
-5. **Typed Redux Hooks:**
-   - Custom `useAppDispatch` and `useAppSelector` hooks
-   - Provides full type inference
-   - No need for manual type annotations in components
-
-### 4.2 Backend Patterns
-
-1. **Service Layer Architecture:**
-   - Controllers: Handle HTTP request/response
-   - Services: Implement business logic
-   - Models: Data access (Sequelize ORM)
-   - Clear separation of concerns
-
-2. **Error Handling Strategy:**
-   - Custom `ApiError` class with HTTP status codes
-   - `asyncHandler()` wrapper catches async errors
-   - Centralized error middleware converts to responses
-   - Consistent error response format
-
-3. **Validation Pipeline:**
-   - Zod schemas for request validation
-   - Middleware validation before reaching controllers
-   - Type-safe input with proper error messages
-
-4. **JWT Token Strategy:**
-   - Short-lived access tokens (in-memory)
-   - Long-lived refresh tokens (httpOnly cookie)
-   - Automatic token rotation on refresh
-   - Database-backed token revocation
-
-5. **Transaction Support:**
-   - Multi-step operations wrapped in DB transactions
-   - Ensures data consistency (e.g., user + preferences creation)
-   - Automatic rollback on errors
-
-6. **Database Modeling:**
-   - Soft deletes (paranoid: true) preserve audit trail
-   - UUID primary keys for better distribution
-   - JSON columns for flexible configuration
-   - Model scopes hide sensitive data by default
-
-### 4.3 Full-Stack Patterns
-
-1. **API Response Envelope:**
-   - Every response wrapped in `{ success, message, data }`
-   - Frontend has single place to unwrap
-   - Consistent error format across all endpoints
-
-2. **Type Safety Across Boundary:**
-   - Backend generates TypeScript from Sequelize models
-   - Frontend uses same types in Redux slices
-   - API contracts enforced by types
-
-3. **CORS with Credentials:**
-   - Backend: `credentials: true` in CORS config
-   - Frontend: `withCredentials: true` in axios
-   - Enables httpOnly cookie transmission
-
-4. **Concurrent Request Batching:**
-   - Multiple simultaneous 401 responses share single refresh
-   - Prevents thundering herd on token expiry
-   - Improves performance under load
-
----
-
-## 5. Development Workflow
-
-### 5.1 Setup
-
-```bash
-npm run setup  # Install all dependencies (root + backend)
-```
-
-### 5.2 Development
-
-```bash
-npm run dev           # Start frontend + backend concurrently
-npm run dev:frontend  # Frontend only
-npm run dev:backend   # Backend only
-```
-
-- Frontend: http://localhost:5173
-- Backend: http://localhost:4000
-- API: http://localhost:4000/api
-
-### 5.3 Database
-
-```bash
-npm run db:migrate           # Run migrations
-npm run db:migrate:undo      # Rollback last migration
-npm run db:migrate:undo:all  # Rollback all migrations
-npm run db:seed              # Run seeders
-```
-
-### 5.4 Testing
-
-```bash
-npm run test              # Run all tests once
-npm run test:watch       # Watch mode for frontend/backend
-npm run test:coverage    # Generate coverage reports
-```
-
-### 5.5 Code Quality
-
-```bash
-npm run lint         # Check both frontend and backend
-npm run lint:fix     # Auto-fix issues
-npm run format       # Format code with Prettier
-npm run typecheck    # Full type checking
-```
-
-### 5.6 Building
-
-```bash
-npm run build        # Frontend: TypeScript + Vite
-cd backend
-npm run build        # Backend: TypeScript compilation
-npm run start        # Run compiled backend
-```
-
----
-
-## 6. API Response Format
-
-**Success Response:**
 ```json
 {
   "success": true,
-  "message": "Account created",
-  "data": {
-    "user": {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "avatarUrl": null
-    },
-    "accessToken": "eyJhbGciOiJIUzI1NiIs..."
-  }
+  "message": "Success",
+  "data": {}
 }
 ```
 
-**Error Response:**
-```json
-{
-  "success": false,
-  "message": "Invalid email or password",
-  "data": null
-}
-```
+Errors use `success: false` with a message and optional details. Zod and Sequelize validation errors become client errors; unknown errors are logged and returned as a generic server error. In non-production mode, the backend may include a stack trace in the response.
 
-**HTTP Status Codes:**
-- 200 OK: Successful GET/PUT/POST
-- 201 Created: Resource created
-- 400 Bad Request: Invalid input
-- 401 Unauthorized: Missing/invalid token
-- 404 Not Found: Resource not found
-- 409 Conflict: Email already exists
-- 500 Internal Server Error: Server error
+## 5. Authentication and security boundaries
 
----
+### 5.1 Session model
 
-## 7. Security Considerations
+The backend issues a short-lived access JWT and a longer-lived refresh JWT. Refresh tokens are sent in an HTTP-only cookie; a hash of each refresh token is stored in `refresh_tokens` so tokens can be rotated and revoked without storing the raw token in the database.
 
-### Frontend
-1. **Token Storage:** Access tokens in memory (cleared on refresh)
-2. **Refresh Token:** httpOnly cookie (inaccessible to JavaScript)
-3. **CSRF Protection:** Built into httpOnly cookies
-4. **XSS Prevention:** React escapes content by default
-5. **Route Guards:** Protected routes check authentication state
+The refresh endpoint verifies the JWT and matching database row, rejects revoked/expired tokens, revokes the presented token, and issues a new pair. Logout revokes the refresh token when supplied. The frontend silently refreshes once for concurrent 401 responses.
 
-### Backend
-1. **Password Security:** bcryptjs with salting
-2. **Token Signing:** HMAC-SHA256 with strong secrets
-3. **Token Revocation:** Refresh tokens tracked in database
-4. **Soft Deletes:** User data preserved for audit trails
-5. **SQL Injection:** Sequelize parameterized queries
-6. **HTTP Security:** Helmet headers, CORS validation
-7. **Rate Limiting:** (Future enhancement)
+### 5.2 Identity and authorization
 
----
+`requireAuth` verifies the bearer access token and attaches the verified subject to the request. Services/controllers use that user ID to scope most personal data. Public/social resources have additional privacy and membership rules that are implemented in their domain services.
 
-## 8. Future Enhancements & Scalability
+Frontend route protection improves navigation but must not be relied on to protect data. Backend authentication and per-resource authorization remain authoritative.
 
-### Frontend
-- [ ] Offline-first with service workers
-- [ ] Analytics integration
-- [ ] Advanced data visualization
-- [ ] Mobile app (React Native)
-- [ ] Internationalization (i18n)
-- [ ] Code splitting by route
+### 5.3 Security controls and review points
 
-### Backend
-- [ ] WebSocket support for real-time updates
-- [ ] Caching layer (Redis)
-- [ ] File upload handling
-- [ ] Email notifications
-- [ ] Background jobs (Bull/Agenda)
-- [ ] API rate limiting
-- [ ] GraphQL option
+Implemented controls include bcrypt password hashing, JWT verification, refresh-token hashing and rotation, Helmet, credentialed CORS restricted to a configured origin, Zod validation on many routes, encrypted Google Calendar token storage, and ORM parameterization.
 
-### Infrastructure
-- [ ] Docker containerization
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Load balancing
-- [ ] Database replication
-- [ ] CDN for static assets
-- [ ] Monitoring & logging (APM)
+Operational controls that should be assessed before public production deployment include request rate limiting and abuse controls, deployment-specific cookie settings and HTTPS, secret rotation, backup/restore procedures, and multi-instance job coordination. Avoid assuming that CORS or frontend route guards replace server-side authorization.
 
----
+## 6. Persistence and domain model
 
-## 9. Documentation References
+MySQL is accessed through a shared Sequelize instance configured with `utf8mb4`, underscored table/column naming, timestamps, and a connection pool. Schema evolution is migration-based; model definitions alone do not migrate a database.
 
-- **Database Design:** [docs/RoutineMate-MVP1-Database-Design.html](docs/RoutineMate-MVP1-Database-Design.html)
-- **API Integration Plan:** [docs/RoutineMate-Frontend-Backend-Integration-Plan.md](docs/RoutineMate-Frontend-Backend-Integration-Plan.md)
-- **Postman Collection:** [backend/postman/RoutineMate.postman_collection.json](backend/postman/RoutineMate.postman_collection.json)
-- **Postman Environment:** [backend/postman/RoutineMate.postman_environment.json](backend/postman/RoutineMate.postman_environment.json)
+### 6.1 Persisted domains
 
----
+Models currently cover:
 
-## 10. Summary of Architectural Strengths
+- **Identity:** users, preferences, refresh tokens, onboarding state.
+- **Habit tracking:** routines and habit logs.
+- **Progress:** goals, milestones, achievements, user achievement unlocks, and user XP.
+- **Reflection and communication:** journal entries and notifications.
+- **Social:** friendships, challenges, challenge check-ins, challenge reactions, and leaderboards derived from friend/challenge data.
+- **Sequencing:** routine bundles, ordered bundle items, and bundle check-ins.
+- **Focus:** focus sessions.
+- **Integrations:** Calendar connections and one-time OAuth states.
+- **Feedback and insights:** feedback items, votes, and weekly insight records.
+- **Billing records:** subscriptions and billing events.
 
-✅ **Type Safety:** Full TypeScript across frontend and backend
-✅ **Separation of Concerns:** Clean layering (UI → State → API → Services → Database)
-✅ **Scalability:** Feature-based organization allows independent scaling
-✅ **Security:** JWT tokens, password hashing, soft deletes, CORS
-✅ **Developer Experience:** Fast builds (Vite), hot reloading, comprehensive tooling
-✅ **Testability:** Jest setup with mocking capabilities on both sides
-✅ **Maintainability:** Clear patterns (ducks, services, middleware), consistent naming
-✅ **Code Quality:** ESLint, Prettier, Husky, TypeScript strict mode
-✅ **API Design:** Consistent response envelopes, meaningful error messages
-✅ **Token Strategy:** Secure refresh token rotation with silent failures
+The Sequelize association graph includes user-owned routines, logs, goals, preferences, refresh tokens, journal entries, notifications, social records, bundles, subscriptions, and related progress records. Cascading delete behavior is configured for a number of user-owned relationships; review the specific model and migration when changing retention or deletion semantics.
 
----
+### 6.2 Database operations
 
-**Last Updated:** 2026-08-23
-**Author:** Wishvanath Sah
+The Sequelize CLI configuration is in `backend/config/config.js`; models and migrations live under `backend/src/`. Migration history is tracked by Sequelize in the database. Seeders contain demo users, routines, logs, and later MVP sample data.
+
+The backend's `predev` and `prestart` scripts execute `backend/scripts/bootstrap.js`: apply pending migrations, check whether the users table contains data, seed if it appears empty, and then start the server. This is convenient for development but couples server startup to database migration and demo-seed behavior. Production deployment should use an explicit reviewed migration step and must avoid unintended demo data seeding.
+
+## 7. Integrations and scheduled work
+
+### 7.1 Google sign-in
+
+The frontend obtains a Google credential and submits it to `/api/auth/google`. The backend verifies token information against the configured sign-in `GOOGLE_CLIENT_ID`, creates or finds the local user, and issues RoutineMate's own token pair. This sign-in client ID is separate from the Calendar OAuth client ID.
+
+### 7.2 Google Calendar export
+
+Calendar sync is a user-triggered **one-way export**, not a two-way calendar integration:
+
+1. An authenticated user requests a Google connection URL; the backend validates the browser time zone and persists a short-lived OAuth nonce.
+2. The backend signs state and sends the browser to Google using the configured Calendar OAuth web client.
+3. The unauthenticated provider callback verifies signed state and consumes the matching nonce exactly once before exchanging the authorization code.
+4. Access and refresh tokens are encrypted before they are stored in `calendar_connections`.
+5. On **Sync now**, the service finds eligible active routines with time-based reminders, creates/updates RoutineMate-managed recurring events, and removes stale managed events.
+6. Expired access tokens are refreshed; disconnect attempts provider revocation and removes the saved connection.
+
+RoutineMate does not read unrelated Calendar events, import events, or sync in the background. Google Cloud configuration, the exact backend callback URI, encryption secret, and database migrations are required. Detailed steps are in the [Calendar setup guide](docs/Google-Calendar-Sync-Setup.md).
+
+### 7.3 Email and notification scheduler
+
+At backend startup, `startNotificationScheduler()` starts a 60-second `setInterval`. Each tick runs notification generation, weekly email delivery, and expired-challenge archiving. Weekly email uses Resend when `RESEND_API_KEY` and `EMAIL_FROM` are configured; otherwise mail delivery is skipped with a log warning.
+
+This scheduler runs inside each API process. It is appropriate for a single-instance development deployment, but multiple API replicas can execute duplicate sweeps. Production horizontal scaling should move scheduled work to a designated worker or distributed job/locking mechanism.
+
+### 7.4 Insights
+
+The current weekly insight service creates deterministic summaries and suggestions and persists them. It does not call an AI/LLM provider. The AI-related feature flag should not be interpreted as evidence that an external model integration exists.
+
+### 7.5 Billing
+
+Subscription records and API endpoints for status, checkout, portal, and webhooks exist. However, the current checkout/portal service returns local placeholder URLs when the Stripe secret is present; it does not create a real Stripe Checkout Session or Customer Portal session. Billing is therefore not a complete production payment integration.
+
+## 8. Configuration and runtime environments
+
+Configuration is split across:
+
+- Root `.env`: Vite-exposed variables such as `VITE_API_BASE_URL`, Google sign-in client ID, and declared `VITE_FEATURE_*` switches.
+- `backend/.env`: server port, MySQL, JWT secrets, CORS origin, optional Google Calendar, Resend, and Stripe values.
+
+Only variables prefixed with `VITE_` are intended to be exposed to the browser. Provider secrets, JWT signing secrets, and database credentials belong only in the backend environment and deployment secret store.
+
+Feature flags are declared in `src/config/featureFlags.ts` and default to false when not set to the exact string `true`. They are not yet applied uniformly across all feature routes and services; inspect each feature's usage before treating a flag as a complete security or rollout boundary.
+
+Useful defaults for local development are Vite at port `5173`, the API at port `4000`, and MySQL at port `3306`. Actual values are controlled by environment configuration. The API has a `/health` endpoint.
+
+## 9. Testing and quality architecture
+
+- Frontend: Jest with jsdom, React Testing Library, and `src/test/setupTests.ts`. Tests are co-located under feature `__tests__` directories. CSS modules are mocked, and Vite aliases are mapped for Jest.
+- Backend: Jest with the Node environment and ts-jest. Tests are primarily co-located under backend modules; Supertest is available for HTTP-level tests.
+- Static quality: TypeScript strict settings, ESLint, and Prettier are configured separately for root frontend and backend.
+- Database migrations and seeders are generally not exercised by unit tests; migration correctness should also be verified against a representative MySQL instance.
+
+There is no claim here of comprehensive browser end-to-end coverage, load testing, or production observability. Those should be established as separate release requirements if needed.
+
+## 10. Architectural assessment
+
+### Strengths
+
+- Clear frontend feature organization and backend route/controller/service/model separation.
+- Shared typed API client, response envelope, and refresh lifecycle reduce repeated transport/auth code.
+- Database schema changes are versioned and associations are explicit.
+- Sensitive refresh tokens are not persisted raw in the database; Calendar provider tokens are encrypted at rest.
+- Tests cover important domain logic and selected user-visible flows.
+- Offline behavior is constrained to an explicit retryable check-in queue rather than serving stale API data as if current.
+
+### Constraints and risks to manage
+
+- **State management is mixed:** some domains have Redux slices while newer screens use page-local state and direct API calls. Establish a consistent policy as cross-page data sharing grows.
+- **Single-process background jobs:** the scheduler can duplicate work when the API is scaled horizontally.
+- **Rollout switches are partial:** feature flags are not comprehensive route or backend gates.
+- **Offline scope is narrow:** only routine check-ins are queued; most screens require a working API.
+- **Provider integrations differ in completeness:** Calendar export is implemented but requires OAuth setup; billing endpoints are placeholders; insights are deterministic.
+- **Startup side effects:** dev/start bootstrap migrates and may seed data. Separate release migrations from application startup before production use.
+- **Operational hardening remains deployment-specific:** rate limiting, observability, backups, secret management, and high-availability job scheduling need explicit configuration/processes.
+- **Schema and service complexity are growing in a shared MySQL database:** maintain domain ownership, transaction boundaries, constraints, and migration review as features expand.
+
+These are implementation and deployment observations, not a claim that every item is currently a defect. Reassess them against the intended deployment scale and threat model.
+
+## 11. Recommended change workflow
+
+For a new domain feature:
+
+1. Define the persisted data and migration first; include ownership, uniqueness, deletion, and index behavior.
+2. Add or update Sequelize models/associations and domain service logic.
+3. Add Zod input validation, route authentication, controller mapping, and response/error behavior.
+4. Add a frontend feature API adapter and choose Redux state only when data needs to be shared or cached across screens.
+5. Add user-visible loading, empty, error, and retry states, plus accessibility labels.
+6. Test business rules and API boundaries; add UI tests for important interactions.
+7. Run migrations and tests against the intended database/runtime configuration; update this document and the README when architecture or setup changes.
+
+## 12. Related documentation
+
+- [Project README and local setup](README.md)
+- [Google Calendar Sync Setup](docs/Google-Calendar-Sync-Setup.md)
+- [Database design](docs/RoutineMate-MVP1-Database-Design.html)
+- [Frontend/backend integration plan](docs/RoutineMate-Frontend-Backend-Integration-Plan.md)
+- [MVP-2 scope](docs/RoutineMate-MVP2-Scope.md)
+- [MVP-3 scope](docs/RoutineMate-MVP3-Scope.md)

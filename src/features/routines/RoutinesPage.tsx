@@ -5,6 +5,7 @@ import { toastShown } from '@features/ui/ui.slice';
 import RoutineCard from './components/RoutineCard';
 import DeleteRoutineModal from './components/DeleteRoutineModal';
 import RoutineFormModal from './components/RoutineFormModal';
+import RoutineBundleModal from './components/RoutineBundleModal';
 import { selectAllRoutines, selectRoutinesStatus } from './routines.selectors';
 import {
   createRoutineThunk,
@@ -38,8 +39,6 @@ export default function RoutinesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [bundles, setBundles] = useState<RoutineBundle[]>([]);
   const [bundleModalOpen, setBundleModalOpen] = useState(false);
-  const [bundleTitle, setBundleTitle] = useState('');
-  const [bundleRoutineIds, setBundleRoutineIds] = useState<string[]>([]);
   const [bundleCreating, setBundleCreating] = useState(false);
   const [bundlePage, setBundlePage] = useState(1);
   const [bundleTotalPages, setBundleTotalPages] = useState(1);
@@ -70,34 +69,30 @@ export default function RoutinesPage() {
   };
   const openEditBundle = (bundle: RoutineBundle) => {
     setBundleEditing(bundle);
-    setBundleTitle(bundle.title);
-    setBundleRoutineIds(bundle.items.map((item) => item.routineId));
     setBundleModalOpen(true);
   };
-  const createBundle = async () => {
-    if (bundleRoutineIds.length < 1 || !bundleTitle.trim() || bundleCreating) return;
+  const closeBundleModal = () => {
+    if (bundleCreating) return;
+    setBundleModalOpen(false);
+    setBundleEditing(null);
+  };
+  const saveBundle = async (input: { title: string; routineIds: string[] }) => {
+    if (bundleCreating) return;
     setBundleCreating(true);
     try {
-      const payload = {
-        title: bundleTitle.trim(),
-        routineIds: bundleRoutineIds,
-      };
-      if (bundleEditing) await updateBundle(bundleEditing.id, payload);
-      else await createBundleRequest(payload);
+      if (bundleEditing) await updateBundle(bundleEditing.id, input);
+      else await createBundleRequest(input);
       const refreshed = await fetchBundles(bundlePage, 6);
       setBundles(refreshed.items);
       setBundleTotalPages(refreshed.meta.totalPages);
-      setBundleModalOpen(false);
-      setBundleTitle('');
-      setBundleRoutineIds([]);
       dispatch(
         toastShown(
           bundleEditing ? 'Bundle updated successfully 🎉' : 'Bundle created successfully 🎉',
         ),
       );
-      setBundleEditing(null);
     } catch (error) {
       dispatch(toastShown(extractApiErrorMessage(error, 'Failed to create bundle.')));
+      throw error;
     } finally {
       setBundleCreating(false);
     }
@@ -292,70 +287,14 @@ export default function RoutinesPage() {
         onClose={() => setRoutineToDelete(null)}
         onConfirm={handleDelete}
       />
-      <Modal
+      <RoutineBundleModal
         isOpen={bundleModalOpen}
-        title={bundleEditing ? 'Edit Routine Bundle' : 'Create Routine Bundle'}
-        onClose={() => setBundleModalOpen(false)}
-      >
-        <div className={styles.bundleForm}>
-          <label htmlFor="bundle-name">Bundle name</label>
-          <input
-            id="bundle-name"
-            required
-            aria-required="true"
-            placeholder="e.g. Evening Wind-down"
-            value={bundleTitle}
-            onChange={(e) => setBundleTitle(e.target.value)}
-          />
-          <div>
-            <strong>Habits, in order</strong>
-            <p className={styles.bundleHint}>Check habits in the order you want them to run.</p>
-          </div>
-          <div className={styles.bundleChoices}>
-            {routines
-              .filter((r) => r.status === 'active')
-              .map((routine) => (
-                <label key={routine.id}>
-                  <input
-                    type="checkbox"
-                    checked={bundleRoutineIds.includes(routine.id)}
-                    onChange={() =>
-                      setBundleRoutineIds((ids) =>
-                        ids.includes(routine.id)
-                          ? ids.filter((id) => id !== routine.id)
-                          : [...ids, routine.id],
-                      )
-                    }
-                  />{' '}
-                  {routine.emoji} {routine.name}
-                </label>
-              ))}
-          </div>
-          <div className={styles.bundleActions}>
-            <button
-              type="button"
-              onClick={() => setBundleModalOpen(false)}
-              disabled={bundleCreating}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={styles.sequenceButton}
-              disabled={bundleRoutineIds.length < 1 || !bundleTitle.trim() || bundleCreating}
-              onClick={() => void createBundle()}
-            >
-              {bundleCreating
-                ? bundleEditing
-                  ? 'Saving…'
-                  : 'Creating…'
-                : bundleEditing
-                  ? 'Save Changes'
-                  : 'Create Bundle'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+        routines={routines}
+        bundle={bundleEditing}
+        isSaving={bundleCreating}
+        onClose={closeBundleModal}
+        onSave={saveBundle}
+      />
       <Modal
         isOpen={bundleToDelete !== null}
         title="Delete bundle?"

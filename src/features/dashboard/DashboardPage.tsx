@@ -14,8 +14,11 @@ import {
   toggleCheckInThunk,
 } from '@features/routines/routines.thunks';
 import RoutineFormModal from '@features/routines/components/RoutineFormModal';
+import RoutineBundleModal from '@features/routines/components/RoutineBundleModal';
+import { createBundle } from '@features/routines/bundles.api';
 import type { CreateRoutineInput, Routine } from '@features/routines/routines.types';
 import { toastShown } from '@features/ui/ui.slice';
+import { extractApiErrorMessage } from '@api/apiError';
 import { selectFeaturedGoal, selectGoalsStatus } from '@features/goals/goals.selectors';
 import { fetchGoalsThunk } from '@features/goals/goals.thunks';
 import goalsStyles from '@features/goals/goals.module.scss';
@@ -58,6 +61,8 @@ export default function DashboardPage() {
   const todayJournalEntry = useAppSelector(selectTodayJournalEntry);
   const journalStatus = useAppSelector(selectJournalStatus);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [isBundleModalOpen, setBundleModalOpen] = useState(false);
+  const [bundleSaving, setBundleSaving] = useState(false);
   const [journalMood, setJournalMood] = useState<1 | 2 | 3 | 4 | 5>(4);
   const [journalNote, setJournalNote] = useState('');
   const [journalSaving, setJournalSaving] = useState(false);
@@ -131,6 +136,19 @@ export default function DashboardPage() {
       setModalOpen(false);
     } else {
       dispatch(toastShown(result.payload ?? 'Failed to create routine.'));
+    }
+  };
+
+  const handleCreateBundle = async (input: { title: string; routineIds: string[] }) => {
+    setBundleSaving(true);
+    try {
+      await createBundle(input);
+      dispatch(toastShown('Bundle created successfully 🎉'));
+    } catch (error) {
+      dispatch(toastShown(extractApiErrorMessage(error, 'Failed to create bundle.')));
+      throw error;
+    } finally {
+      setBundleSaving(false);
     }
   };
 
@@ -238,9 +256,13 @@ export default function DashboardPage() {
             <Link to="/friends" className={styles.widgetPromptButton}>
               Friends
             </Link>
-            <Link to="/routines/bundles/new" className={styles.widgetPromptButton}>
+            <button
+              type="button"
+              className={styles.widgetPromptButton}
+              onClick={() => setBundleModalOpen(true)}
+            >
               Bundle routines
-            </Link>
+            </button>
             <Link to="/focus-timer" className={styles.widgetPromptButton}>
               Focus timer
             </Link>
@@ -348,6 +370,13 @@ export default function DashboardPage() {
         editingRoutine={null}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreateRoutine}
+      />
+      <RoutineBundleModal
+        isOpen={isBundleModalOpen}
+        routines={routines}
+        isSaving={bundleSaving}
+        onClose={() => setBundleModalOpen(false)}
+        onSave={handleCreateBundle}
       />
     </div>
   );
