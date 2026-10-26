@@ -21,6 +21,7 @@ const journalSlice = createSlice({
     builder
       .addCase(fetchJournalEntriesThunk.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(fetchJournalEntriesThunk.fulfilled, (state, action) => {
         state.status = 'succeeded';

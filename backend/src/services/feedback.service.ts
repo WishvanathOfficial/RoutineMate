@@ -1,16 +1,47 @@
 import { FeedbackItem, FeedbackVote } from '../models';
 import { ApiError } from '../utils/ApiError';
-export async function list(status?: string) {
-  return FeedbackItem.findAll({
+
+function toDto(item: FeedbackItem, hasVoted: boolean) {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    votes: item.votes,
+    status: item.status,
+    createdAt: item.createdAt,
+    hasVoted,
+  };
+}
+
+export async function list(status?: 'planned' | 'in-progress' | 'shipped', userId?: string) {
+  const items = await FeedbackItem.findAll({
     where: status ? { status } : undefined,
     order: [
       ['votes', 'DESC'],
       ['createdAt', 'DESC'],
     ],
   });
+  const votedIds = userId
+    ? new Set(
+        (
+          await FeedbackVote.findAll({
+            where: { userId, feedbackId: items.map((item) => item.id) },
+            attributes: ['feedbackId'],
+          })
+        ).map((vote) => vote.feedbackId),
+      )
+    : new Set<string>();
+  return items.map((item) => toDto(item, votedIds.has(item.id)));
 }
 export async function create(userId: string, title: string, description: string) {
-  return FeedbackItem.create({ userId, title, description, votes: 0, status: 'planned' });
+  const item = await FeedbackItem.create({
+    userId,
+    title,
+    description,
+    votes: 0,
+    status: 'planned',
+  });
+  return toDto(item, false);
 }
 export async function vote(userId: string, id: string) {
   const item = await FeedbackItem.findByPk(id);
@@ -23,7 +54,7 @@ export async function vote(userId: string, id: string) {
     item.votes += 1;
     await item.save();
   }
-  return item;
+  return toDto(item, true);
 }
 export async function unvote(userId: string, id: string) {
   const item = await FeedbackItem.findByPk(id);
@@ -33,7 +64,7 @@ export async function unvote(userId: string, id: string) {
     item.votes = Math.max(0, item.votes - 1);
     await item.save();
   }
-  return item;
+  return toDto(item, false);
 }
 export async function setStatus(
   userId: string,
@@ -46,5 +77,5 @@ export async function setStatus(
   if (!item) throw ApiError.notFound('Feedback item not found');
   item.status = status;
   await item.save();
-  return item;
+  return toDto(item, false);
 }

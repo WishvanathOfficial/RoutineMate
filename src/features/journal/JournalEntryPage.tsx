@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { toastShown } from '@features/ui/ui.slice';
@@ -17,7 +17,9 @@ function formatFullDate(dateStr: string): string {
 }
 
 function isValidDateParam(date: string | undefined): date is string {
-  return !!date && /^\d{4}-\d{2}-\d{2}$/.test(date);
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 }
 
 // docs/RoutineMate-MVP2-Scope.md §4 site map: "/journal/:date — Single day
@@ -33,13 +35,23 @@ export default function JournalEntryPage() {
   const [mood, setMood] = useState<1 | 2 | 3 | 4 | 5>(4);
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const loadEntry = useCallback(async () => {
     if (!isValidDateParam(date)) return;
     setLoading(true);
-    dispatch(fetchJournalEntryByDateThunk(date)).finally(() => setLoading(false));
+    setLoadError(null);
+    const result = await dispatch(fetchJournalEntryByDateThunk(date));
+    if (fetchJournalEntryByDateThunk.rejected.match(result)) {
+      setLoadError(result.payload ?? 'Unable to load this journal entry.');
+    }
+    setLoading(false);
   }, [date, dispatch]);
+
+  useEffect(() => {
+    void loadEntry();
+  }, [loadEntry]);
 
   useEffect(() => {
     if (entry) {
@@ -88,6 +100,13 @@ export default function JournalEntryPage() {
 
       {loading ? (
         <p className={styles.emptyState}>Loading…</p>
+      ) : loadError ? (
+        <div className={styles.loadError} role="alert">
+          <span>{loadError}</span>
+          <button type="button" onClick={() => void loadEntry()}>
+            Try again
+          </button>
+        </div>
       ) : (
         <div className={styles.composeCard}>
           <p className={styles.composeLabel}>How did this day go?</p>
@@ -108,10 +127,14 @@ export default function JournalEntryPage() {
           <textarea
             className={styles.noteInput}
             rows={4}
+            maxLength={2000}
             placeholder="Write a quick reflection..."
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
+          <p className={styles.characterCount} aria-live="polite">
+            {note.length}/2000
+          </p>
           <button
             type="button"
             className={styles.saveButton}

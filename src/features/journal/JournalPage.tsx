@@ -5,6 +5,7 @@ import { toastShown } from '@features/ui/ui.slice';
 import { MOOD_OPTIONS, moodEmoji } from './journal.types';
 import {
   selectAllJournalEntries,
+  selectJournalError,
   selectJournalStatus,
   selectTodayJournalEntry,
 } from './journal.selectors';
@@ -44,6 +45,7 @@ export default function JournalPage() {
   const navigate = useNavigate();
   const entries = useAppSelector(selectAllJournalEntries);
   const status = useAppSelector(selectJournalStatus);
+  const loadError = useAppSelector(selectJournalError);
   const todayEntry = useAppSelector(selectTodayJournalEntry);
 
   const [mood, setMood] = useState<1 | 2 | 3 | 4 | 5>(4);
@@ -117,14 +119,27 @@ export default function JournalPage() {
         <textarea
           className={styles.noteInput}
           rows={3}
+          maxLength={2000}
           placeholder="Write a quick reflection..."
           value={note}
           onChange={(e) => setNote(e.target.value)}
         />
+        <p className={styles.characterCount} aria-live="polite">
+          {note.length}/2000
+        </p>
         <button type="button" className={styles.saveButton} onClick={handleSave} disabled={saving}>
           {todayEntry ? 'Update Entry' : 'Save Entry'}
         </button>
       </div>
+
+      {status === 'failed' && (
+        <div className={styles.loadError} role="alert">
+          <span>{loadError ?? 'Unable to load your journal entries.'}</span>
+          <button type="button" onClick={() => void dispatch(fetchJournalEntriesThunk())}>
+            Try again
+          </button>
+        </div>
+      )}
 
       {status === 'loading' && entries.length === 0 ? (
         <p className={styles.emptyState}>Loading entries…</p>
@@ -168,6 +183,13 @@ export default function JournalPage() {
                   type="button"
                   className={`${styles.calendarDay} ${inMonth ? '' : styles.calendarDayOutside} ${isToday ? styles.calendarDayToday : ''}`}
                   onClick={() => navigate(`/journal/${dateStr}`)}
+                  aria-label={`${day.toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}${entry ? `, mood: ${MOOD_OPTIONS.find((option) => option.value === entry.mood)?.label ?? 'logged'}` : ', no entry'}`}
+                  aria-current={isToday ? 'date' : undefined}
                 >
                   <span className={styles.calendarDayNumber}>{day.getDate()}</span>
                   {entry && <span className={styles.calendarDayMood}>{moodEmoji(entry.mood)}</span>}

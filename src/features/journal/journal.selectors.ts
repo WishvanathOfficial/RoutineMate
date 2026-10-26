@@ -3,6 +3,8 @@ import type { RootState } from '@app/store';
 
 export const selectJournalStatus = (state: RootState) => state.journal.status;
 
+export const selectJournalError = (state: RootState) => state.journal.error;
+
 export const selectAllJournalEntries = (state: RootState) => state.journal.items;
 
 function todayIso(): string {

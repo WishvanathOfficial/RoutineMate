@@ -81,6 +81,35 @@
   resize: vertical;
 }
 
+.characterCount {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.loadError {
+  align-items: center;
+  background: v.$color-rose-50;
+  border: 1px solid v.$color-rose-400;
+  border-radius: v.$radius-md;
+  color: v.$color-rose-500;
+  display: flex;
+  font-size: 14px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  gap: 12px;
+
+  button {
+    @include m.button-reset;
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+}
+
 .saveButton {
   @include m.button-reset;
   margin-top: 12px;

@@ -1,0 +1,449 @@
+@use '@styles/variables' as v;
+@use '@styles/mixins' as m;
+
+.page {
+  max-width: 1040px;
+}
+
+.header,
+.listHeader,
+.formFooter {
+  @include m.flex-between;
+  gap: 16px;
+}
+
+.header {
+  align-items: flex-start;
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  p,
+  .formCard > div > p,
+  .listHeader > div > p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+}
+
+.roadmapLink {
+  @include m.button-reset;
+  align-items: center;
+  color: v.$color-brand-600;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 8px;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.modalBackdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.roadmapModal {
+  @include m.card;
+  display: flex;
+  flex-direction: column;
+  max-height: min(82vh, 860px);
+  max-width: 760px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.modalHeader {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-shrink: 0;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 22px 24px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+}
+
+.modalCloseButton {
+  @include m.button-reset;
+  align-items: center;
+  border-radius: v.$radius-full;
+  color: var(--text-secondary);
+  display: inline-flex;
+  flex: 0 0 36px;
+  height: 36px;
+  justify-content: center;
+
+  &:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+}
+
+.modalContent {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px 24px;
+}
+
+.formCard {
+  @include m.card;
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 24px;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  > div > p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+
+  > span {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  input,
+  textarea {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color-strong);
+    border-radius: v.$radius-md;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    width: 100%;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  small {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: right;
+  }
+}
+
+.formFooter {
+  border-top: 1px solid var(--border-color);
+  padding-top: 14px;
+
+  p {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+}
+
+.primaryButton,
+.errorState button {
+  @include m.button-reset;
+  background: v.$color-brand-600;
+  border-radius: v.$radius-md;
+  color: v.$color-white;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+
+  &:hover:not(:disabled) {
+    background: v.$color-brand-700;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+}
+
+.actionError,
+.errorState {
+  background: v.$color-rose-50;
+  border: 1px solid v.$color-rose-400;
+  border-radius: v.$radius-md;
+  color: v.$color-rose-500;
+  font-size: 13px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+}
+
+.errorState {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+
+  button {
+    white-space: nowrap;
+  }
+}
+
+.listSection {
+  margin-top: 28px;
+}
+
+.listHeader {
+  margin-bottom: 16px;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+
+  select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color-strong);
+    border-radius: v.$radius-md;
+    color: var(--text-primary);
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+
+.searchField {
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-strong);
+  border-radius: v.$radius-md;
+  color: var(--text-muted);
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 0 12px;
+
+  input {
+    background: transparent;
+    border: 0;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+    padding: 10px 0;
+    width: 100%;
+  }
+}
+
+.ideaList {
+  display: grid;
+  gap: 12px;
+}
+
+.ideaCard {
+  @include m.card;
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  padding: 18px;
+}
+
+.voteButton {
+  @include m.button-reset;
+  align-items: center;
+  border: 1px solid var(--border-color-strong);
+  border-radius: v.$radius-md;
+  color: var(--text-secondary);
+  display: flex;
+  flex: 0 0 58px;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 4px;
+
+  i {
+    color: v.$color-brand-600;
+    font-size: 16px;
+  }
+
+  span {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  small {
+    font-size: 10px;
+  }
+
+  &:hover:not(:disabled),
+  &.voteButtonActive {
+    background: v.$color-brand-50;
+    border-color: v.$color-brand-400;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+}
+
+.ideaContent {
+  min-width: 0;
+  width: 100%;
+
+  > p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 7px 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  > small {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+}
+
+.ideaTitleRow {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+}
+
+.statusBadge {
+  border-radius: v.$radius-full;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 650;
+  padding: 4px 9px;
+}
+
+.status_planned {
+  background: v.$color-amber-50;
+  color: v.$color-amber-500;
+}
+
+.status_in_progress {
+  background: v.$color-brand-50;
+  color: v.$color-brand-600;
+}
+
+.status_shipped {
+  background: v.$color-success-50;
+  color: v.$color-success-600;
+}
+
+.stateMessage {
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 36px 16px;
+  text-align: center;
+}
+
+.visuallyHidden {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  position: absolute;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  width: 1px;
+}
+
+@media (max-width: 640px) {
+  .header,
+  .listHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .roadmapLink {
+    font-size: 12px;
+  }
+
+  .modalBackdrop {
+    padding: 12px;
+  }
+
+  .roadmapModal {
+    max-height: 90vh;
+  }
+
+  .modalHeader {
+    padding: 18px;
+  }
+
+  .modalContent {
+    padding: 16px 18px 18px;
+  }
+
+  .formCard {
+    padding: 18px;
+  }
+
+  .formFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .controls {
+    width: 100%;
+
+    label,
+    select {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+    }
+  }
+
+  .ideaCard {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+  }
+}
