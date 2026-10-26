@@ -4,6 +4,7 @@ import { themeToggled } from '@features/ui/ui.slice';
 import { selectCurrentUser } from '@features/auth/auth.selectors';
 import NotificationPanel from '@components/NotificationPanel/NotificationPanel';
 import OnlineStatusBadge from '@components/OnlineStatusBadge/OnlineStatusBadge';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Topbar.module.scss';
 
 interface TopbarProps {
@@ -14,6 +15,7 @@ export default function Topbar({ title }: TopbarProps) {
   const dispatch = useAppDispatch();
   const theme = useAppSelector(selectTheme);
   const user = useAppSelector(selectCurrentUser);
+  const { t } = useTranslation();
 
   const initials = user?.name
     .split(' ')
@@ -30,7 +32,7 @@ export default function Topbar({ title }: TopbarProps) {
         <button
           type="button"
           className={styles.iconButton}
-          aria-label="Toggle theme"
+          aria-label={t('Toggle theme')}
           onClick={() => dispatch(themeToggled())}
         >
           <i

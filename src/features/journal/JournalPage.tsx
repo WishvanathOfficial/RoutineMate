@@ -11,6 +11,7 @@ import {
 } from './journal.selectors';
 import { createJournalEntryThunk, fetchJournalEntriesThunk } from './journal.thunks';
 import styles from './journal.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -43,6 +44,7 @@ function buildMonthGrid(monthAnchor: Date): Date[] {
 export default function JournalPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const entries = useAppSelector(selectAllJournalEntries);
   const status = useAppSelector(selectJournalStatus);
   const loadError = useAppSelector(selectJournalError);
@@ -96,7 +98,7 @@ export default function JournalPage() {
   return (
     <div>
       <div className={styles.pageHeader}>
-        <h2>Journal</h2>
+        <h2>{t('Journal')}</h2>
         <p>A short daily reflection, separate from your habit check-ins.</p>
       </div>
 

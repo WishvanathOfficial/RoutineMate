@@ -9,6 +9,7 @@ import Modal from '@components/Modal/Modal';
 import { deleteGoal } from './goals.api';
 import type { Goal } from './goals.types';
 import styles from './goals.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 function formatTargetDate(dateStr: string): string {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-US', {
@@ -27,6 +28,7 @@ function daysLeft(dateStr: string): number {
 
 export default function GoalsPage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const goals = useAppSelector(selectAllGoals);
   const status = useAppSelector(selectGoalsStatus);
   const routines = useAppSelector(selectAllRoutines);
@@ -76,7 +78,7 @@ export default function GoalsPage() {
     <div>
       <div className={styles.pageHeader}>
         <div>
-          <h2>Goals</h2>
+          <h2>{t('Goals')}</h2>
           <p>Long-term targets linked to your daily routines.</p>
         </div>
         <button type="button" className={styles.newGoalButton} onClick={() => setNewGoalOpen(true)}>

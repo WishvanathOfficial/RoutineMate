@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '@components/Sidebar/Sidebar';
 import Topbar from '@components/Topbar/Topbar';
 import Toast from '@components/Toast/Toast';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './AppLayout.module.scss';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -25,7 +26,8 @@ function resolveTitle(pathname: string): string {
 
 export default function AppLayout() {
   const location = useLocation();
-  const title = resolveTitle(location.pathname);
+  const { t } = useTranslation();
+  const title = t(resolveTitle(location.pathname));
 
   return (
     <div className={styles.shell}>

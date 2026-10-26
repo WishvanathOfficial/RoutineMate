@@ -6,6 +6,12 @@ import { Provider } from 'react-redux';
 import * as profileApi from '../profile.api';
 import profileReducer from '../profile.slice';
 import LanguageSettingsPage from '../LanguageSettingsPage';
+import { useTranslation } from '../../../i18n/useTranslation';
+
+function GlobalLanguagePreview() {
+  const { t } = useTranslation();
+  return <p>{t('Dashboard')}</p>;
+}
 
 describe('LanguageSettingsPage', () => {
   beforeEach(() => {
@@ -30,18 +36,20 @@ describe('LanguageSettingsPage', () => {
 
     render(
       <Provider store={store}>
+        <GlobalLanguagePreview />
         <LanguageSettingsPage />
       </Provider>,
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Language')).toHaveValue('es');
+      expect(screen.getByLabelText('Idioma')).toHaveValue('es');
     });
+    expect(screen.getByText('Panel')).toBeInTheDocument();
     const unitSelect = screen.getByLabelText('Unidades');
     expect(unitSelect).toHaveValue('imperial');
-    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'hi' } });
+    fireEvent.change(screen.getByLabelText('Idioma'), { target: { value: 'hi' } });
     fireEvent.change(unitSelect, { target: { value: 'metric' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar preferencias' }));
 
     await waitFor(() => {
       expect(profileApi.updatePreferences).toHaveBeenCalledWith({
@@ -52,6 +60,7 @@ describe('LanguageSettingsPage', () => {
         units: 'metric',
       });
     });
+    expect(await screen.findByText('डैशबोर्ड')).toBeInTheDocument();
     expect(await screen.findByRole('status')).toHaveTextContent('प्राथमिकताएँ सहेजी गईं');
   });
 });

@@ -44,9 +44,11 @@ import Pagination from '@components/Pagination/Pagination';
 import { fetchGreetingThunk } from './dashboard.thunks';
 import { selectGreeting } from './dashboard.selectors';
 import styles from './dashboard.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const user = useAppSelector(selectCurrentUser);
   const greeting = useAppSelector(selectGreeting);
   const routines = useAppSelector(selectActiveRoutines);
@@ -156,15 +158,19 @@ export default function DashboardPage() {
     <div>
       <div className={styles.header}>
         {/* Backend returns the user's full name; always show just the first word. */}
-        <h2>Good morning, {(greeting?.name ?? user?.name)?.split(' ')[0] ?? 'there'} 👋</h2>
-        <p>{greeting?.quote ?? 'Small steps every day lead to big change.'}</p>
+        <h2>
+          {t('Good morning, {name} 👋', {
+            name: (greeting?.name ?? user?.name)?.split(' ')[0] ?? 'there',
+          })}
+        </h2>
+        <p>{greeting?.quote ?? t('Small steps every day lead to big change.')}</p>
       </div>
 
       <div className={styles.grid}>
         <div className={styles.card}>
           <div className={styles.listHeader}>
-            <h3>Today&apos;s Routines</h3>
-            <Link to="/routines">View all →</Link>
+            <h3>{t("Today's Routines")}</h3>
+            <Link to="/routines">{t('View all')} →</Link>
           </div>
           <div className={styles.habitList}>
             {routines
@@ -205,18 +211,20 @@ export default function DashboardPage() {
         </div>
 
         <div className={styles.progressCard}>
-          <h3 style={{ alignSelf: 'flex-start', marginBottom: 16 }}>Today&apos;s Progress</h3>
+          <h3 style={{ alignSelf: 'flex-start', marginBottom: 16 }}>{t("Today's Progress")}</h3>
           <ProgressRing percentage={progress.percentage} />
           <p className={styles.metaText} style={{ fontSize: 14, marginTop: 16 }}>
             {progress.done} of {progress.total} done
           </p>
           <div className={styles.statsRow}>
             <div className={styles.statBox}>
-              <p>Best streak</p>
-              <p>{bestStreak} days</p>
+              <p>{t('Best streak')}</p>
+              <p>
+                {bestStreak} {t('days')}
+              </p>
             </div>
             <div className={`${styles.statBox} ${styles.brand}`}>
-              <p>Active routines</p>
+              <p>{t('Active routines')}</p>
               <p>{routines.length}</p>
             </div>
           </div>
@@ -225,9 +233,9 @@ export default function DashboardPage() {
 
       <div className={styles.ctaCard}>
         <div>
-          <h3 style={{ marginBottom: 4 }}>Want to build a new habit?</h3>
+          <h3 style={{ marginBottom: 4 }}>{t('Want to build a new habit?')}</h3>
           <p className={styles.metaText} style={{ fontSize: 14 }}>
-            Add a routine and start your streak today.
+            {t('Add a routine and start your streak today.')}
           </p>
         </div>
         <button
@@ -235,7 +243,7 @@ export default function DashboardPage() {
           className={styles.newRoutineButton}
           onClick={() => setModalOpen(true)}
         >
-          <i className="fa-solid fa-plus" aria-hidden="true" /> New Routine
+          <i className="fa-solid fa-plus" aria-hidden="true" /> {t('New Routine')}
         </button>
       </div>
 
@@ -246,11 +254,11 @@ export default function DashboardPage() {
         <div className={styles.widgetCard}>
           <div className={styles.widgetHeader}>
             <h3>
-              <i className="fa-solid fa-compass" style={{ color: '#4f46e5' }} /> Keep growing
+              <i className="fa-solid fa-compass" style={{ color: '#4f46e5' }} /> {t('Keep growing')}
             </h3>
           </div>
           <p className={styles.widgetEmptyText}>
-            Build momentum with friends, bundles, and focused sessions.
+            {t('Build momentum with friends, bundles, and focused sessions.')}
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
             <Link to="/friends" className={styles.widgetPromptButton}>
@@ -261,7 +269,7 @@ export default function DashboardPage() {
               className={styles.widgetPromptButton}
               onClick={() => setBundleModalOpen(true)}
             >
-              Bundle routines
+              {t('Bundle routines')}
             </button>
             <Link to="/focus-timer" className={styles.widgetPromptButton}>
               Focus timer
@@ -271,9 +279,9 @@ export default function DashboardPage() {
         <div className={styles.widgetCard}>
           <div className={styles.widgetHeader}>
             <h3>
-              <i className="fa-solid fa-bullseye" style={{ color: '#4f46e5' }} /> Goals
+              <i className="fa-solid fa-bullseye" style={{ color: '#4f46e5' }} /> {t('Goals')}
             </h3>
-            <Link to="/goals">View all →</Link>
+            <Link to="/goals">{t('View all')} →</Link>
           </div>
           {featuredGoal ? (
             <>
@@ -287,12 +295,12 @@ export default function DashboardPage() {
                 />
               </div>
               <p className={styles.metaText} style={{ fontSize: 12, marginTop: 4 }}>
-                {featuredGoal.progress}% there
+                {featuredGoal.progress}% {t('there')}
               </p>
             </>
           ) : (
             <p className={styles.widgetEmptyText}>
-              No active goals yet — set a long-term target linked to your habits.
+              {t('No active goals yet — set a long-term target linked to your habits.')}
             </p>
           )}
         </div>
@@ -300,9 +308,10 @@ export default function DashboardPage() {
         <div className={styles.widgetCard}>
           <div className={styles.widgetHeader}>
             <h3>
-              <i className="fa-solid fa-trophy" style={{ color: '#f59e0b' }} /> Recent Achievement
+              <i className="fa-solid fa-trophy" style={{ color: '#f59e0b' }} />{' '}
+              {t('Recent Achievement')}
             </h3>
-            <Link to="/achievements">View all →</Link>
+            <Link to="/achievements">{t('View all')} →</Link>
           </div>
           {recentAchievement ? (
             <div className={styles.widgetBadgeRow}>
@@ -313,23 +322,26 @@ export default function DashboardPage() {
                 </p>
                 <p className={styles.metaText} style={{ fontSize: 12 }}>
                   {recentAchievement.unlockedAt
-                    ? `Unlocked ${formatUnlockedDate(recentAchievement.unlockedAt)}`
-                    : 'Unlocked'}
-                  {xp ? ` · Level ${xp.level} · ${xp.totalPoints} XP` : ''}
+                    ? `${t('Unlocked')} ${formatUnlockedDate(recentAchievement.unlockedAt)}`
+                    : t('Unlocked')}
+                  {xp ? ` · ${t('Level')} ${xp.level} · ${xp.totalPoints} XP` : ''}
                 </p>
               </div>
             </div>
           ) : (
-            <p className={styles.widgetEmptyText}>Complete habits to start earning badges.</p>
+            <p className={styles.widgetEmptyText}>
+              {t('Complete habits to start earning badges.')}
+            </p>
           )}
         </div>
 
         <div className={styles.widgetCard}>
           <div className={styles.widgetHeader}>
             <h3>
-              <i className="fa-solid fa-book-open" style={{ color: '#059669' }} /> Quick Journal
+              <i className="fa-solid fa-book-open" style={{ color: '#059669' }} />{' '}
+              {t('Quick Journal')}
             </h3>
-            <Link to="/journal">Open →</Link>
+            <Link to="/journal">{t('Open')} →</Link>
           </div>
           <div className={journalStyles.moodPicker} style={{ marginBottom: 12 }}>
             {MOOD_OPTIONS.map((option) => (

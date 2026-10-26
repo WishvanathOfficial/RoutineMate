@@ -59,9 +59,9 @@ No public `/roadmap`, authenticated `/feedback`, suggestion moderation/status wo
 
 Pricing copy exists, but there is no Subscription model, Stripe customer/checkout/portal integration, webhook signature verification, entitlement middleware, invoice history, or upgrade/downgrade/cancel flow. Keep tracking, streaks, and basic stats free as promised; gate only explicitly selected growth features.
 
-### 9. Localization — **Not implemented**
+### 9. Localization — **Partially implemented**
 
-Strings are embedded in React components and backend messages. Missing i18n catalog/loader, language preference persistence, translated validation/errors, locale-aware date/time and first-day-of-week formatting, and metric/imperial handling.
+The profile preference is loaded for authenticated sessions and persisted through the existing profile API. A shared frontend translation helper now applies English, Hindi, and Spanish to the app shell, language settings, and selected high-traffic page headings/content; the document `lang` attribute and calendar date formatting follow the selected locale. Coverage is not yet complete: many page components, dialogs, validation/API errors, backend messages, and exported reports still contain English-only strings. First-day-of-week and metric/imperial display behavior also remain outstanding.
 
 ### 10. MVP2 operational hardening — **Baseline complete; verify in deployment**
 
@@ -82,7 +82,7 @@ The prototype demonstrates the intended information architecture: Challenges and
 7. **Focus timer + calendar sync:** sessions first, then provider OAuth, encrypted token lifecycle, event sync and conflicts.
 8. **AI insights:** weekly batch job, provider abstraction, deterministic fallback, moderation/safety, cost budget, and engagement telemetry.
 9. **Feedback + public roadmap:** public read model, authenticated submissions/votes, moderation workflow, and community links.
-10. **Localization completion:** translate supported locales, date/time/unit formatting, language settings route, and visual QA.
+10. **Localization completion:** extract and translate remaining user-facing strings, localize validation/errors and exported reports, complete date/time/unit formatting, and run visual QA across supported locales.
 
 ## Suggested route and data-model checklist
 

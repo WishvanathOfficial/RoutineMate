@@ -26,9 +26,11 @@ import {
 import { extractApiErrorMessage } from '@api/apiError';
 import Modal from '@components/Modal/Modal';
 import Pagination from '@components/Pagination/Pagination';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export default function RoutinesPage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const routines = useAppSelector(selectAllRoutines);
   const status = useAppSelector(selectRoutinesStatus);
 
@@ -173,7 +175,7 @@ export default function RoutinesPage() {
     <div>
       <div className={styles.pageHeader}>
         <div>
-          <h2>My Routines</h2>
+          <h2>{t('My Routines')}</h2>
           <p>Manage all your habits in one place.</p>
         </div>
         <div className={styles.headerActions}>

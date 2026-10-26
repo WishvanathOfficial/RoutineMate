@@ -8,6 +8,7 @@ import { fetchRoutinesThunk } from './routines.thunks';
 import { selectActiveRoutines, selectRoutinesStatus } from './routines.selectors';
 import type { Routine } from './routines.types';
 import styles from './focusTimer.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 type SessionStatus = 'running' | 'paused' | 'completed' | 'cancelled';
 
@@ -63,6 +64,7 @@ function formatCompletedAt(value: string | null): string {
 
 export default function FocusTimerPage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const routines = useAppSelector(selectActiveRoutines);
   const routinesStatus = useAppSelector(selectRoutinesStatus);
   const [routineId, setRoutineId] = useState('');
@@ -165,7 +167,7 @@ export default function FocusTimerPage() {
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>MAKE SPACE FOR WHAT MATTERS</p>
-          <h2>Focus Timer</h2>
+          <h2>{t('Focus Timer')}</h2>
           <p>Give one routine your attention. Your session is saved to your focus history.</p>
         </div>
         <Link className={styles.backLink} to="/dashboard">

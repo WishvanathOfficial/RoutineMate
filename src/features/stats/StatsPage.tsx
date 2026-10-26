@@ -10,6 +10,7 @@ import { buildStatsCsv, downloadTextFile, exportStatsAsPdf } from './stats.expor
 import styles from './stats.module.scss';
 import { httpClient } from '@api/httpClient';
 import { unwrap } from '@api/apiResponse';
+import { useTranslation } from '../../i18n/useTranslation';
 
 // Shared muted axis/legend color that stays legible on both the light card
 // background and the dark-mode slate-800 card background.
@@ -57,6 +58,7 @@ const SUMMARY_CARDS: SummaryCard[] = [
 
 export default function StatsPage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const summary = useAppSelector(selectStatsSummary);
   const status = useAppSelector(selectStatsStatus);
   const routines = useAppSelector(selectAllRoutines);
@@ -139,7 +141,7 @@ export default function StatsPage() {
     <div>
       <div className={styles.header}>
         <div>
-          <h2>Stats &amp; Insights</h2>
+          <h2>{t('Stats & Insights')}</h2>
           <p>Visualize your progress and activity across every routine.</p>
         </div>
         <div className={styles.headerActions}>

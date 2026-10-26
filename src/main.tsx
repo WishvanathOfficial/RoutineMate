@@ -6,6 +6,7 @@ import { store } from '@app/store';
 import { router } from '@app/router';
 import ThemeSync from '@app/ThemeSync';
 import AuthSessionBridge from '@app/AuthSessionBridge';
+import LocaleSync from '@app/LocaleSync';
 import OfflineSyncBridge from '@app/OfflineSyncBridge';
 // Side-effect import only — registers the `beforeinstallprompt` capture as
 // early as possible, since the browser only fires that event once per page
@@ -34,6 +35,7 @@ ReactDOM.createRoot(rootElement).render(
     <Provider store={store}>
       <ThemeSync />
       <AuthSessionBridge />
+      <LocaleSync />
       <OfflineSyncBridge />
       <RouterProvider router={router} />
     </Provider>

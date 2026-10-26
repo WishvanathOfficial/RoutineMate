@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectSidebarCollapsed } from '@features/ui/ui.selectors';
 import { sidebarToggled } from '@features/ui/ui.slice';
 import { logoutUser } from '@features/auth/auth.thunks';
+import { useTranslation } from '../../i18n/useTranslation';
 import logoIcon from '@assets/logo-icon.svg';
 import styles from './Sidebar.module.scss';
 
@@ -30,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
 export default function Sidebar() {
   const dispatch = useAppDispatch();
   const collapsed = useAppSelector(selectSidebarCollapsed);
+  const { t } = useTranslation();
 
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
@@ -48,8 +50,8 @@ export default function Sidebar() {
             <span className={styles.icon}>
               <i className={item.icon} aria-hidden="true" />
             </span>
-            <span className={styles.label}>{item.label}</span>
-            <span className={styles.tooltip}>{item.label}</span>
+            <span className={styles.label}>{t(item.label)}</span>
+            <span className={styles.tooltip}>{t(item.label)}</span>
           </NavLink>
         ))}
       </nav>
@@ -59,8 +61,8 @@ export default function Sidebar() {
           <span className={styles.icon}>
             <i className="fa-solid fa-comment-dots" aria-hidden="true" />
           </span>
-          <span className={styles.label}>Feedback</span>
-          <span className={styles.tooltip}>Feedback</span>
+          <span className={styles.label}>{t('Feedback')}</span>
+          <span className={styles.tooltip}>{t('Feedback')}</span>
         </NavLink>
         <button
           type="button"
@@ -73,15 +75,15 @@ export default function Sidebar() {
               aria-hidden="true"
             />
           </span>
-          <span className={styles.label}>Collapse</span>
-          <span className={styles.tooltip}>{collapsed ? 'Expand' : 'Collapse'}</span>
+          <span className={styles.label}>{t('Collapse')}</span>
+          <span className={styles.tooltip}>{t(collapsed ? 'Expand' : 'Collapse')}</span>
         </button>
         <NavLink to="/" onClick={() => dispatch(logoutUser())} className={styles.logoutLink}>
           <span className={styles.icon}>
             <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true" />
           </span>
-          <span className={styles.label}>Log Out</span>
-          <span className={styles.tooltip}>Log Out</span>
+          <span className={styles.label}>{t('Log Out')}</span>
+          <span className={styles.tooltip}>{t('Log Out')}</span>
         </NavLink>
       </div>
     </aside>

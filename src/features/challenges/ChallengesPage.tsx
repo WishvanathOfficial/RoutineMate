@@ -6,6 +6,7 @@ import { featureFlags } from '../../config/featureFlags';
 import { toastShown } from '@features/ui/ui.slice';
 import { extractApiErrorMessage } from '@api/apiError';
 import styles from './challenges.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 import Modal from '@components/Modal/Modal';
 import Button from '@components/Button/Button';
 import {
@@ -19,6 +20,7 @@ import {
 } from './challenges.api';
 
 export default function ChallengesPage() {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const currentUser = useAppSelector(selectCurrentUser);
   const [tab, setTab] = useState<'discover' | 'mine'>('discover');
@@ -197,7 +199,7 @@ export default function ChallengesPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h2>Challenges</h2>
+          <h2>{t('Challenges')}</h2>
           <p>Build consistency together with friends.</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>

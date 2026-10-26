@@ -6,6 +6,7 @@ import { extractApiErrorMessage } from '@api/apiError';
 import Button from '@components/Button/Button';
 import Modal from '@components/Modal/Modal';
 import styles from './friends.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 import {
   getFriendships,
   getFriendsLeaderboard,
@@ -20,6 +21,7 @@ import type { FriendsSearchResult } from './friends.api';
 
 export default function FriendsPage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const currentUser = useAppSelector(selectCurrentUser);
   const [tab, setTab] = useState<'friends' | 'leaderboard'>('friends');
   const [friendships, setFriendships] = useState<Friendship[]>([]);
@@ -148,7 +150,7 @@ export default function FriendsPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
-          <h1>Friends</h1>
+          <h1>{t('Friends')}</h1>
           <p>Add people and keep each other consistent.</p>
         </div>
         <form className={styles.searchForm} onSubmit={handleSearch}>

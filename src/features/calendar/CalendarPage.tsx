@@ -14,6 +14,8 @@ import {
 } from './calendar.api';
 import type { CalendarConnection } from './calendar.types';
 import styles from './calendar.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
+import type { Locale } from '../../i18n/catalog';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -28,9 +30,9 @@ function shiftMonth(month: string, offset: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function formatDate(month: string, day: number): string {
+function formatDate(month: string, day: number, locale: Locale): string {
   const [year, monthNumber] = month.split('-').map(Number);
-  return new Date(year, monthNumber - 1, day).toLocaleDateString(undefined, {
+  return new Date(year, monthNumber - 1, day).toLocaleDateString(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -40,6 +42,7 @@ function formatDate(month: string, day: number): string {
 
 export default function CalendarPage() {
   const dispatch = useAppDispatch();
+  const { t, locale } = useTranslation();
   const month = useAppSelector(selectCalendarMonth);
   const status = useAppSelector(selectCalendarStatus);
   const calendarError = useAppSelector(selectCalendarError);
@@ -146,7 +149,7 @@ export default function CalendarPage() {
   if (!month && status === 'loading') {
     return (
       <p className={styles.pageState} role="status">
-        Loading calendar…
+        {t('Loading calendar…')}
       </p>
     );
   }
@@ -154,9 +157,9 @@ export default function CalendarPage() {
   if (!month && status === 'failed') {
     return (
       <div className={styles.pageError} role="alert">
-        <p>{calendarError ?? 'Unable to load calendar.'}</p>
+        <p>{calendarError ?? t('Unable to load calendar.')}</p>
         <button type="button" onClick={() => dispatch(fetchCalendarThunk(requestedMonth))}>
-          Try again
+          {t('Try again')}
         </button>
       </div>
     );
@@ -170,8 +173,8 @@ export default function CalendarPage() {
     <div>
       <div className={styles.header}>
         <div>
-          <h2>Calendar</h2>
-          <p>Review your routine check-ins and calendar connections.</p>
+          <h2>{t('Calendar')}</h2>
+          <p>{t('Review your routine check-ins and calendar connections.')}</p>
         </div>
         <div className={styles.monthControls} aria-label="Calendar month navigation">
           <button
@@ -333,7 +336,7 @@ export default function CalendarPage() {
               className={`${styles.day} ${styles[day.status]} ${
                 day.date === month.today ? styles.today : ''
               } ${selectedDay === day.date ? styles.selectedDay : ''}`}
-              aria-label={`${formatDate(month.month, day.date)}: ${day.completed} of ${day.total} routines completed`}
+              aria-label={`${formatDate(month.month, day.date, locale)}: ${day.completed} of ${day.total} routines completed`}
               aria-pressed={selectedDay === day.date}
               onClick={() => setSelectedDay((current) => (current === day.date ? null : day.date))}
             >
@@ -349,7 +352,7 @@ export default function CalendarPage() {
 
         {selectedDayData && (
           <div className={styles.dayDetail} role="status">
-            <strong>{formatDate(month.month, selectedDayData.date)}</strong>
+            <strong>{formatDate(month.month, selectedDayData.date, locale)}</strong>
             {selectedDayData.total === 0 ? (
               <span>No routine check-ins recorded.</span>
             ) : (

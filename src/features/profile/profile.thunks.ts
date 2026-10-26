@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { extractApiErrorMessage } from '@api/apiError';
+import type { RootState } from '@app/store';
 import {
   deleteAccount,
   fetchProfile,
@@ -11,7 +12,11 @@ import type { AccountUpdateInput, ProfilePreferences } from './profile.types';
 
 /** Dispatched on ProfilePage mount — see auth.slice.ts for how the returned
  * user also refreshes the authoritative auth state. */
-export const fetchProfileThunk = createAsyncThunk<ProfileSnapshot, void, { rejectValue: string }>(
+export const fetchProfileThunk = createAsyncThunk<
+  ProfileSnapshot,
+  void,
+  { rejectValue: string; state: RootState }
+>(
   'profile/fetchProfile',
   async (_, { rejectWithValue }) => {
     try {
@@ -19,6 +24,9 @@ export const fetchProfileThunk = createAsyncThunk<ProfileSnapshot, void, { rejec
     } catch (err) {
       return rejectWithValue(extractApiErrorMessage(err, 'Failed to load profile.'));
     }
+  },
+  {
+    condition: (_, { getState }) => getState().profile.status !== 'loading',
   },
 );
 

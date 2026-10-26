@@ -9,9 +9,11 @@ import {
 import { fetchAchievementsThunk } from './achievements.thunks';
 import { formatUnlockedDate } from './achievements.types';
 import styles from './achievements.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export default function AchievementsPage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const status = useAppSelector(selectAchievementsStatus);
   const error = useAppSelector(selectAchievementsError);
   const achievements = useAppSelector(selectAllAchievements);
@@ -25,7 +27,7 @@ export default function AchievementsPage() {
   return (
     <div>
       <div className={styles.header}>
-        <h2>Achievements</h2>
+        <h2>{t('Achievements')}</h2>
         <p>Badges and rewards for staying consistent.</p>
       </div>
 

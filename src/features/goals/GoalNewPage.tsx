@@ -5,6 +5,7 @@ import GoalForm from './components/GoalForm';
 import { createGoalThunk } from './goals.thunks';
 import type { CreateGoalInput } from './goals.types';
 import styles from './goals.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 // docs/RoutineMate-MVP2-Scope.md §4 site map: "/goals/new — Private —
 // Create goal, link habits". Shares its form with the quick-add modal on
@@ -13,6 +14,7 @@ import styles from './goals.module.scss';
 export default function GoalNewPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (input: CreateGoalInput) => {
     const result = await dispatch(createGoalThunk(input));
@@ -31,7 +33,7 @@ export default function GoalNewPage() {
       </button>
       <div className={styles.pageHeader}>
         <div>
-          <h2>New Goal</h2>
+          <h2>{t('New Goal')}</h2>
           <p>Set a long-term target and link it to your habits or break it into milestones.</p>
         </div>
       </div>

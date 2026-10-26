@@ -4,13 +4,15 @@ import Button from '@components/Button/Button';
 import { selectPreferences, selectProfileError, selectProfileStatus } from './profile.selectors';
 import { fetchProfileThunk, updatePreferencesThunk } from './profile.thunks';
 import styles from './profile.module.scss';
-import { catalogs, type Locale } from '../../i18n/catalog';
+import { translate, type Locale } from '../../i18n/catalog';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export default function LanguageSettingsPage() {
   const dispatch = useAppDispatch();
   const preferences = useAppSelector(selectPreferences);
   const profileStatus = useAppSelector(selectProfileStatus);
   const profileError = useAppSelector(selectProfileError);
+  const { t } = useTranslation();
   const [locale, setLocale] = useState<Locale>(preferences.language);
   const [units, setUnits] = useState<'metric' | 'imperial'>(preferences.units);
   const [message, setMessage] = useState('');
@@ -33,8 +35,7 @@ export default function LanguageSettingsPage() {
     );
     setSaving(false);
     if (updatePreferencesThunk.fulfilled.match(result)) {
-      localStorage.setItem('routinemate-locale', locale);
-      setMessage(catalogs[locale].saved);
+      setMessage(translate(locale, 'Preferences saved'));
     } else {
       setMessage(result.payload ?? 'Unable to save preferences. Please try again.');
     }
@@ -43,42 +44,42 @@ export default function LanguageSettingsPage() {
   return (
     <div className={styles.languagePage}>
       <div className={styles.pageHeader}>
-        <h2>{catalogs[locale].language} &amp; regional settings</h2>
-        <p>Choose your interface language and preferred measurement units.</p>
+        <h2>{t('Language & regional settings')}</h2>
+        <p>{t('Choose your interface language and preferred measurement units.')}</p>
       </div>
-      {profileStatus === 'loading' && <p role="status">Loading preferences…</p>}
+      {profileStatus === 'loading' && <p role="status">{t('Loading preferences…')}</p>}
       {profileStatus === 'failed' && (
         <div className={styles.errorMessage} role="alert">
-          <span>{profileError ?? 'Unable to load preferences.'}</span>
+          <span>{profileError ?? t('Unable to load preferences.')}</span>
           <button type="button" onClick={() => dispatch(fetchProfileThunk())}>
-            Retry
+            {t('Retry')}
           </button>
         </div>
       )}
       <section className={styles.section}>
         <div className={styles.languageField}>
-          <label htmlFor="profile-language">Language</label>
+          <label htmlFor="profile-language">{t('Language')}</label>
           <select
             id="profile-language"
             value={locale}
             disabled={profileStatus !== 'succeeded' || saving}
             onChange={(event) => setLocale(event.target.value as Locale)}
           >
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="hi">हिन्दी</option>
+            <option value="en">{t('English')}</option>
+            <option value="es">{t('Español')}</option>
+            <option value="hi">{t('हिन्दी')}</option>
           </select>
         </div>
         <div className={styles.languageField}>
-          <label htmlFor="profile-units">{catalogs[locale].units}</label>
+          <label htmlFor="profile-units">{t('Units')}</label>
           <select
             id="profile-units"
             value={units}
             disabled={profileStatus !== 'succeeded' || saving}
             onChange={(event) => setUnits(event.target.value as typeof units)}
           >
-            <option value="metric">Metric</option>
-            <option value="imperial">Imperial</option>
+            <option value="metric">{t('Metric')}</option>
+            <option value="imperial">{t('Imperial')}</option>
           </select>
         </div>
         <Button
@@ -86,14 +87,14 @@ export default function LanguageSettingsPage() {
           disabled={saving || profileStatus !== 'succeeded'}
           onClick={() => void save()}
         >
-          {saving ? 'Saving…' : 'Save preferences'}
+          {saving ? t('Saving…') : t('Save preferences')}
         </Button>
         {message && (
           <p
             className={
-              message === catalogs[locale].saved ? styles.successMessage : styles.errorMessage
+              message === t('Preferences saved') ? styles.successMessage : styles.errorMessage
             }
-            role={message === catalogs[locale].saved ? 'status' : 'alert'}
+            role={message === t('Preferences saved') ? 'status' : 'alert'}
           >
             {message}
           </p>

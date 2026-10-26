@@ -36,6 +36,7 @@ import styles from './profile.module.scss';
 import { httpClient } from '@api/httpClient';
 import { unwrap } from '@api/apiResponse';
 import Modal from '@components/Modal/Modal';
+import { useTranslation } from '../../i18n/useTranslation';
 
 interface BillingSubscription {
   plan: 'free' | 'pro';
@@ -53,6 +54,7 @@ function formatBillingStatus(status: string): string {
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAppSelector(selectCurrentUser);
   const routines = useAppSelector(selectAllRoutines);
@@ -227,7 +229,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Profile &amp; Settings</h2>
+      <h2 style={{ marginBottom: 24 }}>{t('Profile & Settings')}</h2>
       {profileStatus === 'failed' && (
         <div className={styles.errorMessage} role="alert">
           <span>{profileError ?? 'Unable to load your profile settings.'}</span>
@@ -239,7 +241,7 @@ export default function ProfilePage() {
       <section className={styles.section} aria-labelledby="billing-heading">
         <div className={styles.billingHeader}>
           <div>
-            <h3 id="billing-heading">Billing &amp; plan</h3>
+            <h3 id="billing-heading">{t('Billing & plan')}</h3>
             <p className={styles.billingSubtitle}>Manage your RoutineMate subscription.</p>
           </div>
           <i className="fa-regular fa-credit-card" aria-hidden="true" />
@@ -402,7 +404,7 @@ export default function ProfilePage() {
 
         <div>
           <form className={styles.section} onSubmit={handleSaveAccount}>
-            <h3 style={{ marginBottom: 16 }}>Account</h3>
+            <h3 style={{ marginBottom: 16 }}>{t('Account')}</h3>
             <div className={styles.fieldRow}>
               <div>
                 <label htmlFor="profile-name">Full name</label>
@@ -432,7 +434,7 @@ export default function ProfilePage() {
           </form>
 
           <div className={styles.section}>
-            <h3 style={{ marginBottom: 8 }}>Preferences</h3>
+            <h3 style={{ marginBottom: 8 }}>{t('Preferences')}</h3>
             <div className={styles.preferenceRow}>
               <div>
                 <p style={{ fontWeight: 500, fontSize: 14 }}>Dark mode</p>
@@ -540,7 +542,7 @@ export default function ProfilePage() {
           </div>
 
           <div className={styles.dangerZone}>
-            <h3>Danger Zone</h3>
+            <h3>{t('Danger Zone')}</h3>
             <p>Deleting your account removes all routines and history permanently.</p>
             <Button variant="danger" onClick={() => setDeleteDialogOpen(true)}>
               Delete Account
