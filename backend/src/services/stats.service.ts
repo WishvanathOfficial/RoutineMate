@@ -28,6 +28,13 @@ export interface MoodCorrelationPoint {
   avgCompletionPercentage: number; // 0-100, rounded
   entryCount: number;
 }
+export interface RoutineStatsPoint {
+  routineId: string;
+  name: string;
+  emoji: string;
+  currentStreak: number;
+  consistency: number;
+}
 export interface StatsSummary {
   totalCheckIns: number;
   completionRate: number;
@@ -38,6 +45,7 @@ export interface StatsSummary {
   trend30Day: number[];
   timeOfDay: TimeOfDayPoint[];
   moodCorrelation: MoodCorrelationPoint[];
+  routineStats: RoutineStatsPoint[];
   /** Plain-language summary, e.g. scope doc's own example: "You complete
    * 20% more habits on days you log a positive mood." Null when there isn't
    * yet at least one low-mood (1-2) and one high-mood (4-5) day to compare. */
@@ -82,6 +90,55 @@ function buildTrend30Day(logs: HabitLogModel[], routineCount: number): number[] 
     trend.push(routineCount > 0 ? Math.round((done / routineCount) * 100) : 0);
   }
   return trend;
+}
+
+function isScheduledRoutineDay(routine: Routine, dateStr: string): boolean {
+  if (dateStr < routine.startDate || (routine.endDate && dateStr > routine.endDate)) return false;
+
+  const day = new Date(`${dateStr}T00:00:00Z`).getUTCDay();
+  switch (routine.frequencyType) {
+    case 'weekdays':
+      return day >= 1 && day <= 5;
+    case 'specific_days':
+      return (routine.frequencyConfig?.days ?? []).includes(day);
+    case 'interval': {
+      const start = new Date(`${routine.startDate}T00:00:00Z`).getTime();
+      const date = new Date(`${dateStr}T00:00:00Z`).getTime();
+      const elapsedDays = Math.floor((date - start) / 86_400_000);
+      const everyNDays = Math.max(1, routine.frequencyConfig?.everyNDays ?? 1);
+      return elapsedDays % everyNDays === 0;
+    }
+    case 'daily':
+    default:
+      return true;
+  }
+}
+
+function buildRoutineStats(routines: Routine[], logs: HabitLogModel[]): RoutineStatsPoint[] {
+  const activeRoutines = routines.filter((routine) => routine.status === 'active');
+  return activeRoutines.map((routine) => {
+    const scheduledDates = new Set<string>();
+    for (let i = 29; i >= 0; i -= 1) {
+      const dateStr = isoDateNDaysAgo(i);
+      if (isScheduledRoutineDay(routine, dateStr)) scheduledDates.add(dateStr);
+    }
+
+    const completedDays = logs.filter(
+      (log) =>
+        log.routineId === routine.id && log.status === 'done' && scheduledDates.has(log.date),
+    ).length;
+
+    return {
+      routineId: routine.id,
+      name: routine.name,
+      emoji: routine.emoji,
+      currentStreak: routine.currentStreak,
+      consistency:
+        scheduledDates.size > 0
+          ? Math.min(100, Math.round((completedDays / scheduledDates.size) * 100))
+          : 0,
+    };
+  });
 }
 
 function buildTimeOfDay(logs: HabitLogModel[]): TimeOfDayPoint[] {
@@ -183,6 +240,7 @@ function emptySummary(activeRoutines: number, bestStreak: number): StatsSummary 
     ],
     moodCorrelation: [],
     moodInsight: null,
+    routineStats: [],
   };
 }
 
@@ -207,6 +265,7 @@ export async function getStatsSummary(userId: string): Promise<StatsSummary> {
   const categoryBreakdown = buildCategoryBreakdown(routines);
   const trend30Day = buildTrend30Day(logs, routineIds.length);
   const timeOfDay = buildTimeOfDay(logs);
+  const routineStats = buildRoutineStats(routines, logs);
   const { points: moodCorrelation, insight: moodInsight } = buildMoodCorrelation(
     journalEntries,
     logs,
@@ -227,5 +286,6 @@ export async function getStatsSummary(userId: string): Promise<StatsSummary> {
     timeOfDay,
     moodCorrelation,
     moodInsight,
+    routineStats,
   };
 }

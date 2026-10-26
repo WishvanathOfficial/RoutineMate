@@ -22,6 +22,14 @@ export interface MoodCorrelationPoint {
   entryCount: number;
 }
 
+export interface RoutineStatsPoint {
+  routineId: string;
+  name: string;
+  emoji: string;
+  currentStreak: number;
+  consistency: number;
+}
+
 export interface StatsSummary {
   totalCheckIns: number;
   completionRate: number;
@@ -32,6 +40,7 @@ export interface StatsSummary {
   trend30Day: number[];
   timeOfDay: TimeOfDayPoint[];
   moodCorrelation: MoodCorrelationPoint[];
+  routineStats: RoutineStatsPoint[];
   /** e.g. "You complete 20% more habits on days you log a positive mood."
    * Null when there isn't yet a low-mood and a high-mood day to compare. */
   moodInsight: string | null;

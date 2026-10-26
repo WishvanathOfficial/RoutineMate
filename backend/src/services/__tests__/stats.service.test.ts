@@ -34,15 +34,52 @@ describe('stats.service', () => {
     expect(summary.categoryBreakdown).toEqual([]);
     expect(summary.moodCorrelation).toEqual([]);
     expect(summary.moodInsight).toBeNull();
+    expect(summary.routineStats).toEqual([]);
     expect(HabitLog.findAll).not.toHaveBeenCalled();
     expect(JournalEntry.findAll).not.toHaveBeenCalled();
   });
 
   it('aggregates routines and habit_logs into the full summary', async () => {
     const routines = [
-      { id: 'r1', category: 'Health', status: 'active', longestStreak: 5 },
-      { id: 'r2', category: 'Health', status: 'active', longestStreak: 12 },
-      { id: 'r3', category: 'Learning', status: 'paused', longestStreak: 3 },
+      {
+        id: 'r1',
+        name: 'Water',
+        emoji: '💧',
+        category: 'Health',
+        status: 'active',
+        longestStreak: 5,
+        currentStreak: 2,
+        frequencyType: 'daily',
+        frequencyConfig: null,
+        startDate: '2026-08-01',
+        endDate: null,
+      },
+      {
+        id: 'r2',
+        name: 'Exercise',
+        emoji: '🏃',
+        category: 'Health',
+        status: 'active',
+        longestStreak: 12,
+        currentStreak: 4,
+        frequencyType: 'specific_days',
+        frequencyConfig: { days: [1, 3, 5] },
+        startDate: '2026-08-01',
+        endDate: null,
+      },
+      {
+        id: 'r3',
+        name: 'Reading',
+        emoji: '📚',
+        category: 'Learning',
+        status: 'paused',
+        longestStreak: 3,
+        currentStreak: 1,
+        frequencyType: 'daily',
+        frequencyConfig: null,
+        startDate: '2026-08-01',
+        endDate: null,
+      },
     ];
     (Routine.findAll as jest.Mock).mockResolvedValue(routines);
 
@@ -68,6 +105,10 @@ describe('stats.service', () => {
     expect(summary.activeRoutines).toBe(2);
     expect(summary.bestStreak).toBe(12);
     expect(summary.totalCheckIns).toBe(2);
+    expect(summary.routineStats).toEqual([
+      { routineId: 'r1', name: 'Water', emoji: '💧', currentStreak: 2, consistency: 5 },
+      { routineId: 'r2', name: 'Exercise', emoji: '🏃', currentStreak: 4, consistency: 0 },
+    ]);
     expect(summary.categoryBreakdown).toEqual(
       expect.arrayContaining([
         { category: 'Health', count: 2 },
@@ -86,8 +127,32 @@ describe('stats.service', () => {
 
   describe('mood-vs-completion correlation', () => {
     const routines = [
-      { id: 'r1', category: 'Health', status: 'active', longestStreak: 5 },
-      { id: 'r2', category: 'Health', status: 'active', longestStreak: 5 },
+      {
+        id: 'r1',
+        name: 'Water',
+        emoji: '💧',
+        category: 'Health',
+        status: 'active',
+        longestStreak: 5,
+        currentStreak: 0,
+        frequencyType: 'daily',
+        frequencyConfig: null,
+        startDate: '2026-08-01',
+        endDate: null,
+      },
+      {
+        id: 'r2',
+        name: 'Exercise',
+        emoji: '🏃',
+        category: 'Health',
+        status: 'active',
+        longestStreak: 5,
+        currentStreak: 0,
+        frequencyType: 'daily',
+        frequencyConfig: null,
+        startDate: '2026-08-01',
+        endDate: null,
+      },
     ];
 
     it('returns no points or insight when the user has no journal entries', async () => {

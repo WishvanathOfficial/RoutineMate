@@ -15,6 +15,7 @@ const summary: StatsSummary = {
   timeOfDay: [{ label: 'Morning', percentage: 90 }],
   moodCorrelation: [],
   moodInsight: null,
+  routineStats: [],
 };
 
 const routines = [

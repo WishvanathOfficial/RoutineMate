@@ -15,6 +15,7 @@ const sampleSummary: StatsSummary = {
   timeOfDay: [],
   moodCorrelation: [],
   moodInsight: null,
+  routineStats: [],
 };
 
 describe('stats.slice', () => {

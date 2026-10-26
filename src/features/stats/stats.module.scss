@@ -19,6 +19,118 @@
   }
 }
 
+.loadState {
+  color: var(--text-secondary);
+  padding: 24px 0;
+}
+
+.retryButton {
+  @include m.button-reset;
+  color: v.$color-brand-600;
+  font-weight: 600;
+  margin-top: 8px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.insightCard {
+  @include m.card;
+  border-color: v.$color-brand-100;
+  background: linear-gradient(135deg, v.$color-brand-50, v.$color-success-50);
+  margin-bottom: 24px;
+  padding: 24px;
+
+  :global(html.dark) & {
+    border-color: rgba(67, 56, 202, 0.4);
+    background: linear-gradient(135deg, rgba(67, 56, 202, 0.12), rgba(16, 185, 129, 0.06));
+  }
+}
+
+.insightHeader {
+  @include m.flex-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  h3 {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    font-size: 16px;
+  }
+}
+
+.insightBadge {
+  background: rgba(79, 70, 229, 0.1);
+  border-radius: v.$radius-full;
+  color: v.$color-brand-600;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+}
+
+.insightRefresh,
+.feedbackButton {
+  @include m.button-reset;
+  color: v.$color-brand-600;
+  font-size: 12px;
+  font-weight: 600;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+.insightRefresh {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+
+.insightSummary {
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.insightSuggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.insightSuggestion {
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: v.$radius-full;
+  color: var(--text-primary);
+  display: inline-flex;
+  font-size: 12px;
+  gap: 6px;
+  line-height: 1.4;
+  padding: 7px 12px;
+
+  :global(html.dark) & {
+    background: rgba(30, 41, 59, 0.72);
+  }
+}
+
+.insightFooter {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.insightError {
+  color: v.$color-rose-500;
+  font-size: 12px;
+}
+
 // MVP-2: CSV/PDF export — see docs/RoutineMate-MVP2-Scope.md §3.6.
 .headerActions {
   display: flex;
@@ -188,6 +300,12 @@
 
 .consistencyValue {
   color: var(--text-muted);
+}
+
+.consistencyHint {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: -8px 0 16px;
 }
 
 .barTrack {

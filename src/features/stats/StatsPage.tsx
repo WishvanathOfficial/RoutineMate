@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { selectAllRoutines } from '@features/routines/routines.selectors';
 import { toastShown } from '@features/ui/ui.slice';
@@ -15,6 +15,13 @@ import { unwrap } from '@api/apiResponse';
 // background and the dark-mode slate-800 card background.
 const CHART_TEXT_COLOR = '#94a3b8';
 const CHART_GRID_COLOR = 'rgba(148, 163, 184, 0.15)';
+
+interface InsightPayload {
+  id: string;
+  summaryText: string;
+  suggestions: string[];
+  fallback: boolean;
+}
 
 interface SummaryCard {
   key: 'totalCheckIns' | 'completionRate' | 'bestStreak' | 'activeRoutines';
@@ -53,26 +60,50 @@ export default function StatsPage() {
   const summary = useAppSelector(selectStatsSummary);
   const status = useAppSelector(selectStatsStatus);
   const routines = useAppSelector(selectAllRoutines);
-  const [insight, setInsight] = useState<{
-    id: string;
-    summaryText: string;
-    suggestions: string[];
-    fallback: boolean;
-  } | null>(null);
-  useEffect(() => {
-    void httpClient
-      .get('/api/insights')
-      .then(unwrap<typeof insight>)
-      .then(setInsight)
-      .catch(() => undefined);
+  const [insight, setInsight] = useState<InsightPayload | null>(null);
+  const [insightStatus, setInsightStatus] = useState<'loading' | 'succeeded' | 'failed'>('loading');
+  const [insightError, setInsightError] = useState<string | null>(null);
+  const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>(
+    'idle',
+  );
+
+  const loadInsight = useCallback(async () => {
+    setInsightStatus('loading');
+    setInsightError(null);
+    try {
+      const response = await httpClient.get('/api/insights');
+      setInsight(unwrap<InsightPayload>(response));
+      setInsightStatus('succeeded');
+    } catch {
+      setInsightError('Unable to load your insight. Please try again.');
+      setInsightStatus('failed');
+    }
   }, []);
+
+  useEffect(() => {
+    void loadInsight();
+  }, [loadInsight]);
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchStatsThunk());
   }, [status, dispatch]);
 
   if (!summary) {
-    return <p>Loading stats…</p>;
+    if (status === 'failed') {
+      return (
+        <div className={styles.loadState} role="alert">
+          <p>Unable to load your stats. Please try again.</p>
+          <button
+            type="button"
+            className={styles.retryButton}
+            onClick={() => dispatch(fetchStatsThunk())}
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return <p className={styles.loadState}>Loading stats…</p>;
   }
 
   const handleExportCsv = () => {
@@ -93,27 +124,19 @@ export default function StatsPage() {
     );
   };
 
+  const handleInsightFeedback = async () => {
+    if (!insight) return;
+    setFeedbackStatus('saving');
+    try {
+      await httpClient.post(`/api/insights/${insight.id}/feedback`, { feedback: 'helpful' });
+      setFeedbackStatus('saved');
+    } catch {
+      setFeedbackStatus('failed');
+    }
+  };
+
   return (
     <div>
-      {insight && (
-        <div className={styles.chartCard}>
-          <h3>AI Insights {insight.fallback && <span>(basic)</span>}</h3>
-          <p>{insight.summaryText}</p>
-          <ul>
-            {insight.suggestions.map((suggestion) => (
-              <li key={suggestion}>{suggestion}</li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            onClick={() =>
-              void httpClient.post(`/api/insights/${insight.id}/feedback`, { feedback: 'helpful' })
-            }
-          >
-            Helpful
-          </button>
-        </div>
-      )}
       <div className={styles.header}>
         <div>
           <h2>Stats &amp; Insights</h2>
@@ -128,6 +151,65 @@ export default function StatsPage() {
           </button>
         </div>
       </div>
+
+      {(insight || insightStatus === 'loading' || insightError) && (
+        <section className={styles.insightCard} aria-labelledby="stats-insight-heading">
+          <div className={styles.insightHeader}>
+            <h3 id="stats-insight-heading">
+              <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" />
+              AI Insights
+              {insight?.fallback && <span className={styles.insightBadge}>BASIC</span>}
+            </h3>
+            <button
+              type="button"
+              className={styles.insightRefresh}
+              onClick={() => void loadInsight()}
+              disabled={insightStatus === 'loading'}
+            >
+              <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />
+              {insightStatus === 'loading' ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </div>
+          {insightError ? (
+            <p className={styles.insightError} role="alert">
+              {insightError}
+            </p>
+          ) : insight ? (
+            <>
+              <p className={styles.insightSummary}>{insight.summaryText}</p>
+              <div className={styles.insightSuggestions}>
+                {insight.suggestions.map((suggestion) => (
+                  <span className={styles.insightSuggestion} key={suggestion}>
+                    <i className="fa-regular fa-lightbulb" aria-hidden="true" />
+                    {suggestion}
+                  </span>
+                ))}
+              </div>
+              <div className={styles.insightFooter}>
+                <button
+                  type="button"
+                  className={styles.feedbackButton}
+                  onClick={() => void handleInsightFeedback()}
+                  disabled={feedbackStatus === 'saving' || feedbackStatus === 'saved'}
+                >
+                  {feedbackStatus === 'saved'
+                    ? 'Thanks for your feedback'
+                    : feedbackStatus === 'saving'
+                      ? 'Saving…'
+                      : 'Helpful'}
+                </button>
+                {feedbackStatus === 'failed' && (
+                  <span className={styles.insightError} role="alert">
+                    Feedback could not be saved. Please try again.
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className={styles.insightSummary}>Loading your latest insight…</p>
+          )}
+        </section>
+      )}
 
       <div className={styles.statGrid}>
         {SUMMARY_CARDS.map((card) => (
@@ -324,61 +406,74 @@ export default function StatsPage() {
       <div className={styles.chartGridEven}>
         <div className={styles.chartCard}>
           <h3>Current Streaks by Habit</h3>
-          <ChartCanvas
-            config={{
-              type: 'bar',
-              data: {
-                labels: routines.map((routine) => `${routine.emoji} ${routine.name}`),
-                datasets: [
-                  {
-                    label: 'Current streak (days)',
-                    data: routines.map((routine) => routine.streak),
-                    backgroundColor: '#10B981',
-                    borderRadius: 6,
-                    maxBarThickness: 28,
-                  },
-                ],
-              },
-              options: {
-                indexAxis: 'y',
-                plugins: { legend: { display: false } },
-                scales: {
-                  x: {
-                    beginAtZero: true,
-                    ticks: { color: CHART_TEXT_COLOR },
-                    grid: { color: CHART_GRID_COLOR },
-                    title: { display: true, text: 'Days', color: CHART_TEXT_COLOR },
-                  },
-                  y: { ticks: { color: CHART_TEXT_COLOR }, grid: { display: false } },
+          {summary.routineStats.length === 0 ? (
+            <p className={styles.emptyChartState}>Create an active routine to build a streak.</p>
+          ) : (
+            <ChartCanvas
+              config={{
+                type: 'bar',
+                data: {
+                  labels: summary.routineStats.map((routine) => `${routine.emoji} ${routine.name}`),
+                  datasets: [
+                    {
+                      label: 'Current streak (days)',
+                      data: summary.routineStats.map((routine) => routine.currentStreak),
+                      backgroundColor: '#10B981',
+                      borderRadius: 6,
+                      maxBarThickness: 28,
+                    },
+                  ],
                 },
-              },
-            }}
-            height={Math.max(140, routines.length * 42)}
-          />
+                options: {
+                  indexAxis: 'y',
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    x: {
+                      beginAtZero: true,
+                      ticks: { color: CHART_TEXT_COLOR },
+                      grid: { color: CHART_GRID_COLOR },
+                      title: { display: true, text: 'Days', color: CHART_TEXT_COLOR },
+                    },
+                    y: { ticks: { color: CHART_TEXT_COLOR }, grid: { display: false } },
+                  },
+                },
+              }}
+              height={Math.max(140, summary.routineStats.length * 42)}
+            />
+          )}
         </div>
 
         <div className={styles.chartCard}>
           <h3>Per-Habit Consistency</h3>
-          {routines.map((routine) => {
-            const rate = Math.min(100, 40 + routine.streak * 3);
-            const isConsistent = rate >= 70;
-            return (
-              <div key={routine.id}>
-                <div className={styles.consistencyRow}>
-                  <span>
-                    {routine.emoji} {routine.name}
-                  </span>
-                  <span className={styles.consistencyValue}>{rate}%</span>
+          <p className={styles.consistencyHint}>
+            Completion over scheduled days in the last 30 days
+          </p>
+          {summary.routineStats.length === 0 ? (
+            <p className={styles.emptyChartState}>
+              Create an active routine to see its consistency.
+            </p>
+          ) : (
+            summary.routineStats.map((routine) => {
+              const rate = routine.consistency;
+              const isConsistent = rate >= 70;
+              return (
+                <div key={routine.routineId}>
+                  <div className={styles.consistencyRow}>
+                    <span>
+                      {routine.emoji} {routine.name}
+                    </span>
+                    <span className={styles.consistencyValue}>{rate}%</span>
+                  </div>
+                  <div className={styles.barTrack}>
+                    <div
+                      className={`${styles.barFill} ${isConsistent ? styles.consistent : styles.inconsistent}`}
+                      style={{ width: `${rate}%` }}
+                    />
+                  </div>
                 </div>
-                <div className={styles.barTrack}>
-                  <div
-                    className={`${styles.barFill} ${isConsistent ? styles.consistent : styles.inconsistent}`}
-                    style={{ width: `${rate}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
     </div>
