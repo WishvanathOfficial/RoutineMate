@@ -523,7 +523,7 @@ export default function LandingPage() {
           </div>
         </div>
         <p className={`${styles.footerBottom} ${styles.reveal}`}>
-          © 2026 RoutineMate. All rights reserved.
+          © 2026 Wishvanath Sah. RoutineMate is licensed under GNU GPL v3.0 only.
         </p>
       </footer>
     </div>
