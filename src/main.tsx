@@ -24,7 +24,7 @@ if (!rootElement) {
 // own HMR/module graph should stay in full control of what's served.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
       // Non-fatal — the app still works fully online without the worker.
     });
   });

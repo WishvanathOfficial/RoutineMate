@@ -4,6 +4,16 @@ RoutineMate is a full-stack habit and routine management application. It helps p
 
 The repository contains a React + TypeScript frontend and an Express + TypeScript backend backed by MySQL. The main product modules are implemented; optional integrations and provider-dependent features need their own credentials and setup. See [Current integrations and limitations](#current-integrations-and-limitations) before enabling them.
 
+## Live preview
+
+[Open the RoutineMate landing page](https://wishvanathofficial.github.io/RoutineMate/).
+
+![RoutineMate landing page preview](./docs/images/routinemate-landing.png)
+
+The deployment workflow publishes on pushes to `main`. For the first deployment, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
+
+The GitHub Pages preview hosts the frontend only. Authentication, API-backed features, and integrations require a separately deployed backend and its environment configuration.
+
 ## Product features
 
 ### Daily routine building

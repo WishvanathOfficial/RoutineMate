@@ -25,45 +25,50 @@ import LanguageSettingsPage from '@features/profile/LanguageSettingsPage';
 import ChallengesPage from '@features/challenges/ChallengesPage';
 import ChallengeDetailPage from '@features/challenges/ChallengeDetailPage';
 
-export const router = createBrowserRouter([
-  { path: '/', element: <LandingPage /> },
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
+export const router = createBrowserRouter(
+  [
+    { path: '/', element: <LandingPage /> },
+    { path: '/login', element: <LoginPage /> },
+    { path: '/register', element: <RegisterPage /> },
+    {
+      path: '/onboarding',
+      element: (
+        <ProtectedRoute onboardingRoute>
+          <OnboardingPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      element: (
+        <ProtectedRoute>
+          <AppLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        { path: '/dashboard', element: <DashboardPage /> },
+        { path: '/routines', element: <RoutinesPage /> },
+        { path: '/routines/:id', element: <RoutineDetailPage /> },
+        { path: '/goals', element: <GoalsPage /> },
+        { path: '/goals/new', element: <GoalNewPage /> },
+        { path: '/stats', element: <StatsPage /> },
+        { path: '/achievements', element: <AchievementsPage /> },
+        { path: '/journal', element: <JournalPage /> },
+        { path: '/journal/:date', element: <JournalEntryPage /> },
+        { path: '/calendar', element: <CalendarPage /> },
+        { path: '/profile', element: <ProfilePage /> },
+        { path: '/friends', element: <FriendsPage /> },
+        { path: '/routines/bundles/:id', element: <RoutineBundleSequencePage /> },
+        { path: '/focus-timer', element: <FocusTimerPage /> },
+        { path: '/feedback', element: <FeedbackPage /> },
+        { path: '/settings/language', element: <LanguageSettingsPage /> },
+        { path: '/challenges', element: <ChallengesPage /> },
+        { path: '/challenges/:id', element: <ChallengeDetailPage /> },
+      ],
+    },
+    { path: '*', element: <Navigate to="/" replace /> },
+    { path: '/roadmap', element: <RoadmapPage /> },
+  ],
   {
-    path: '/onboarding',
-    element: (
-      <ProtectedRoute onboardingRoute>
-        <OnboardingPage />
-      </ProtectedRoute>
-    ),
+    basename: import.meta.env.BASE_URL,
   },
-  {
-    element: (
-      <ProtectedRoute>
-        <AppLayout />
-      </ProtectedRoute>
-    ),
-    children: [
-      { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/routines', element: <RoutinesPage /> },
-      { path: '/routines/:id', element: <RoutineDetailPage /> },
-      { path: '/goals', element: <GoalsPage /> },
-      { path: '/goals/new', element: <GoalNewPage /> },
-      { path: '/stats', element: <StatsPage /> },
-      { path: '/achievements', element: <AchievementsPage /> },
-      { path: '/journal', element: <JournalPage /> },
-      { path: '/journal/:date', element: <JournalEntryPage /> },
-      { path: '/calendar', element: <CalendarPage /> },
-      { path: '/profile', element: <ProfilePage /> },
-      { path: '/friends', element: <FriendsPage /> },
-      { path: '/routines/bundles/:id', element: <RoutineBundleSequencePage /> },
-      { path: '/focus-timer', element: <FocusTimerPage /> },
-      { path: '/feedback', element: <FeedbackPage /> },
-      { path: '/settings/language', element: <LanguageSettingsPage /> },
-      { path: '/challenges', element: <ChallengesPage /> },
-      { path: '/challenges/:id', element: <ChallengeDetailPage /> },
-    ],
-  },
-  { path: '*', element: <Navigate to="/" replace /> },
-  { path: '/roadmap', element: <RoadmapPage /> },
-]);
+);

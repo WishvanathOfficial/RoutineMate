@@ -9,7 +9,12 @@
 // IndexedDB and replayed by src/app/OfflineSyncBridge.tsx once back online.
 
 const CACHE_NAME = 'routinemate-shell-v1';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/pwa-icon.svg'];
+const APP_BASE = self.registration.scope;
+const APP_SHELL = [
+  APP_BASE,
+  new URL('manifest.webmanifest', APP_BASE).href,
+  new URL('pwa-icon.svg', APP_BASE).href,
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -43,7 +48,9 @@ self.addEventListener('fetch', (event) => {
   // still get *something* when offline.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/').then((cached) => cached ?? Response.error())),
+      fetch(request).catch(() =>
+        caches.match(APP_BASE).then((cached) => cached ?? Response.error()),
+      ),
     );
     return;
   }

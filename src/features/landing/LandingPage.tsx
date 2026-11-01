@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import logoIcon from '@assets/logo-icon.svg';
@@ -138,13 +138,61 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 export default function LandingPage() {
   const dispatch = useAppDispatch();
   const testimonials = useAppSelector(selectTestimonials);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchTestimonialsThunk());
   }, [dispatch]);
 
+  useEffect(() => {
+    const page = pageRef.current;
+    if (!page) return;
+
+    const revealElements = page.querySelectorAll<HTMLElement>(`.${styles.reveal}`);
+    if (!('IntersectionObserver' in window)) {
+      revealElements.forEach((element) => element.classList.add(styles.visible));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -32px 0px' },
+    );
+
+    revealElements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen]);
+
   return (
-    <div>
+    <div className={styles.landingPage} ref={pageRef}>
+      <div className={styles.ambientBackground} aria-hidden="true">
+        <span className={`${styles.ambientOrb} ${styles.orbIndigo}`} />
+        <span className={`${styles.ambientOrb} ${styles.orbMint}`} />
+        <span className={`${styles.ambientOrb} ${styles.orbRose}`} />
+      </div>
       {/* Navbar */}
       <header className={styles.navbar}>
         <div className={styles.navInner}>
@@ -152,29 +200,70 @@ export default function LandingPage() {
             <img src={logoIcon} alt="RoutineMate" />
             <span className="gradient-text">RoutineMate</span>
           </div>
-          <nav className={styles.navLinks}>
-            <a href="#features">Features</a>
-            <a href="#how">How it works</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#faq">FAQ</a>
-          </nav>
-          <div className={styles.navActions}>
-            <Link to="/login" className={styles.loginLink}>
-              Log In
-            </Link>
-            <Link to="/register" className={styles.ctaButton}>
-              Get Started Free
-            </Link>
+          <button
+            ref={menuButtonRef}
+            className={styles.menuToggle}
+            type="button"
+            aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="landing-navigation"
+            onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+          >
+            <i
+              className={`fa-solid ${isMobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}
+              aria-hidden="true"
+            />
+          </button>
+          <div
+            id="landing-navigation"
+            className={`${styles.navMenu} ${isMobileMenuOpen ? styles.navMenuOpen : ''}`}
+          >
+            <div className={styles.mobileMenuContent}>
+              <nav className={styles.navLinks} aria-label="Main navigation">
+                <a href="#features" onClick={() => setIsMobileMenuOpen(false)}>
+                  Features
+                </a>
+                <a href="#how" onClick={() => setIsMobileMenuOpen(false)}>
+                  How it works
+                </a>
+                <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)}>
+                  Pricing
+                </a>
+                <a href="#faq" onClick={() => setIsMobileMenuOpen(false)}>
+                  FAQ
+                </a>
+              </nav>
+              <div className={styles.navActions}>
+                <Link
+                  to="/login"
+                  className={styles.loginLink}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Log In
+                </Link>
+                <Link
+                  to="/register"
+                  className={styles.ctaButton}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Get Started Free
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Hero */}
       <section className={styles.hero}>
-        <div>
-          <span className={styles.heroBadge}>Habit tracking, made simple</span>
+        <div className={`${styles.heroContent} ${styles.reveal}`}>
+          <span className={styles.heroBadge}>
+            <span className={styles.heroBadgeDot} aria-hidden="true" />
+            Habit tracking, made simple
+          </span>
           <h1>
-            Build better routines. <span className="gradient-text">One day at a time.</span>
+            Build better routines.{' '}
+            <span className={`gradient-text ${styles.animatedGradient}`}>One day at a time.</span>
           </h1>
           <p>
             RoutineMate helps you plan, track, and stick to the habits that matter — with streaks,
@@ -198,30 +287,40 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className={styles.heroPreviewCard}>
-          <div className={styles.heroPreviewHeader}>
-            <p>Today · Aug 18</p>
-            <span className={styles.heroPreviewBadge}>3/5 done</span>
+        <div className={styles.heroShowcase}>
+          <div className={`${styles.heroPreviewCard} ${styles.reveal}`}>
+            <div className={styles.heroPreviewHeader}>
+              <p>Today · Aug 18</p>
+              <span className={styles.heroPreviewBadge}>3/5 done</span>
+            </div>
+            <div className={styles.heroPreviewList}>
+              <div className={`${styles.heroPreviewItem} ${styles.done}`}>
+                <i className="fa-solid fa-circle-check" aria-hidden="true" />
+                <span>Drink 8 glasses of water</span>
+              </div>
+              <div className={`${styles.heroPreviewItem} ${styles.done}`}>
+                <i className="fa-solid fa-circle-check" aria-hidden="true" />
+                <span>Morning meditation</span>
+              </div>
+              <div className={styles.heroPreviewItem}>
+                <i className="fa-regular fa-circle" aria-hidden="true" />
+                <span>Read 20 pages</span>
+              </div>
+            </div>
+            <div className={styles.heroPreviewFooter}>
+              <span>Current streak</span>
+              <strong>
+                <i className="fa-solid fa-fire" aria-hidden="true" /> 12 days
+              </strong>
+            </div>
           </div>
-          <div className={styles.heroPreviewList}>
-            <div className={`${styles.heroPreviewItem} ${styles.done}`}>
-              <i className="fa-solid fa-circle-check" aria-hidden="true" />
-              <span>Drink 8 glasses of water</span>
-            </div>
-            <div className={`${styles.heroPreviewItem} ${styles.done}`}>
-              <i className="fa-solid fa-circle-check" aria-hidden="true" />
-              <span>Morning meditation</span>
-            </div>
-            <div className={styles.heroPreviewItem}>
-              <i className="fa-regular fa-circle" aria-hidden="true" />
-              <span>Read 20 pages</span>
-            </div>
-          </div>
-          <div className={styles.heroPreviewFooter}>
-            <span>Current streak</span>
-            <strong>
-              <i className="fa-solid fa-fire" aria-hidden="true" /> 12 days
-            </strong>
+          <div className={styles.heroFeatureBubbles} aria-hidden="true">
+            {FEATURES.map((feature) => (
+              <span className={styles.featureBubble} key={feature.title}>
+                <i className={feature.icon} />
+                {feature.title}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -229,7 +328,7 @@ export default function LandingPage() {
       {/* Social proof */}
       <section className={styles.sectionAlt} id="social-proof">
         <div className={styles.section}>
-          <div className={styles.statRow}>
+          <div className={`${styles.statRow} ${styles.reveal}`}>
             <div>
               <strong>10,000+</strong>
               <span>Habits tracked</span>
@@ -249,7 +348,7 @@ export default function LandingPage() {
               <span>No credit card required</span>
             </div>
           </div>
-          <div className={styles.testimonialGrid}>
+          <div className={`${styles.testimonialGrid} ${styles.reveal}`}>
             {testimonials.map((testimonial) => (
               <TestimonialCard key={testimonial.id} testimonial={testimonial} />
             ))}
@@ -258,7 +357,7 @@ export default function LandingPage() {
       </section>
 
       {/* Problem / solution strip */}
-      <section className={styles.problemStrip}>
+      <section className={`${styles.problemStrip} ${styles.reveal}`}>
         <p>
           Most habits fail not from lack of motivation — but from lack of a simple system to{' '}
           <span className={styles.problemBrand}>show up daily</span> and{' '}
@@ -268,11 +367,11 @@ export default function LandingPage() {
 
       {/* Features */}
       <section className={styles.section} id="features">
-        <div className={styles.sectionTitle}>
+        <div className={`${styles.sectionTitle} ${styles.reveal}`}>
           <h2>Everything you need to build habits that stick</h2>
           <p>Simple daily tracking, motivating streaks, and clear insight into your progress.</p>
         </div>
-        <div className={styles.featureGrid}>
+        <div className={`${styles.featureGrid} ${styles.reveal}`}>
           {FEATURES.map((feature) => (
             <div className={styles.featureCard} key={feature.title}>
               <span className={`${styles.featureIcon} ${styles[feature.tint]}`}>
@@ -288,8 +387,8 @@ export default function LandingPage() {
       {/* How it works */}
       <section className={styles.howSection} id="how">
         <div className={styles.howInner}>
-          <h2 className={styles.howHeading}>How RoutineMate works</h2>
-          <div className={styles.howGrid}>
+          <h2 className={`${styles.howHeading} ${styles.reveal}`}>How RoutineMate works</h2>
+          <div className={`${styles.howGrid} ${styles.reveal}`}>
             {HOW_IT_WORKS.map((item) => (
               <div className={styles.howStep} key={item.step}>
                 <div className={`${styles.howStepNumber} gradient-bg`}>{item.step}</div>
@@ -303,11 +402,11 @@ export default function LandingPage() {
 
       {/* Pricing */}
       <section className={styles.section} id="pricing">
-        <div className={styles.sectionTitle}>
+        <div className={`${styles.sectionTitle} ${styles.reveal}`}>
           <h2>Simple pricing</h2>
           <p>Start free. Upgrade later — MVP-1 ships free-tier only.</p>
         </div>
-        <div className={styles.pricingGrid}>
+        <div className={`${styles.pricingGrid} ${styles.reveal}`}>
           <div className={`${styles.pricingCard} ${styles.highlighted}`}>
             <h3>FREE</h3>
             <p className="price">$0/mo</p>
@@ -355,10 +454,10 @@ export default function LandingPage() {
       {/* FAQ */}
       <section className={styles.sectionAlt} id="faq">
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>
+          <div className={`${styles.sectionTitle} ${styles.reveal}`}>
             <h2>Frequently asked questions</h2>
           </div>
-          <div className={styles.faqList}>
+          <div className={`${styles.faqList} ${styles.reveal}`}>
             {FAQS.map((faq) => (
               <details className={styles.faqItem} key={faq.question}>
                 <summary>
@@ -373,7 +472,7 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className={`${styles.ctaSection} gradient-bg`}>
+      <section className={`${styles.ctaSection} ${styles.reveal} gradient-bg`}>
         <h2>Ready to build better habits?</h2>
         <p>Join RoutineMate today — it&apos;s free.</p>
         <Link to="/register" className={styles.ctaSectionButton}>
@@ -383,7 +482,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className={styles.footer}>
-        <div className={styles.footerTop}>
+        <div className={`${styles.footerTop} ${styles.reveal}`}>
           <div className={styles.footerBrand}>
             <div className={styles.brand}>
               <img src={logoIcon} alt="RoutineMate" />
@@ -423,7 +522,9 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-        <p className={styles.footerBottom}>© 2026 RoutineMate. All rights reserved.</p>
+        <p className={`${styles.footerBottom} ${styles.reveal}`}>
+          © 2026 RoutineMate. All rights reserved.
+        </p>
       </footer>
     </div>
   );
